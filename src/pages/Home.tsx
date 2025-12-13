@@ -23,9 +23,7 @@ const Home = () => {
               <span className="text-foreground">Before Markets Move.</span>
             </h1>
 
-            <p className="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto animate-slide-up animation-delay-200">
-              Augurion tracks how real world fragilities are changing and then turns them into signals for the market.
-            </p>
+            <p className="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto animate-slide-up animation-delay-200">Augurion tracks how real-world fragilities are changing and then turns them into trading signals for an African focussed predictive market.</p>
 
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-slide-up animation-delay-300">A pre-market outcome intelligence platform presenting signals , structured data, and disciplined interpretation.</p>
 
