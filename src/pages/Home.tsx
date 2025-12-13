@@ -26,7 +26,7 @@ const Home = () => {
             </h1>
 
             <p className="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto animate-slide-up animation-delay-200">
-              Augurion tracks how real-world outcomes become likely — and only turns them into markets when they are ready.
+              Augurion tracks how real world fragilities are changing and then turns them into signals for the market.
             </p>
 
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-slide-up animation-delay-300">
