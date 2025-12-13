@@ -31,6 +31,15 @@ const MARKETS_DATA = {
       trend: "down" as const,
       trendValue: 15,
     },
+    {
+      title: "Will the ANC retain majority coalition control in the 2027 general elections?",
+      yes: 45,
+      no: 55,
+      volatility: "medium" as const,
+      endsIn: "912 days",
+      trend: "down" as const,
+      trendValue: 8,
+    },
   ],
   Nigeria: [
     {
