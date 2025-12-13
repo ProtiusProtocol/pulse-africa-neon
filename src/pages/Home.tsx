@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Eye, Layers, Target, Globe, Filter, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
-
 const Home = () => {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10" />
@@ -29,9 +27,7 @@ const Home = () => {
               Augurion tracks how real world fragilities are changing and then turns them into signals for the market.
             </p>
 
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-slide-up animation-delay-300">
-              A pre-market outcome intelligence platform powered by crowd signals, structured data, and disciplined interpretation.
-            </p>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto animate-slide-up animation-delay-300">A pre-market outcome intelligence platform presenting signals , structured data, and disciplined interpretation.</p>
 
             <div className="flex flex-wrap gap-3 justify-center pt-2 animate-slide-up animation-delay-400">
               <span className="px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-sm font-bold text-primary">
@@ -63,7 +59,7 @@ const Home = () => {
             <h2 className="text-3xl lg:text-4xl font-bold">
               <span className="text-primary text-glow-primary">Outcomes shift quietly.</span>
               <br />
-              <span className="text-foreground">We make the movement visible.</span>
+              <span className="text-foreground">We make their movement visible.</span>
             </h2>
 
             <div className="space-y-6 text-lg text-muted-foreground">
@@ -79,7 +75,7 @@ const Home = () => {
 
               <div className="pt-4 space-y-2">
                 <p className="text-foreground font-bold">We don't predict the future.</p>
-                <p className="text-accent font-bold">We detect when outcomes begin to move.</p>
+                <p className="text-accent font-bold">We detect when the signals leading to outcomes begin to move.</p>
               </div>
             </div>
           </div>
@@ -106,7 +102,7 @@ const Home = () => {
                   </div>
                   <div>
                     <div className="text-xs text-primary font-bold uppercase tracking-wider">Layer 1</div>
-                    <h3 className="text-xl font-bold text-foreground">Outcome Intelligence</h3>
+                    <h3 className="text-xl font-bold text-foreground">Signal Intelligence</h3>
                   </div>
                 </div>
 
@@ -199,9 +195,7 @@ const Home = () => {
                   </ul>
                 </div>
 
-                <p className="text-foreground font-medium">
-                  —we activate a regulated binary market.
-                </p>
+                <p className="text-foreground font-medium">—we activate a regulated binary predictive market traidng opportunity</p>
 
                 <p className="text-accent font-bold">Not before.</p>
 
@@ -231,7 +225,7 @@ const Home = () => {
                   <Target className="w-6 h-6 text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-bold text-foreground">Outcome-first, not crisis-first.</h3>
+                  <h3 className="font-bold text-foreground">Signal -first, not crisis dependent.</h3>
                   <p className="text-muted-foreground">
                     We focus on how outcomes evolve, not dramatic events.
                   </p>
@@ -246,9 +240,7 @@ const Home = () => {
                 </div>
                 <div className="space-y-2">
                   <h3 className="font-bold text-foreground">Curation over noise.</h3>
-                  <p className="text-muted-foreground">
-                    Only outcomes that pass readiness criteria advance to markets.
-                  </p>
+                  <p className="text-muted-foreground">Only outcomes that pass readiness criteria advance to the predictive market trading platform.</p>
                 </div>
               </div>
             </div>
@@ -288,9 +280,7 @@ const Home = () => {
       <section className="py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto text-center space-y-6 p-8 rounded-lg border border-primary/30 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 glow-primary">
-            <h2 className="text-2xl lg:text-3xl font-bold text-foreground">
-              Be part of the first cohort building the world's outcome-intelligence layer for Africa.
-            </h2>
+            <h2 className="text-2xl lg:text-3xl font-bold text-foreground">Be part of the first cohort building the world's signal dependent predictive market for Africa.</h2>
             <Link to="/early-access">
               <Button variant="neon" size="lg">
                 Join Early Access
@@ -299,8 +289,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Home;
