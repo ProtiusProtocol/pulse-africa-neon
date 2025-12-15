@@ -10,6 +10,8 @@ import HowItWorks from "./pages/HowItWorks";
 import Markets from "./pages/Markets";
 import EarlyAccess from "./pages/EarlyAccess";
 import About from "./pages/About";
+import AdminDashboard from "./pages/AdminDashboard";
+import UserDashboard from "./pages/UserDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
               <Route path="/markets" element={<Markets />} />
               <Route path="/early-access" element={<EarlyAccess />} />
               <Route path="/about" element={<About />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
