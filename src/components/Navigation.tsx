@@ -10,6 +10,7 @@ export const Navigation = () => {
     { to: "/", label: "Home" },
     { to: "/how-it-works", label: "How It Works" },
     { to: "/markets", label: "Markets" },
+    { to: "/dashboard", label: "Dashboard" },
     { to: "/about", label: "About" },
   ];
 
