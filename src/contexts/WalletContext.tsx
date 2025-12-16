@@ -3,13 +3,16 @@ import { PeraWalletConnect } from '@perawallet/connect';
 import algosdk from 'algosdk';
 import { toast } from 'sonner';
 
+type TransactionSigner = (txnGroup: algosdk.Transaction[], indexesToSign: number[]) => Promise<Uint8Array[]>;
+
 interface WalletContextType {
   walletAddress: string | null;
   isConnecting: boolean;
   isConnected: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
-  signTransactions: (txnGroup: algosdk.Transaction[], indexesToSign: number[]) => Promise<Uint8Array[]>;
+  signTransactions: TransactionSigner;
+  getSigner: () => TransactionSigner;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -88,6 +91,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return signedTxns;
   }, [walletAddress]);
 
+  const getSigner = useCallback((): TransactionSigner => {
+    return signTransactions;
+  }, [signTransactions]);
+
   return (
     <WalletContext.Provider value={{
       walletAddress,
@@ -96,6 +103,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       connect,
       disconnect,
       signTransactions,
+      getSigner,
     }}>
       {children}
     </WalletContext.Provider>
