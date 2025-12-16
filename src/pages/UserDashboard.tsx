@@ -155,16 +155,11 @@ export default function UserDashboard() {
             <h1 className="text-3xl font-bold text-glow-primary">Dashboard</h1>
             <p className="text-muted-foreground">Place bets and track your predictions</p>
           </div>
-          {walletAddress ? (
+          {walletAddress && (
             <div className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg">
               <Wallet className="w-4 h-4 text-primary" />
               <span className="text-sm font-mono truncate max-w-[150px]">{walletAddress}</span>
             </div>
-          ) : (
-            <Button onClick={handleConnectWallet} disabled={isLoading} variant="neon">
-              <Wallet className="w-4 h-4 mr-2" />
-              Connect Wallet
-            </Button>
           )}
         </div>
 
