@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      early_access_signups: {
+        Row: {
+          country: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          predictor_type: string
+          whatsapp: string
+        }
+        Insert: {
+          country: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          predictor_type: string
+          whatsapp: string
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          predictor_type?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
