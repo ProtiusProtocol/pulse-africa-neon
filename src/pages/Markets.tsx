@@ -23,7 +23,7 @@ const MARKETS_DATA = {
       trendValue: 3,
     },
     {
-      title: "Will load-shedding end permanently by September 2025?",
+      title: "Will load-shedding end permanently by September 2026?",
       yes: 31,
       no: 69,
       volatility: "low" as const,
