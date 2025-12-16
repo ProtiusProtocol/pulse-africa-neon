@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { StickyBanner } from "@/components/StickyBanner";
+import { WalletProvider } from "@/contexts/WalletContext";
 import Home from "./pages/Home";
 import HowItWorks from "./pages/HowItWorks";
 import Markets from "./pages/Markets";
@@ -31,35 +32,37 @@ const queryClient = new QueryClient({
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <div className="flex flex-col min-h-screen">
-          <Navigation />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/intelligence" element={<Intelligence />} />
-              <Route path="/markets" element={<Markets />} />
-              <Route path="/early-access" element={<EarlyAccess />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/pulse" element={<Pulse />} />
-              <Route path="/brief" element={<Brief />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/admin/reports" element={<AdminReports />} />
-              <Route path="/admin/reports/:weekId" element={<AdminReportWeek />} />
-              <Route path="/dashboard" element={<UserDashboard />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-          <StickyBanner />
-        </div>
-      </BrowserRouter>
-    </TooltipProvider>
+    <WalletProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="flex flex-col min-h-screen">
+            <Navigation />
+            <main className="flex-1">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/how-it-works" element={<HowItWorks />} />
+                <Route path="/intelligence" element={<Intelligence />} />
+                <Route path="/markets" element={<Markets />} />
+                <Route path="/early-access" element={<EarlyAccess />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/pulse" element={<Pulse />} />
+                <Route path="/brief" element={<Brief />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/admin/reports" element={<AdminReports />} />
+                <Route path="/admin/reports/:weekId" element={<AdminReportWeek />} />
+                <Route path="/dashboard" element={<UserDashboard />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+            <Footer />
+            <StickyBanner />
+          </div>
+        </BrowserRouter>
+      </TooltipProvider>
+    </WalletProvider>
   </QueryClientProvider>
 );
 

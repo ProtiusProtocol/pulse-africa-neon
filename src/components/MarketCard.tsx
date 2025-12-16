@@ -15,6 +15,7 @@ interface MarketCardProps {
   category?: string;
   linkedSignals?: { code: string; name: string }[];
   resolutionCriteria?: string;
+  onTrade?: () => void;
 }
 
 const formatCountdown = (ms: number): string => {
@@ -48,6 +49,7 @@ export const MarketCard = ({
   category,
   linkedSignals,
   resolutionCriteria,
+  onTrade,
 }: MarketCardProps) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
 
@@ -165,7 +167,7 @@ export const MarketCard = ({
         </div>
 
         {/* CTA */}
-        <Button variant="hero" size="sm" className="w-full">
+        <Button variant="hero" size="sm" className="w-full" onClick={onTrade}>
           Trade Now
         </Button>
       </div>

@@ -2,8 +2,7 @@ import { Menu, X, Wallet, LogOut, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
-import { connectWallet } from "@/lib/algorand";
-import { toast } from "sonner";
+import { useWallet } from "@/contexts/WalletContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,33 +13,13 @@ import {
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [copied, setCopied] = useState(false);
-
-  const handleConnectWallet = async () => {
-    setIsConnecting(true);
-    try {
-      const address = await connectWallet();
-      setWalletAddress(address);
-      toast.success("Wallet connected!");
-    } catch (error) {
-      toast.error("Failed to connect wallet");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  const handleDisconnect = () => {
-    setWalletAddress(null);
-    toast.success("Wallet disconnected");
-  };
+  const { walletAddress, isConnecting, connect, disconnect } = useWallet();
 
   const handleCopyAddress = () => {
     if (walletAddress) {
       navigator.clipboard.writeText(walletAddress);
       setCopied(true);
-      toast.success("Address copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
     }
   };
@@ -91,7 +70,7 @@ export const Navigation = () => {
                     Copy Address
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleDisconnect} className="cursor-pointer text-destructive focus:text-destructive">
+                  <DropdownMenuItem onClick={disconnect} className="cursor-pointer text-destructive focus:text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
                     Disconnect
                   </DropdownMenuItem>
@@ -101,7 +80,7 @@ export const Navigation = () => {
               <Button 
                 variant="hero" 
                 size="sm" 
-                onClick={handleConnectWallet}
+                onClick={connect}
                 disabled={isConnecting}
               >
                 <Wallet className="w-4 h-4 mr-2" />
@@ -147,7 +126,7 @@ export const Navigation = () => {
                     {copied ? <Check className="w-4 h-4 mr-1" /> : <Copy className="w-4 h-4 mr-1" />}
                     Copy
                   </Button>
-                  <Button variant="ghost" size="sm" className="flex-1 text-destructive hover:text-destructive" onClick={handleDisconnect}>
+                  <Button variant="ghost" size="sm" className="flex-1 text-destructive hover:text-destructive" onClick={disconnect}>
                     <LogOut className="w-4 h-4 mr-1" />
                     Disconnect
                   </Button>
@@ -158,7 +137,7 @@ export const Navigation = () => {
                 variant="hero" 
                 size="sm" 
                 className="w-full"
-                onClick={handleConnectWallet}
+                onClick={connect}
                 disabled={isConnecting}
               >
                 <Wallet className="w-4 h-4 mr-2" />
