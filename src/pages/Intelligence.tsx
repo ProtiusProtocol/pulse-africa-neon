@@ -272,6 +272,26 @@ const Intelligence = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Quick Links to Reports */}
+          <div className="flex justify-center gap-4 mt-8">
+            <a 
+              href="/pulse" 
+              className="group flex items-center gap-2 px-6 py-3 bg-card border border-border rounded-lg hover:border-primary/50 hover:glow-primary transition-all duration-300"
+            >
+              <Zap className="w-4 h-4 text-primary" />
+              <span className="font-medium">Trader Pulse</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            </a>
+            <a 
+              href="/brief" 
+              className="group flex items-center gap-2 px-6 py-3 bg-card border border-border rounded-lg hover:border-accent/50 transition-all duration-300"
+            >
+              <Target className="w-4 h-4 text-accent" />
+              <span className="font-medium">Executive Brief</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
+            </a>
+          </div>
         </div>
       </section>
 
