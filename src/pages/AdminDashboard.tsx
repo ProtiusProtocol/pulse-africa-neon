@@ -1,13 +1,7 @@
 import { useState, useEffect } from "react";
-import { 
-  mockMarkets, 
-  mockFragilityIndicators, 
-  freezeMarket, 
-  resolveMarket,
-  type Market,
-  type FragilityIndicator 
-} from "@/lib/algorand";
 import { supabase } from "@/integrations/supabase/client";
+import { useWallet } from "@/contexts/WalletContext";
+import { AugurionMarketV4Client, WinningSide } from "@/contracts/AugurionMarketV4Client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,31 +29,71 @@ import {
   Mail,
   Phone,
   Globe,
-  Calendar
+  Calendar,
+  Wallet,
+  RefreshCw,
+  Play,
+  XCircle
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
+type Market = Tables<'markets'>;
+type FragilitySignal = Tables<'fragility_signals'>;
 
 const ADMIN_PASSWORD = "augurion2024"; // In production, use proper auth
 
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [markets, setMarkets] = useState<Market[]>(mockMarkets);
-  const [indicators] = useState<FragilityIndicator[]>(mockFragilityIndicators);
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [signals, setSignals] = useState<FragilitySignal[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<string>("");
   const [winningSide, setWinningSide] = useState<'YES' | 'NO'>('YES');
   const [isLoading, setIsLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [signups, setSignups] = useState<EarlyAccessSignup[]>([]);
   const [signupsLoading, setSignupsLoading] = useState(false);
   const { toast } = useToast();
+  const { walletAddress, isConnected, connect, getSigner } = useWallet();
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchSignups();
+      fetchData();
     }
   }, [isAuthenticated]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    await Promise.all([fetchMarkets(), fetchSignals(), fetchSignups()]);
+    setIsLoading(false);
+  };
+
+  const fetchMarkets = async () => {
+    const { data, error } = await supabase
+      .from('markets')
+      .select('*')
+      .order('created_at', { ascending: true });
+    
+    if (error) {
+      toast({ title: "Error", description: "Failed to fetch markets", variant: "destructive" });
+    } else {
+      setMarkets(data || []);
+    }
+  };
+
+  const fetchSignals = async () => {
+    const { data, error } = await supabase
+      .from('fragility_signals')
+      .select('*')
+      .order('signal_code', { ascending: true });
+    
+    if (error) {
+      toast({ title: "Error", description: "Failed to fetch signals", variant: "destructive" });
+    } else {
+      setSignals(data || []);
+    }
+  };
 
   const fetchSignups = async () => {
     setSignupsLoading(true);
@@ -85,18 +119,117 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleFreeze = async (market: Market) => {
-    setIsLoading(true);
-    const result = await freezeMarket(market.appId, "ADMIN_ADDRESS");
-    if (result.success) {
-      setMarkets(prev => prev.map(m => 
-        m.id === market.id ? { ...m, status: 'FROZEN' as const } : m
-      ));
-      toast({ title: "Market frozen", description: `${market.name} has been frozen` });
-    } else {
-      toast({ title: "Error", description: result.error, variant: "destructive" });
+  const getNumericAppId = (appId: string): number | null => {
+    const parsed = parseInt(appId, 10);
+    return isNaN(parsed) ? null : parsed;
+  };
+
+  const handleOpenMarket = async (market: Market) => {
+    if (!isConnected || !walletAddress) {
+      toast({ title: "Error", description: "Connect your wallet first", variant: "destructive" });
+      return;
     }
-    setIsLoading(false);
+
+    const numericAppId = getNumericAppId(market.app_id);
+    if (!numericAppId) {
+      toast({ title: "Error", description: "Market contract not deployed yet", variant: "destructive" });
+      return;
+    }
+
+    setActionLoading(market.id);
+    try {
+      const client = new AugurionMarketV4Client(numericAppId);
+      const signer = getSigner();
+      const result = await client.openMarket(walletAddress, signer);
+
+      if (result.success) {
+        // Update Supabase
+        await supabase
+          .from('markets')
+          .update({ status: 'active' })
+          .eq('id', market.id);
+
+        await fetchMarkets();
+        toast({ title: "Market opened", description: `${market.title} is now open for betting` });
+      } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to open market", variant: "destructive" });
+    }
+    setActionLoading(null);
+  };
+
+  const handleFreezeMarket = async (market: Market) => {
+    if (!isConnected || !walletAddress) {
+      toast({ title: "Error", description: "Connect your wallet first", variant: "destructive" });
+      return;
+    }
+
+    const numericAppId = getNumericAppId(market.app_id);
+    if (!numericAppId) {
+      toast({ title: "Error", description: "Market contract not deployed yet", variant: "destructive" });
+      return;
+    }
+
+    setActionLoading(market.id);
+    try {
+      const client = new AugurionMarketV4Client(numericAppId);
+      const signer = getSigner();
+      const result = await client.freezeMarket(walletAddress, signer);
+
+      if (result.success) {
+        // Update Supabase
+        await supabase
+          .from('markets')
+          .update({ status: 'frozen' })
+          .eq('id', market.id);
+
+        await fetchMarkets();
+        toast({ title: "Market frozen", description: `${market.title} has been frozen` });
+      } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to freeze market", variant: "destructive" });
+    }
+    setActionLoading(null);
+  };
+
+  const handleCancelMarket = async (market: Market) => {
+    if (!isConnected || !walletAddress) {
+      toast({ title: "Error", description: "Connect your wallet first", variant: "destructive" });
+      return;
+    }
+
+    const numericAppId = getNumericAppId(market.app_id);
+    if (!numericAppId) {
+      toast({ title: "Error", description: "Market contract not deployed yet", variant: "destructive" });
+      return;
+    }
+
+    setActionLoading(market.id);
+    try {
+      const client = new AugurionMarketV4Client(numericAppId);
+      const signer = getSigner();
+      const result = await client.cancelMarket(walletAddress, signer);
+
+      if (result.success) {
+        // Update Supabase
+        await supabase
+          .from('markets')
+          .update({ status: 'cancelled' })
+          .eq('id', market.id);
+
+        await fetchMarkets();
+        toast({ title: "Market cancelled", description: `${market.title} has been cancelled` });
+      } else {
+        toast({ title: "Error", description: result.error, variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to cancel market", variant: "destructive" });
+    }
+    setActionLoading(null);
   };
 
   const handleResolve = async () => {
@@ -104,58 +237,99 @@ export default function AdminDashboard() {
       toast({ title: "Error", description: "Select a market to resolve", variant: "destructive" });
       return;
     }
-    
-    setIsLoading(true);
+
+    if (!isConnected || !walletAddress) {
+      toast({ title: "Error", description: "Connect your wallet first", variant: "destructive" });
+      return;
+    }
+
     const market = markets.find(m => m.id === selectedMarket);
-    if (market) {
-      const result = await resolveMarket(market.appId, winningSide, "ADMIN_ADDRESS");
+    if (!market) return;
+
+    const numericAppId = getNumericAppId(market.app_id);
+    if (!numericAppId) {
+      toast({ title: "Error", description: "Market contract not deployed yet", variant: "destructive" });
+      return;
+    }
+
+    setActionLoading(selectedMarket);
+    try {
+      const client = new AugurionMarketV4Client(numericAppId);
+      const signer = getSigner();
+      const side = winningSide === 'YES' ? WinningSide.YES : WinningSide.NO;
+      const result = await client.resolveMarket(side, walletAddress, signer);
+
       if (result.success) {
-        setMarkets(prev => prev.map(m => 
-          m.id === selectedMarket ? { ...m, status: 'RESOLVED' as const, outcome: winningSide } : m
-        ));
+        // Update Supabase
+        await supabase
+          .from('markets')
+          .update({ 
+            status: 'resolved',
+            outcome_ref: winningSide 
+          })
+          .eq('id', market.id);
+
+        await fetchMarkets();
         toast({ 
           title: "Market resolved", 
-          description: `${market.name} resolved with ${winningSide} as winner` 
+          description: `${market.title} resolved with ${winningSide} as winner` 
         });
+        setSelectedMarket("");
       } else {
         toast({ title: "Error", description: result.error, variant: "destructive" });
       }
+    } catch (error) {
+      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to resolve market", variant: "destructive" });
+    }
+    setActionLoading(null);
+  };
+
+  const triggerIndexer = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('market-indexer');
+      if (error) throw error;
+      
+      toast({ 
+        title: "Indexer triggered", 
+        description: data?.message || "Markets synced from blockchain" 
+      });
+      await fetchMarkets();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to trigger indexer", 
+        variant: "destructive" 
+      });
     }
     setIsLoading(false);
   };
 
-  const getStatusBadge = (status: Market['status']) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'OPEN':
-        return <Badge className="bg-primary/20 text-primary border-primary">OPEN</Badge>;
-      case 'FROZEN':
+      case 'active':
+        return <Badge className="bg-primary/20 text-primary border-primary">ACTIVE</Badge>;
+      case 'frozen':
         return <Badge className="bg-secondary/20 text-secondary border-secondary">FROZEN</Badge>;
-      case 'RESOLVED':
+      case 'resolved':
         return <Badge className="bg-accent/20 text-accent border-accent">RESOLVED</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-destructive/20 text-destructive border-destructive">CANCELLED</Badge>;
+      case 'pending':
+        return <Badge className="bg-muted text-muted-foreground border-muted">PENDING</Badge>;
+      default:
+        return <Badge variant="outline">{status.toUpperCase()}</Badge>;
     }
   };
 
-  const getTrendIcon = (trend: FragilityIndicator['trend']) => {
-    switch (trend) {
-      case 'UP':
-        return <TrendingUp className="w-4 h-4 text-primary" />;
-      case 'DOWN':
-        return <TrendingDown className="w-4 h-4 text-destructive" />;
-      case 'STABLE':
+  const getDirectionIcon = (direction: string | null) => {
+    switch (direction) {
+      case 'elevated':
+        return <TrendingUp className="w-4 h-4 text-destructive" />;
+      case 'declining':
+        return <TrendingDown className="w-4 h-4 text-primary" />;
+      default:
         return <Minus className="w-4 h-4 text-muted-foreground" />;
-    }
-  };
-
-  const getCategoryColor = (category: FragilityIndicator['category']) => {
-    switch (category) {
-      case 'POLITICAL':
-        return 'text-primary';
-      case 'ECONOMIC':
-        return 'text-accent';
-      case 'SOCIAL':
-        return 'text-secondary';
-      case 'SECURITY':
-        return 'text-destructive';
     }
   };
 
@@ -195,45 +369,60 @@ export default function AdminDashboard() {
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-glow-primary">Admin Dashboard</h1>
             <p className="text-muted-foreground">Manage markets and monitor fragility indicators</p>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => setIsAuthenticated(false)}
-            className="border-border"
-          >
-            <Unlock className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isConnected ? (
+              <Button onClick={connect} variant="outline" className="border-primary text-primary">
+                <Wallet className="w-4 h-4 mr-2" />
+                Connect Wallet
+              </Button>
+            ) : (
+              <Badge variant="outline" className="px-3 py-1 text-xs">
+                <Wallet className="w-3 h-3 mr-1" />
+                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+              </Badge>
+            )}
+            <Button 
+              variant="outline" 
+              onClick={() => setIsAuthenticated(false)}
+              className="border-border"
+            >
+              <Unlock className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
 
-        {/* Fragility Indicators - Layer 1 */}
+        {/* Wallet Warning */}
+        {!isConnected && (
+          <Card className="border-secondary bg-secondary/10">
+            <CardContent className="flex items-center gap-3 p-4">
+              <AlertTriangle className="w-5 h-5 text-secondary" />
+              <p className="text-sm">Connect your admin wallet to perform on-chain market operations (freeze, resolve, cancel).</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Fragility Signals - Layer 1 */}
         <section>
           <div className="flex items-center gap-2 mb-4">
             <Activity className="w-5 h-5 text-secondary" />
-            <h2 className="text-xl font-semibold">Fragility Indicators (Layer 1)</h2>
+            <h2 className="text-xl font-semibold">Fragility Signals (Layer 1)</h2>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {indicators.map((indicator) => (
-              <Card key={indicator.id} className="border-border bg-card hover:border-primary/50 transition-colors">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {signals.map((signal) => (
+              <Card key={signal.id} className="border-border bg-card hover:border-primary/50 transition-colors">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    <span className={`text-xs font-medium ${getCategoryColor(indicator.category)}`}>
-                      {indicator.category}
-                    </span>
-                    {getTrendIcon(indicator.trend)}
+                    <Badge variant="outline" className="text-xs">{signal.signal_code}</Badge>
+                    {getDirectionIcon(signal.current_direction)}
                   </div>
-                  <h3 className="font-medium text-sm mb-1">{indicator.name}</h3>
-                  <p className="text-xs text-muted-foreground mb-2">{indicator.country}</p>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-primary">{indicator.value}</span>
-                    <span className={`text-xs ${indicator.trend === 'UP' ? 'text-primary' : indicator.trend === 'DOWN' ? 'text-destructive' : 'text-muted-foreground'}`}>
-                      {indicator.trend === 'UP' ? '+' : indicator.trend === 'DOWN' ? '-' : ''}{Math.abs(indicator.value - indicator.previousValue)}
-                    </span>
-                  </div>
+                  <h3 className="font-medium text-sm mb-1">{signal.name}</h3>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{signal.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -242,66 +431,112 @@ export default function AdminDashboard() {
 
         {/* Market Management - Layer 2 */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-semibold">Market Management (Layer 2)</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Market Management (Layer 2)</h2>
+            </div>
+            <Button variant="outline" size="sm" onClick={triggerIndexer} disabled={isLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Sync from Chain
+            </Button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {markets.map((market) => (
-              <Card key={market.id} className="border-border bg-card">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{market.name}</CardTitle>
-                      <CardDescription className="text-xs">App ID: {market.appId}</CardDescription>
+            {markets.map((market) => {
+              const hasContract = !!getNumericAppId(market.app_id);
+              const isActionLoading = actionLoading === market.id;
+              
+              return (
+                <Card key={market.id} className="border-border bg-card">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base line-clamp-2">{market.title}</CardTitle>
+                        <CardDescription className="text-xs mt-1">
+                          App ID: {market.app_id}
+                          {!hasContract && <span className="text-secondary ml-2">(placeholder)</span>}
+                        </CardDescription>
+                      </div>
+                      {getStatusBadge(market.status)}
                     </div>
-                    {getStatusBadge(market.status)}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <p className="text-xs text-muted-foreground">YES Total</p>
-                      <p className="font-semibold text-primary">{market.yesTotal.toLocaleString()} ALGO</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-3 text-sm">
+                      <div className="bg-muted/50 rounded-lg p-2 text-center">
+                        <p className="text-xs text-muted-foreground">YES</p>
+                        <p className="font-semibold text-primary">{(market.yes_total || 0).toLocaleString()}</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-2 text-center">
+                        <p className="text-xs text-muted-foreground">NO</p>
+                        <p className="font-semibold text-accent">{(market.no_total || 0).toLocaleString()}</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-2 text-center">
+                        <p className="text-xs text-muted-foreground">Fee</p>
+                        <p className="font-semibold">{((market.fee_bps || 100) / 100)}%</p>
+                      </div>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <p className="text-xs text-muted-foreground">NO Total</p>
-                      <p className="font-semibold text-accent">{market.noTotal.toLocaleString()} ALGO</p>
-                    </div>
-                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <p className="text-xs text-muted-foreground">Total Bets</p>
-                      <p className="font-semibold">{market.totalBets}</p>
-                    </div>
-                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <p className="text-xs text-muted-foreground">Fee</p>
-                      <p className="font-semibold">{market.feePercent}%</p>
-                    </div>
-                  </div>
 
-                  {/* Outcome if resolved */}
-                  {market.outcome && (
-                    <div className="flex items-center gap-2 p-2 bg-accent/10 rounded-lg">
-                      <AlertTriangle className="w-4 h-4 text-accent" />
-                      <span className="text-sm">Resolved: <strong>{market.outcome}</strong> wins</span>
-                    </div>
-                  )}
+                    {/* Linked Signals */}
+                    {market.linked_signals && market.linked_signals.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {market.linked_signals.map(code => (
+                          <Badge key={code} variant="secondary" className="text-xs">{code}</Badge>
+                        ))}
+                      </div>
+                    )}
 
-                  {/* Actions */}
-                  {market.status === 'OPEN' && (
-                    <Button 
-                      onClick={() => handleFreeze(market)}
-                      disabled={isLoading}
-                      variant="outline"
-                      className="w-full border-secondary text-secondary hover:bg-secondary/20"
-                    >
-                      <Lock className="w-4 h-4 mr-2" />
-                      Freeze Market
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
+                    {/* Outcome if resolved */}
+                    {market.outcome_ref && (
+                      <div className="flex items-center gap-2 p-2 bg-accent/10 rounded-lg">
+                        <AlertTriangle className="w-4 h-4 text-accent" />
+                        <span className="text-sm">Resolved: <strong>{market.outcome_ref}</strong> wins</span>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-2">
+                      {market.status === 'pending' && (
+                        <Button 
+                          onClick={() => handleOpenMarket(market)}
+                          disabled={isActionLoading || !isConnected || !hasContract}
+                          variant="outline"
+                          size="sm"
+                          className="border-primary text-primary hover:bg-primary/20"
+                        >
+                          <Play className="w-3 h-3 mr-1" />
+                          {isActionLoading ? 'Opening...' : 'Open'}
+                        </Button>
+                      )}
+                      {market.status === 'active' && (
+                        <Button 
+                          onClick={() => handleFreezeMarket(market)}
+                          disabled={isActionLoading || !isConnected || !hasContract}
+                          variant="outline"
+                          size="sm"
+                          className="border-secondary text-secondary hover:bg-secondary/20"
+                        >
+                          <Lock className="w-3 h-3 mr-1" />
+                          {isActionLoading ? 'Freezing...' : 'Freeze'}
+                        </Button>
+                      )}
+                      {(market.status === 'active' || market.status === 'pending') && (
+                        <Button 
+                          onClick={() => handleCancelMarket(market)}
+                          disabled={isActionLoading || !isConnected || !hasContract}
+                          variant="outline"
+                          size="sm"
+                          className="border-destructive text-destructive hover:bg-destructive/20"
+                        >
+                          <XCircle className="w-3 h-3 mr-1" />
+                          {isActionLoading ? 'Cancelling...' : 'Cancel'}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </section>
 
@@ -393,12 +628,12 @@ export default function AdminDashboard() {
                 <Label>Select Market</Label>
                 <Select value={selectedMarket} onValueChange={setSelectedMarket}>
                   <SelectTrigger className="bg-input border-border">
-                    <SelectValue placeholder="Choose a market" />
+                    <SelectValue placeholder="Choose a frozen market" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    {markets.filter(m => m.status === 'FROZEN').map((market) => (
+                    {markets.filter(m => m.status === 'frozen').map((market) => (
                       <SelectItem key={market.id} value={market.id}>
-                        {market.name}
+                        {market.title.slice(0, 50)}...
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -419,14 +654,17 @@ export default function AdminDashboard() {
               <div className="flex items-end">
                 <Button 
                   onClick={handleResolve}
-                  disabled={isLoading || !selectedMarket}
+                  disabled={!!actionLoading || !selectedMarket || !isConnected}
                   variant="neon"
                   className="w-full"
                 >
-                  Resolve Market
+                  {actionLoading === selectedMarket ? 'Resolving...' : 'Resolve Market'}
                 </Button>
               </div>
             </div>
+            {!isConnected && (
+              <p className="text-xs text-muted-foreground">Connect your wallet to resolve markets on-chain.</p>
+            )}
           </CardContent>
         </Card>
       </div>
