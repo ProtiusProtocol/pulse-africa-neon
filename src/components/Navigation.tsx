@@ -1,10 +1,27 @@
-import { Menu, X } from "lucide-react";
+import { Menu, X, Wallet } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
+import { connectWallet } from "@/lib/algorand";
+import { toast } from "sonner";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const handleConnectWallet = async () => {
+    setIsConnecting(true);
+    try {
+      const address = await connectWallet();
+      setWalletAddress(address);
+      toast.success("Wallet connected!");
+    } catch (error) {
+      toast.error("Failed to connect wallet");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -38,6 +55,22 @@ export const Navigation = () => {
                 {link.label}
               </NavLink>
             ))}
+            {walletAddress ? (
+              <Button variant="outline" size="sm" className="font-mono text-xs">
+                <Wallet className="w-4 h-4 mr-2" />
+                {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
+              </Button>
+            ) : (
+              <Button 
+                variant="hero" 
+                size="sm" 
+                onClick={handleConnectWallet}
+                disabled={isConnecting}
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                {isConnecting ? "Connecting..." : "Connect Wallet"}
+              </Button>
+            )}
             <NavLink to="/early-access">
               <Button variant="neon" size="sm">
                 Join Beta
@@ -69,6 +102,23 @@ export const Navigation = () => {
                 {link.label}
               </NavLink>
             ))}
+            {walletAddress ? (
+              <Button variant="outline" size="sm" className="w-full font-mono text-xs">
+                <Wallet className="w-4 h-4 mr-2" />
+                {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
+              </Button>
+            ) : (
+              <Button 
+                variant="hero" 
+                size="sm" 
+                className="w-full"
+                onClick={handleConnectWallet}
+                disabled={isConnecting}
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                {isConnecting ? "Connecting..." : "Connect Wallet"}
+              </Button>
+            )}
             <NavLink to="/early-access" onClick={() => setIsOpen(false)}>
               <Button variant="neon" size="sm" className="w-full">
                 Join Beta
