@@ -14,6 +14,11 @@ import About from "./pages/About";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
 import Intelligence from "./pages/Intelligence";
+import Pulse from "./pages/Pulse";
+import Brief from "./pages/Brief";
+import Reports from "./pages/Reports";
+import AdminReports from "./pages/AdminReports";
+import AdminReportWeek from "./pages/AdminReportWeek";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -40,7 +45,12 @@ const App = () => (
               <Route path="/markets" element={<Markets />} />
               <Route path="/early-access" element={<EarlyAccess />} />
               <Route path="/about" element={<About />} />
+              <Route path="/pulse" element={<Pulse />} />
+              <Route path="/brief" element={<Brief />} />
+              <Route path="/reports" element={<Reports />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/reports" element={<AdminReports />} />
+              <Route path="/admin/reports/:weekId" element={<AdminReportWeek />} />
               <Route path="/dashboard" element={<UserDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

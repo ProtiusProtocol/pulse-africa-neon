@@ -2,3 +2,15 @@ project_id = "elrfcqtfdiqevgvbwjac"
 
 [functions.send-welcome-email]
 verify_jwt = false
+
+[functions.weekly-generate-drafts]
+verify_jwt = false
+
+[functions.weekly-generate-final]
+verify_jwt = false
+
+[functions.weekly-admin-inputs]
+verify_jwt = false
+
+[functions.weekly-publish]
+verify_jwt = false
