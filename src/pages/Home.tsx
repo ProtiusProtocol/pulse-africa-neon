@@ -18,7 +18,7 @@ const Home = () => {
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-bold tracking-tight animate-slide-up">
-              <span className="text-primary text-glow-primary">Outcome Intelligence</span>
+              <span className="text-primary text-glow-primary">Fragility signals and Intelligence</span>
               <br />
               <span className="text-foreground">predicts market movement </span>
             </h1>
