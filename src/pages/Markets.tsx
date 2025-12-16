@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 const MARKETS_DATA = {
   "South Africa": [
     {
-      title: "Will there be a cabinet reshuffle before 30 June 2025?",
+      title: "Will there be a cabinet reshuffle before 30 June 2026?",
       yes: 64,
       no: 36,
       volatility: "high" as const,
