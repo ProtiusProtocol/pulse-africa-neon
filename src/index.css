@@ -114,6 +114,38 @@ All colors MUST be HSL.
   }
 }
 
+/* Reduced motion preferences for low-end devices */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .glow-primary,
+  .glow-secondary,
+  .glow-accent,
+  .text-glow-primary,
+  .text-glow-secondary,
+  .text-glow-accent {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (pointer: coarse) {
+  button,
+  [role="button"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
