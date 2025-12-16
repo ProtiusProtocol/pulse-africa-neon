@@ -89,9 +89,9 @@ export const Navigation = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button - 44px min touch target */}
           <button
-            className="md:hidden text-foreground"
+            className="md:hidden text-foreground min-w-[44px] min-h-[44px] flex items-center justify-center -mr-2"
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
@@ -101,13 +101,13 @@ export const Navigation = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="md:hidden py-4 space-y-4 animate-slide-down">
+          <div className="md:hidden py-4 space-y-1 animate-slide-down">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
-                className="block text-muted-foreground hover:text-primary transition-colors font-medium py-2"
-                activeClassName="text-primary text-glow-primary"
+                className="block text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors font-medium py-3 px-2 rounded-md min-h-[44px] flex items-center"
+                activeClassName="text-primary text-glow-primary bg-primary/10"
                 onClick={() => setIsOpen(false)}
               >
                 {link.label}
