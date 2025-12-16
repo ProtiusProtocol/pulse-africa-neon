@@ -1,4 +1,5 @@
-import { TrendingUp, TrendingDown, Clock, Flame } from "lucide-react";
+import { useState, useEffect } from "react";
+import { TrendingUp, TrendingDown, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -7,10 +8,30 @@ interface MarketCardProps {
   yes: number;
   no: number;
   volatility: "low" | "medium" | "high";
-  endsIn: string;
+  endsIn?: string;
+  deadline?: string | Date;
   trend: "up" | "down";
   trendValue: number;
 }
+
+const formatCountdown = (ms: number): string => {
+  if (ms <= 0) return "Resolved";
+  
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (days > 0) {
+    return `${days}d ${hours % 24}h`;
+  } else if (hours > 0) {
+    return `${hours}h ${minutes % 60}m`;
+  } else if (minutes > 0) {
+    return `${minutes}m ${seconds % 60}s`;
+  } else {
+    return `${seconds}s`;
+  }
+};
 
 export const MarketCard = ({
   title,
@@ -18,9 +39,32 @@ export const MarketCard = ({
   no,
   volatility,
   endsIn,
+  deadline,
   trend,
   trendValue,
 }: MarketCardProps) => {
+  const [timeLeft, setTimeLeft] = useState<string>("");
+
+  useEffect(() => {
+    if (!deadline) {
+      setTimeLeft(endsIn || "");
+      return;
+    }
+
+    const targetDate = typeof deadline === "string" ? new Date(deadline) : deadline;
+
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const distance = targetDate.getTime() - now;
+      setTimeLeft(formatCountdown(distance));
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+
+    return () => clearInterval(interval);
+  }, [deadline, endsIn]);
+
   const volatilityConfig = {
     low: { icon: "🔥", text: "Low", color: "text-muted-foreground" },
     medium: { icon: "⚡", text: "Medium", color: "text-secondary" },
@@ -28,6 +72,7 @@ export const MarketCard = ({
   };
 
   const vol = volatilityConfig[volatility];
+  const isUrgent = deadline && new Date(deadline).getTime() - Date.now() < 24 * 60 * 60 * 1000;
 
   return (
     <Card className="group p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover:glow-primary cursor-pointer">
@@ -73,9 +118,9 @@ export const MarketCard = ({
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock className="w-3 h-3" />
-            {endsIn}
+          <div className={`flex items-center gap-2 text-xs ${isUrgent ? "text-accent animate-pulse" : "text-muted-foreground"}`}>
+            <Clock className={`w-3 h-3 ${isUrgent ? "text-accent" : ""}`} />
+            {timeLeft}
           </div>
           <div
             className={`flex items-center gap-1 text-sm font-bold ${
