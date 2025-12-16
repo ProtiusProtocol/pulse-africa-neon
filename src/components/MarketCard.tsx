@@ -12,6 +12,9 @@ interface MarketCardProps {
   deadline?: string | Date;
   trend: "up" | "down";
   trendValue: number;
+  category?: string;
+  linkedSignals?: { code: string; name: string }[];
+  resolutionCriteria?: string;
 }
 
 const formatCountdown = (ms: number): string => {
@@ -42,6 +45,9 @@ export const MarketCard = ({
   deadline,
   trend,
   trendValue,
+  category,
+  linkedSignals,
+  resolutionCriteria,
 }: MarketCardProps) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
 
@@ -79,13 +85,35 @@ export const MarketCard = ({
       <div className="space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
-          <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-            {title}
-          </h3>
+          <div className="space-y-1">
+            {category && (
+              <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                {category}
+              </span>
+            )}
+            <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+              {title}
+            </h3>
+          </div>
           <span className={`text-xs font-bold ${vol.color} flex items-center gap-1`}>
             {vol.icon} {vol.text}
           </span>
         </div>
+
+        {/* Linked Signals */}
+        {linkedSignals && linkedSignals.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {linkedSignals.map((signal) => (
+              <span
+                key={signal.code}
+                className="text-[10px] font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded"
+                title={signal.name}
+              >
+                {signal.code}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Probability Bars */}
         <div className="space-y-2">

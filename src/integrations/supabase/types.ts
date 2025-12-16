@@ -44,18 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      fragility_signals: {
+        Row: {
+          core_components: Json
+          created_at: string
+          current_direction: string | null
+          description: string
+          id: string
+          last_updated: string | null
+          name: string
+          signal_code: string
+          updated_at: string
+          why_it_matters: string
+        }
+        Insert: {
+          core_components?: Json
+          created_at?: string
+          current_direction?: string | null
+          description: string
+          id?: string
+          last_updated?: string | null
+          name: string
+          signal_code: string
+          updated_at?: string
+          why_it_matters: string
+        }
+        Update: {
+          core_components?: Json
+          created_at?: string
+          current_direction?: string | null
+          description?: string
+          id?: string
+          last_updated?: string | null
+          name?: string
+          signal_code?: string
+          updated_at?: string
+          why_it_matters?: string
+        }
+        Relationships: []
+      }
       markets: {
         Row: {
           app_id: string
           category: string
           created_at: string
+          deadline: string | null
           fee_bps: number | null
           id: string
+          linked_signals: string[] | null
           no_total: number | null
           oracle_address: string | null
           outcome_ref: string | null
           region: string
           resolution_criteria: string | null
+          resolution_criteria_full: string | null
           status: string
           title: string
           updated_at: string
@@ -65,13 +107,16 @@ export type Database = {
           app_id: string
           category: string
           created_at?: string
+          deadline?: string | null
           fee_bps?: number | null
           id?: string
+          linked_signals?: string[] | null
           no_total?: number | null
           oracle_address?: string | null
           outcome_ref?: string | null
           region?: string
           resolution_criteria?: string | null
+          resolution_criteria_full?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -81,13 +126,16 @@ export type Database = {
           app_id?: string
           category?: string
           created_at?: string
+          deadline?: string | null
           fee_bps?: number | null
           id?: string
+          linked_signals?: string[] | null
           no_total?: number | null
           oracle_address?: string | null
           outcome_ref?: string | null
           region?: string
           resolution_criteria?: string | null
+          resolution_criteria_full?: string | null
           status?: string
           title?: string
           updated_at?: string
