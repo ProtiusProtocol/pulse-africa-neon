@@ -71,11 +71,6 @@ export const Navigation = () => {
                 {isConnecting ? "Connecting..." : "Connect Wallet"}
               </Button>
             )}
-            <NavLink to="/early-access">
-              <Button variant="neon" size="sm">
-                Join Beta
-              </Button>
-            </NavLink>
           </div>
 
           {/* Mobile Menu Button */}
@@ -119,11 +114,6 @@ export const Navigation = () => {
                 {isConnecting ? "Connecting..." : "Connect Wallet"}
               </Button>
             )}
-            <NavLink to="/early-access" onClick={() => setIsOpen(false)}>
-              <Button variant="neon" size="sm" className="w-full">
-                Join Beta
-              </Button>
-            </NavLink>
           </div>
         )}
       </div>
