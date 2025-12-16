@@ -12,6 +12,7 @@ import EarlyAccess from "./pages/EarlyAccess";
 import About from "./pages/About";
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
+import Intelligence from "./pages/Intelligence";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -34,6 +35,7 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/intelligence" element={<Intelligence />} />
               <Route path="/markets" element={<Markets />} />
               <Route path="/early-access" element={<EarlyAccess />} />
               <Route path="/about" element={<About />} />
