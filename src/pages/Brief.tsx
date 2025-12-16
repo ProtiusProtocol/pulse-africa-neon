@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Briefcase, Calendar, ArrowRight, Download, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 interface Report {
   id: string;
@@ -98,43 +99,6 @@ export default function Brief() {
     return weekId;
   };
 
-  const renderMarkdown = (content: string) => {
-    return content
-      .split("\n")
-      .map((line, i) => {
-        if (line.startsWith("# ")) {
-          return <h1 key={i} className="text-2xl font-bold text-primary mb-4 mt-6">{line.slice(2)}</h1>;
-        }
-        if (line.startsWith("## ")) {
-          return <h2 key={i} className="text-xl font-semibold text-foreground mb-3 mt-5">{line.slice(3)}</h2>;
-        }
-        if (line.startsWith("### ")) {
-          return <h3 key={i} className="text-lg font-medium text-foreground mb-2 mt-4">{line.slice(4)}</h3>;
-        }
-        if (line.startsWith("- ") || line.startsWith("* ")) {
-          return <li key={i} className="ml-4 text-muted-foreground">{line.slice(2)}</li>;
-        }
-        if (line.match(/^\d+\.\s/)) {
-          return <li key={i} className="ml-4 list-decimal text-muted-foreground">{line.replace(/^\d+\.\s/, "")}</li>;
-        }
-        if (line.startsWith("|")) {
-          const cells = line.split("|").filter(c => c.trim());
-          if (cells.every(c => c.trim().match(/^-+$/))) return null;
-          return (
-            <div key={i} className="grid grid-cols-4 gap-2 py-1 border-b border-border/50">
-              {cells.map((cell, j) => (
-                <span key={j} className="text-sm text-muted-foreground">{cell.trim()}</span>
-              ))}
-            </div>
-          );
-        }
-        if (line.trim() === "") {
-          return <div key={i} className="h-2" />;
-        }
-        return <p key={i} className="text-muted-foreground mb-2">{line}</p>;
-      });
-  };
-
   if (loading && !currentReport) {
     return (
       <div className="min-h-screen bg-background pt-24 pb-12">
@@ -152,8 +116,15 @@ export default function Brief() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-              <Briefcase className="h-8 w-8 text-primary" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-accent/10 rounded-lg">
+                <Briefcase className="h-6 w-6 text-accent" />
+              </div>
+              <Badge variant="outline" className="border-accent/30 text-accent">
+                Strategic Intelligence
+              </Badge>
+            </div>
+            <h1 className="text-3xl font-bold text-foreground">
               Executive Brief
             </h1>
             <p className="text-muted-foreground mt-1">
@@ -195,8 +166,8 @@ export default function Brief() {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent className="pt-6 prose prose-invert max-w-none">
-              {renderMarkdown(currentReport.content_md)}
+            <CardContent className="pt-6">
+              <MarkdownRenderer content={currentReport.content_md} variant="brief" />
             </CardContent>
           </Card>
         ) : (
