@@ -1,14 +1,22 @@
-import { Menu, X, Wallet } from "lucide-react";
+import { Menu, X, Wallet, LogOut, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { connectWallet } from "@/lib/algorand";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleConnectWallet = async () => {
     setIsConnecting(true);
@@ -20,6 +28,20 @@ export const Navigation = () => {
       toast.error("Failed to connect wallet");
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = () => {
+    setWalletAddress(null);
+    toast.success("Wallet disconnected");
+  };
+
+  const handleCopyAddress = () => {
+    if (walletAddress) {
+      navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      toast.success("Address copied to clipboard");
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -56,10 +78,25 @@ export const Navigation = () => {
               </NavLink>
             ))}
             {walletAddress ? (
-              <Button variant="outline" size="sm" className="font-mono text-xs">
-                <Wallet className="w-4 h-4 mr-2" />
-                {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="font-mono text-xs">
+                    <Wallet className="w-4 h-4 mr-2 text-primary" />
+                    {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={handleCopyAddress} className="cursor-pointer">
+                    {copied ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                    Copy Address
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDisconnect} className="cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Disconnect
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Button 
                 variant="hero" 
@@ -98,10 +135,24 @@ export const Navigation = () => {
               </NavLink>
             ))}
             {walletAddress ? (
-              <Button variant="outline" size="sm" className="w-full font-mono text-xs">
-                <Wallet className="w-4 h-4 mr-2" />
-                {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
-              </Button>
+              <div className="space-y-2">
+                <Button variant="outline" size="sm" className="w-full font-mono text-xs justify-between">
+                  <span className="flex items-center">
+                    <Wallet className="w-4 h-4 mr-2 text-primary" />
+                    {walletAddress.slice(0, 4)}...{walletAddress.slice(-4)}
+                  </span>
+                </Button>
+                <div className="flex gap-2">
+                  <Button variant="ghost" size="sm" className="flex-1" onClick={handleCopyAddress}>
+                    {copied ? <Check className="w-4 h-4 mr-1" /> : <Copy className="w-4 h-4 mr-1" />}
+                    Copy
+                  </Button>
+                  <Button variant="ghost" size="sm" className="flex-1 text-destructive hover:text-destructive" onClick={handleDisconnect}>
+                    <LogOut className="w-4 h-4 mr-1" />
+                    Disconnect
+                  </Button>
+                </div>
+              </div>
             ) : (
               <Button 
                 variant="hero" 
