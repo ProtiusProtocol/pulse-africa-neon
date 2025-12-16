@@ -18,9 +18,9 @@ const Home = () => {
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-bold tracking-tight animate-slide-up">
-              <span className="text-primary text-glow-primary">Outcome Intelligence.</span>
+              <span className="text-primary text-glow-primary">Outcome Intelligence</span>
               <br />
-              <span className="text-foreground">Before Markets Move.</span>
+              <span className="text-foreground">predicts market movement </span>
             </h1>
 
             <p className="text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto animate-slide-up animation-delay-200">Augurion tracks how real-world fragilities are changing and then turns them into trading signals for an African focussed predictive market.</p>
