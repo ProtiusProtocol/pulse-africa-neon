@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   mockMarkets, 
   mockFragilityIndicators, 
@@ -7,6 +7,7 @@ import {
   type Market,
   type FragilityIndicator 
 } from "@/lib/algorand";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,8 +30,16 @@ import {
   Shield,
   Activity,
   BarChart3,
-  AlertTriangle
+  AlertTriangle,
+  Users,
+  Mail,
+  Phone,
+  Globe,
+  Calendar
 } from "lucide-react";
+import type { Tables } from "@/integrations/supabase/types";
+
+type EarlyAccessSignup = Tables<'early_access_signups'>;
 
 const ADMIN_PASSWORD = "augurion2024"; // In production, use proper auth
 
@@ -42,7 +51,30 @@ export default function AdminDashboard() {
   const [selectedMarket, setSelectedMarket] = useState<string>("");
   const [winningSide, setWinningSide] = useState<'YES' | 'NO'>('YES');
   const [isLoading, setIsLoading] = useState(false);
+  const [signups, setSignups] = useState<EarlyAccessSignup[]>([]);
+  const [signupsLoading, setSignupsLoading] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSignups();
+    }
+  }, [isAuthenticated]);
+
+  const fetchSignups = async () => {
+    setSignupsLoading(true);
+    const { data, error } = await supabase
+      .from('early_access_signups')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      toast({ title: "Error", description: "Failed to fetch signups", variant: "destructive" });
+    } else {
+      setSignups(data || []);
+    }
+    setSignupsLoading(false);
+  };
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
@@ -271,6 +303,82 @@ export default function AdminDashboard() {
               </Card>
             ))}
           </div>
+        </section>
+
+        {/* Early Access Signups */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-accent" />
+              <h2 className="text-xl font-semibold">Early Access Signups</h2>
+              <Badge variant="outline" className="ml-2">{signups.length}</Badge>
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchSignups} disabled={signupsLoading}>
+              Refresh
+            </Button>
+          </div>
+          
+          {signupsLoading ? (
+            <Card className="border-border bg-card p-8 text-center">
+              <p className="text-muted-foreground">Loading signups...</p>
+            </Card>
+          ) : signups.length === 0 ? (
+            <Card className="border-border bg-card p-8 text-center">
+              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No signups yet</p>
+            </Card>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Name</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Email</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">WhatsApp</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Country</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Type</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {signups.map((signup) => (
+                    <tr key={signup.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                      <td className="p-3 font-medium">{signup.name}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1 text-sm">
+                          <Mail className="w-3 h-3 text-muted-foreground" />
+                          {signup.email}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1 text-sm">
+                          <Phone className="w-3 h-3 text-muted-foreground" />
+                          {signup.whatsapp}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1 text-sm">
+                          <Globe className="w-3 h-3 text-muted-foreground" />
+                          {signup.country}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="secondary" className="text-xs">
+                          {signup.predictor_type}
+                        </Badge>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(signup.created_at).toLocaleDateString()}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
 
         {/* Resolve Market Section */}
