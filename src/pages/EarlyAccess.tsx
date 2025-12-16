@@ -4,9 +4,11 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const EarlyAccess = () => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     country: "",
@@ -15,19 +17,43 @@ const EarlyAccess = () => {
     predictorType: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Welcome to Augurion Africa! 🎉",
-      description: "You're on the early access list. We'll be in touch soon.",
-    });
-    setFormData({
-      name: "",
-      country: "",
-      email: "",
-      whatsapp: "",
-      predictorType: "",
-    });
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('early_access_signups')
+        .insert({
+          name: formData.name.trim(),
+          country: formData.country.trim(),
+          email: formData.email.trim().toLowerCase(),
+          whatsapp: formData.whatsapp.trim(),
+          predictor_type: formData.predictorType,
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome to Augurion Africa! 🎉",
+        description: "You're on the early access list. We'll be in touch soon.",
+      });
+      setFormData({
+        name: "",
+        country: "",
+        email: "",
+        whatsapp: "",
+        predictorType: "",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Oops!",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -156,8 +182,8 @@ const EarlyAccess = () => {
             </div>
 
             {/* Submit */}
-            <Button type="submit" variant="neon" size="lg" className="w-full">
-              Unlock Early Access
+            <Button type="submit" variant="neon" size="lg" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Joining..." : "Unlock Early Access"}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
