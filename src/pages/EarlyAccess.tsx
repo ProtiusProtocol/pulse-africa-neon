@@ -34,9 +34,14 @@ const EarlyAccess = () => {
 
       if (error) throw error;
 
+      // Send welcome email (don't block on this)
+      supabase.functions.invoke('send-welcome-email', {
+        body: { name: formData.name.trim(), email: formData.email.trim().toLowerCase() }
+      }).catch(console.error);
+
       toast({
         title: "Welcome to Augurion Africa! 🎉",
-        description: "You're on the early access list. We'll be in touch soon.",
+        description: "You're on the early access list. Check your email!",
       });
       setFormData({
         name: "",
