@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.weekly-publish]
 verify_jwt = false
+
+[functions.market-indexer]
+verify_jwt = false

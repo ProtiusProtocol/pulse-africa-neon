@@ -1,5 +1,6 @@
 import { MarketCard } from "@/components/MarketCard";
 import { FragilitySignalCard } from "@/components/FragilitySignalCard";
+import { TradeModal } from "@/components/TradeModal";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +13,7 @@ interface Market {
   category: string;
   region: string;
   status: string;
+  app_id: string;
   resolution_criteria: string | null;
   resolution_criteria_full: string | null;
   linked_signals: string[] | null;
@@ -35,26 +37,33 @@ const Markets = () => {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
+  const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+
+  const fetchData = async () => {
+    const [marketsRes, signalsRes] = await Promise.all([
+      supabase.from("markets").select("*").eq("status", "active").order("created_at"),
+      supabase.from("fragility_signals").select("*").order("signal_code"),
+    ]);
+
+    if (marketsRes.data) setMarkets(marketsRes.data);
+    if (signalsRes.data) {
+      setSignals(signalsRes.data.map(s => ({
+        ...s,
+        core_components: Array.isArray(s.core_components) ? s.core_components : JSON.parse(s.core_components as string)
+      })));
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const [marketsRes, signalsRes] = await Promise.all([
-        supabase.from("markets").select("*").eq("status", "active").order("created_at"),
-        supabase.from("fragility_signals").select("*").order("signal_code"),
-      ]);
-
-      if (marketsRes.data) setMarkets(marketsRes.data);
-      if (signalsRes.data) {
-        setSignals(signalsRes.data.map(s => ({
-          ...s,
-          core_components: Array.isArray(s.core_components) ? s.core_components : JSON.parse(s.core_components as string)
-        })));
-      }
-      setLoading(false);
-    };
-
     fetchData();
   }, []);
+
+  const handleTrade = (market: Market) => {
+    setSelectedMarket(market);
+    setIsTradeModalOpen(true);
+  };
 
   // Calculate implied odds from totals (placeholder: 50/50 if no bets)
   const getOdds = (market: Market) => {
@@ -142,6 +151,7 @@ const Markets = () => {
                       category={market.category}
                       linkedSignals={linkedSignals}
                       resolutionCriteria={market.resolution_criteria || undefined}
+                      onTrade={() => handleTrade(market)}
                     />
                   </div>
                 );
@@ -229,6 +239,14 @@ const Markets = () => {
           </div>
         </div>
       </div>
+
+      {/* Trade Modal */}
+      <TradeModal
+        market={selectedMarket}
+        isOpen={isTradeModalOpen}
+        onClose={() => setIsTradeModalOpen(false)}
+        onTradeComplete={fetchData}
+      />
     </div>
   );
 };
