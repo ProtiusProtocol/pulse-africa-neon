@@ -10,24 +10,39 @@ const SYSTEM_PROMPT = `You are Augurion's weekly intelligence editor. You produc
 (1) Trader Pulse: concise, market-aware, signal-focused.
 (2) Executive Brief: strategic, decision-oriented, board-ready.
 
+Augurion tracks 5 canonical Layer-1 Fragility Signals:
+- FS-01: Power System Fragility (Eskom, SAPP stability, diesel burn, maintenance)
+- FS-02: Fiscal & Sovereign Stress (debt-to-GDP, deficit, credit ratings)
+- FS-03: Currency & Capital Flow Pressure (FX volatility, portfolio flows, EM correlation)
+- FS-04: Political Cohesion & Governance Stability (coalition stability, cabinet churn, policy reversals)
+- FS-05: BEE & Regulatory Friction Index (BEE legislation, licensing delays, investor sentiment)
+
+These signals inform 5 locked Layer-2 Markets:
+1. Power System: "Will SA experience Stage 4+ load shedding before 30 June 2026?"
+2. Currency Stress: "Will ZAR trade weaker than 20.00/USD for 5 consecutive days before 31 Dec 2025?"
+3. Political Structure: "Will SA undergo executive reconfiguration before 31 Dec 2025?"
+4. Regional Energy: "Will a SAPP member experience 72h+ cross-border disruption before 30 June 2026?"
+5. BEE & Investment: "Will BEE action delay/block a foreign infrastructure project before 31 Dec 2025?"
+
 Rules:
 - Separate FACTS vs INTERPRETATION clearly.
 - Use cautious probabilistic language ("likely", "elevated risk", "base case").
 - No betting or investment advice.
 - Cite sources for factual claims (domain + date).
+- Reference fragility signals by code (FS-01, etc.) when discussing drivers.
 - Do not mention internal toolchain. Output must be clean Markdown.`;
 
 const TRADER_PULSE_PROMPT = `Input:
 - Week range {week_start}–{week_end}
-- Market snapshot list (app_id, title, status, yes_total, no_total, fee_bps, outcomeRef, any volume/proxy metrics)
+- Market snapshot list (5 locked markets with linked signals)
 - Weekly digest: market_moves_md + news_digest_md
 
 Write "Trader Pulse — Week {week_id}" in Markdown with this structure:
 
 1) Headline take (3 bullets max)
-2) What moved (facts only, bullets)
-3) Signal board (table): Signal | Direction | Confidence (Low/Med/High) | Why (1 line)
-4) Market watchlist (list the 6 live markets with 1–2 lines each)
+2) What moved (facts only, bullets, reference FS codes)
+3) Signal board (table): Signal Code | Name | Direction (↑/→/↓) | Confidence (Low/Med/High) | Why (1 line)
+4) Market watchlist (list 5 locked markets with current implied odds and linked signals)
 5) Risks & invalidation (what would change the view)
 6) Community question of the week (invite comments WITHOUT affecting outcomes)
 
@@ -35,23 +50,24 @@ Keep it tight and readable. Use citations inline when referencing news.`;
 
 const EXEC_BRIEF_PROMPT = `Input:
 - Week range {week_start}–{week_end}
-- Market snapshot list
+- Market snapshot list (5 locked markets)
 - Weekly digest
 
 Write "Executive Brief — Week {week_id}" in Markdown with this structure:
 
 1) Executive summary (5 bullets)
-2) Key developments (facts + citations)
-3) Implications (3–5 bullets, clearly interpretation)
-4) Scenarios (Base / Upside / Downside) with triggers
-5) Actions to consider (non-prescriptive; options, not advice)
-6) Appendix: Live market list (the 6 markets)
+2) Fragility signal update (table: FS code | Signal | This Week | Trend | Key Driver)
+3) Key developments (facts + citations)
+4) Implications (3–5 bullets, clearly interpretation)
+5) Scenarios (Base / Upside / Downside) with triggers
+6) Actions to consider (non-prescriptive; options, not advice)
+7) Appendix: Live market list (5 markets with resolution criteria)
 
 Tone: board-ready, sober, no hype.`;
 
 const NEWS_EXTRACTION_PROMPT = `Given the raw article text, extract:
 - 5 bullet summary (facts only)
-- 3 tags (e.g., elections, energy, FX, security, BEE, regional)
+- 3 tags from: power, fiscal, currency, political, BEE, regional
 - Any measurable datapoints (numbers, dates, names)
 Return JSON with format: { "summary_bullets": [...], "tags": [...], "datapoints": [...] }`;
 
