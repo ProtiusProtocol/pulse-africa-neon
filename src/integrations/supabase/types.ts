@@ -44,6 +44,251 @@ export type Database = {
         }
         Relationships: []
       }
+      markets: {
+        Row: {
+          app_id: string
+          category: string
+          created_at: string
+          fee_bps: number | null
+          id: string
+          no_total: number | null
+          oracle_address: string | null
+          outcome_ref: string | null
+          region: string
+          resolution_criteria: string | null
+          status: string
+          title: string
+          updated_at: string
+          yes_total: number | null
+        }
+        Insert: {
+          app_id: string
+          category: string
+          created_at?: string
+          fee_bps?: number | null
+          id?: string
+          no_total?: number | null
+          oracle_address?: string | null
+          outcome_ref?: string | null
+          region?: string
+          resolution_criteria?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          yes_total?: number | null
+        }
+        Update: {
+          app_id?: string
+          category?: string
+          created_at?: string
+          fee_bps?: number | null
+          id?: string
+          no_total?: number | null
+          oracle_address?: string | null
+          outcome_ref?: string | null
+          region?: string
+          resolution_criteria?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          yes_total?: number | null
+        }
+        Relationships: []
+      }
+      news_sources: {
+        Row: {
+          category: string
+          created_at: string
+          feed_type: string
+          feed_url: string | null
+          id: string
+          is_active: boolean
+          name: string
+          url: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          feed_type?: string
+          feed_url?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          url: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          feed_type?: string
+          feed_url?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      weekly_admin_inputs: {
+        Row: {
+          contrarian_view: string | null
+          created_at: string
+          id: string
+          sensitive_avoid: string | null
+          submitted_at: string | null
+          submitted_by: string | null
+          top_drivers: string[] | null
+          updated_at: string
+          week_id: string
+        }
+        Insert: {
+          contrarian_view?: string | null
+          created_at?: string
+          id?: string
+          sensitive_avoid?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          top_drivers?: string[] | null
+          updated_at?: string
+          week_id: string
+        }
+        Update: {
+          contrarian_view?: string | null
+          created_at?: string
+          id?: string
+          sensitive_avoid?: string | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          top_drivers?: string[] | null
+          updated_at?: string
+          week_id?: string
+        }
+        Relationships: []
+      }
+      weekly_digest: {
+        Row: {
+          citations: Json | null
+          created_at: string
+          id: string
+          market_moves_md: string | null
+          market_snapshot: Json
+          news_digest_md: string | null
+          updated_at: string
+          week_end: string
+          week_id: string
+          week_start: string
+        }
+        Insert: {
+          citations?: Json | null
+          created_at?: string
+          id?: string
+          market_moves_md?: string | null
+          market_snapshot?: Json
+          news_digest_md?: string | null
+          updated_at?: string
+          week_end: string
+          week_id: string
+          week_start: string
+        }
+        Update: {
+          citations?: Json | null
+          created_at?: string
+          id?: string
+          market_moves_md?: string | null
+          market_snapshot?: Json
+          news_digest_md?: string | null
+          updated_at?: string
+          week_end?: string
+          week_id?: string
+          week_start?: string
+        }
+        Relationships: []
+      }
+      weekly_reports: {
+        Row: {
+          content_md: string
+          created_at: string
+          id: string
+          published_at: string | null
+          report_type: string
+          status: string
+          updated_at: string
+          version: number
+          week_id: string
+        }
+        Insert: {
+          content_md: string
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          report_type: string
+          status?: string
+          updated_at?: string
+          version?: number
+          week_id: string
+        }
+        Update: {
+          content_md?: string
+          created_at?: string
+          id?: string
+          published_at?: string | null
+          report_type?: string
+          status?: string
+          updated_at?: string
+          version?: number
+          week_id?: string
+        }
+        Relationships: []
+      }
+      weekly_source_items: {
+        Row: {
+          datapoints: Json | null
+          fetched_at: string
+          id: string
+          published_at: string | null
+          raw_content: string | null
+          source_id: string | null
+          summary_bullets: Json | null
+          tags: string[] | null
+          title: string
+          url: string
+          week_id: string
+        }
+        Insert: {
+          datapoints?: Json | null
+          fetched_at?: string
+          id?: string
+          published_at?: string | null
+          raw_content?: string | null
+          source_id?: string | null
+          summary_bullets?: Json | null
+          tags?: string[] | null
+          title: string
+          url: string
+          week_id: string
+        }
+        Update: {
+          datapoints?: Json | null
+          fetched_at?: string
+          id?: string
+          published_at?: string | null
+          raw_content?: string | null
+          source_id?: string | null
+          summary_bullets?: Json | null
+          tags?: string[] | null
+          title?: string
+          url?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_source_items_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "news_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
