@@ -1,25 +1,20 @@
 import { Eye, TrendingUp, Shield, Globe, Clock, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-
 const About = () => {
-  return (
-    <div className="min-h-screen bg-background py-20">
+  return <div className="min-h-screen bg-background py-20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header / Mission */}
         <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
           <h1 className="text-4xl lg:text-5xl font-bold text-foreground">
             Our Mission
           </h1>
-          <p className="text-xl text-muted-foreground">
-            To observe how real-world outcomes evolve — and turn them into markets only when they are ready.
-          </p>
+          <p className="text-xl text-muted-foreground">To observe how real-world outcomes evolve — and turn them into tradable markets when they are ready.</p>
           <div className="pt-4 space-y-3">
             <p className="text-lg text-muted-foreground">
               Modern markets react late. Decisions deserve earlier insight.
             </p>
-            <p className="text-lg text-foreground font-medium">
-              Augurion exists to track <span className="text-primary">outcome readiness</span>: the moment when probability meaningfully shifts.
+            <p className="text-lg text-foreground font-medium">Augurion exists to track fragility and showcase when outcome readiness: the moment when probability meaningfully shifts.<span className="text-primary">outcome readiness</span>: the moment when probability meaningfully shifts.
             </p>
           </div>
         </div>
@@ -180,8 +175,6 @@ const About = () => {
           </Link>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default About;
