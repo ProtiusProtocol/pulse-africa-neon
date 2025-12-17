@@ -26,10 +26,13 @@ export const Navigation = () => {
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/about", label: "About" },
     { to: "/intelligence", label: "Intelligence" },
     { to: "/markets", label: "Markets" },
     { to: "/dashboard", label: "Dashboard" },
+  ];
+
+  const externalLinks = [
+    { href: "https://protiuspete.substack.com", label: "Learn" },
   ];
 
   return (
@@ -55,6 +58,17 @@ export const Navigation = () => {
               >
                 {link.label}
               </NavLink>
+            ))}
+            {externalLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors font-medium"
+              >
+                {link.label}
+              </a>
             ))}
             {walletAddress ? (
               <DropdownMenu>
@@ -112,6 +126,18 @@ export const Navigation = () => {
               >
                 {link.label}
               </NavLink>
+            ))}
+            {externalLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors font-medium py-3 px-2 rounded-md min-h-[44px] flex items-center"
+                onClick={() => setIsOpen(false)}
+              >
+                {link.label}
+              </a>
             ))}
             {walletAddress ? (
               <div className="space-y-2">

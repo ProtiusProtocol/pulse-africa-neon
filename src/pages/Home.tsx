@@ -280,6 +280,35 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Why Africa */}
+      <section className="py-12 sm:py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-4xl mx-auto p-6 sm:p-8 bg-gradient-to-br from-accent/5 via-transparent to-primary/5 border border-accent/30 rounded-lg space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center glow-accent motion-reduce:shadow-none">
+                <Globe className="w-6 h-6 text-accent" />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Why Africa</h2>
+            </div>
+
+            <div className="space-y-4 text-base sm:text-lg text-muted-foreground">
+              <p>
+                Africa's most important outcomes — energy availability, policy reforms, fiscal direction, institutional coordination — shape possibility long before they become tradeable.
+              </p>
+              <p>
+                Yet these shifts are rarely mapped in advance.
+              </p>
+              <p className="text-foreground font-medium">
+                Augurion exists to fill that gap.
+              </p>
+              <p className="text-accent font-bold">
+                We observe outcome movement where decisions are made, not where global headlines arrive late.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-12 sm:py-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
