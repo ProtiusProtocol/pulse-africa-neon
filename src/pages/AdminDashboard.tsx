@@ -339,7 +339,7 @@ export default function AdminDashboard() {
           deadline: newMarket.deadline ? new Date(newMarket.deadline).toISOString() : null,
           resolution_criteria: newMarket.resolutionCriteria.trim() || null,
           resolution_criteria_full: newMarket.resolutionCriteriaFull.trim() || null,
-          status: 'pending',
+          status: 'active',
         });
 
       if (error) throw error;
