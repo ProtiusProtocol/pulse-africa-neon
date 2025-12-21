@@ -26,7 +26,7 @@ export const Navigation = () => {
 
   const navLinks = [
     { to: "/", label: "Home" },
-    { to: "/intelligence", label: "Intelligence" },
+    { to: "/intelligence", label: "Your Early Signals" },
     { to: "/markets", label: "Markets" },
     { to: "/dashboard", label: "Dashboard" },
   ];
