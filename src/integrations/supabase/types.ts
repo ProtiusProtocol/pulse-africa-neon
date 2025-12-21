@@ -176,6 +176,50 @@ export type Database = {
         }
         Relationships: []
       }
+      user_trades: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          market_id: string
+          side: string
+          status: string
+          tx_id: string | null
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          market_id: string
+          side: string
+          status?: string
+          tx_id?: string | null
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          market_id?: string
+          side?: string
+          status?: string
+          tx_id?: string | null
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_trades_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_admin_inputs: {
         Row: {
           contrarian_view: string | null
