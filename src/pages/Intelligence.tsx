@@ -288,7 +288,7 @@ const Intelligence = () => {
               className="group flex items-center gap-2 px-6 py-3 bg-card border border-border rounded-lg hover:border-accent/50 transition-all duration-300"
             >
               <Target className="w-4 h-4 text-accent" />
-              <span className="font-medium">Executive Brief</span>
+              <span className="font-medium">Read Executive Brief</span>
               <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors" />
             </a>
           </div>
