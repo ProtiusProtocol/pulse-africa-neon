@@ -47,6 +47,27 @@ const Markets = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Subscribe to realtime updates for markets table
+    const channel = supabase
+      .channel('markets-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'markets'
+        },
+        () => {
+          // Refetch when any market changes
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleTrade = (market: Market) => {
