@@ -2,12 +2,17 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 
+interface CoreComponent {
+  name: string;
+  description: string;
+}
+
 interface FragilitySignal {
   id: string;
   signal_code: string;
   name: string;
   description: string;
-  core_components: string[];
+  core_components: (string | CoreComponent)[];
   why_it_matters: string;
   current_direction: string;
   last_updated: string;
@@ -74,14 +79,19 @@ export const FragilitySignalCard = ({ signal }: FragilitySignalCardProps) => {
             Core Components
           </h4>
           <div className="flex flex-wrap gap-2">
-            {signal.core_components.map((component, i) => (
-              <span
-                key={i}
-                className="text-xs bg-muted px-2 py-1 rounded text-muted-foreground"
-              >
-                {component}
-              </span>
-            ))}
+            {signal.core_components.map((component, i) => {
+              const displayName = typeof component === 'string' 
+                ? component 
+                : component.name;
+              return (
+                <span
+                  key={i}
+                  className="text-xs bg-muted px-2 py-1 rounded text-muted-foreground"
+                >
+                  {displayName}
+                </span>
+              );
+            })}
           </div>
         </div>
 
