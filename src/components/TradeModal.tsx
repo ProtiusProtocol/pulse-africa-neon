@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useWallet } from '@/contexts/WalletContext';
 import { AugurionMarketV4Client } from '@/contracts/AugurionMarketV4Client';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, TrendingUp, TrendingDown, Wallet, ExternalLink } from 'lucide-react';
 
@@ -79,6 +80,24 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
         : await client.betNo(walletAddress, microAlgos, signTransactions);
 
       if (result.success) {
+        // Save trade to Supabase
+        const { error: dbError } = await supabase
+          .from('user_trades')
+          .insert({
+            wallet_address: walletAddress,
+            market_id: market.id,
+            side: side,
+            amount: parseFloat(amount),
+            tx_id: result.txId || null,
+            status: 'confirmed'
+          });
+
+        if (dbError) {
+          console.error('Failed to save trade to database:', dbError);
+          // Still show success for blockchain tx, but warn about db
+          toast.warning('Trade confirmed on-chain but failed to save to portfolio');
+        }
+
         toast.success(
           <div className="flex flex-col gap-1">
             <span>Trade submitted!</span>
