@@ -53,8 +53,11 @@ export type Database = {
           id: string
           last_updated: string | null
           name: string
+          region: string
           signal_code: string
+          source: string
           updated_at: string
+          weekly_update_md: string | null
           why_it_matters: string
         }
         Insert: {
@@ -65,8 +68,11 @@ export type Database = {
           id?: string
           last_updated?: string | null
           name: string
+          region?: string
           signal_code: string
+          source?: string
           updated_at?: string
+          weekly_update_md?: string | null
           why_it_matters: string
         }
         Update: {
@@ -77,8 +83,11 @@ export type Database = {
           id?: string
           last_updated?: string | null
           name?: string
+          region?: string
           signal_code?: string
+          source?: string
           updated_at?: string
+          weekly_update_md?: string | null
           why_it_matters?: string
         }
         Relationships: []
