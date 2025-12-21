@@ -27,7 +27,7 @@ export const Navigation = () => {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/intelligence", label: "Markets with Signals" },
-    { to: "/markets", label: "Your Trading Markets" },
+    { to: "/markets", label: "Markets with Trades" },
     { to: "/dashboard", label: "Dashboard" },
   ];
 
