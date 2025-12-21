@@ -48,7 +48,7 @@ export const Navigation = () => {
           </NavLink>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-6 text-sm">
             {navLinks.map((link) => (
               <NavLink
                 key={link.to}
