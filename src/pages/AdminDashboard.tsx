@@ -33,6 +33,7 @@ import {
   Wallet,
   RefreshCw,
   Play,
+  Plus,
   XCircle
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
@@ -54,6 +55,20 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [signups, setSignups] = useState<EarlyAccessSignup[]>([]);
   const [signupsLoading, setSignupsLoading] = useState(false);
+  
+  // New market form state
+  const [newMarket, setNewMarket] = useState({
+    appId: '',
+    title: '',
+    category: '',
+    region: 'Southern Africa',
+    linkedSignals: [] as string[],
+    deadline: '',
+    resolutionCriteria: '',
+    resolutionCriteriaFull: '',
+  });
+  const [isCreatingMarket, setIsCreatingMarket] = useState(false);
+  
   const { toast } = useToast();
   const { walletAddress, isConnected, connect, getSigner } = useWallet();
 
@@ -305,6 +320,64 @@ export default function AdminDashboard() {
     setIsLoading(false);
   };
 
+  const handleCreateMarket = async () => {
+    if (!newMarket.appId.trim() || !newMarket.title.trim() || !newMarket.category.trim()) {
+      toast({ title: "Error", description: "App ID, Title and Category are required", variant: "destructive" });
+      return;
+    }
+
+    setIsCreatingMarket(true);
+    try {
+      const { error } = await supabase
+        .from('markets')
+        .insert({
+          app_id: newMarket.appId.trim(),
+          title: newMarket.title.trim(),
+          category: newMarket.category.trim(),
+          region: newMarket.region,
+          linked_signals: newMarket.linkedSignals.length > 0 ? newMarket.linkedSignals : null,
+          deadline: newMarket.deadline ? new Date(newMarket.deadline).toISOString() : null,
+          resolution_criteria: newMarket.resolutionCriteria.trim() || null,
+          resolution_criteria_full: newMarket.resolutionCriteriaFull.trim() || null,
+          status: 'pending',
+        });
+
+      if (error) throw error;
+
+      toast({ title: "Market registered", description: `${newMarket.title} has been added` });
+      
+      // Reset form
+      setNewMarket({
+        appId: '',
+        title: '',
+        category: '',
+        region: 'Southern Africa',
+        linkedSignals: [],
+        deadline: '',
+        resolutionCriteria: '',
+        resolutionCriteriaFull: '',
+      });
+      
+      await fetchMarkets();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to create market", 
+        variant: "destructive" 
+      });
+    }
+    setIsCreatingMarket(false);
+  };
+
+  const toggleSignal = (signalCode: string) => {
+    setNewMarket(prev => ({
+      ...prev,
+      linkedSignals: prev.linkedSignals.includes(signalCode)
+        ? prev.linkedSignals.filter(s => s !== signalCode)
+        : [...prev.linkedSignals, signalCode]
+    }));
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -427,6 +500,143 @@ export default function AdminDashboard() {
               </Card>
             ))}
           </div>
+        </section>
+
+        {/* Register New Market */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Plus className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">Register Market from Lora</h2>
+          </div>
+          <Card className="border-primary/30 bg-card">
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="appId">Algorand App ID *</Label>
+                  <Input
+                    id="appId"
+                    placeholder="e.g. 123456789"
+                    value={newMarket.appId}
+                    onChange={(e) => setNewMarket(prev => ({ ...prev, appId: e.target.value }))}
+                    className="bg-input border-border"
+                  />
+                  <p className="text-xs text-muted-foreground">Copy this from Lora after creating the market</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category *</Label>
+                  <Select 
+                    value={newMarket.category} 
+                    onValueChange={(value) => setNewMarket(prev => ({ ...prev, category: value }))}
+                  >
+                    <SelectTrigger className="bg-input border-border">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Politics">Politics</SelectItem>
+                      <SelectItem value="Economy">Economy</SelectItem>
+                      <SelectItem value="Energy">Energy</SelectItem>
+                      <SelectItem value="Climate">Climate</SelectItem>
+                      <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                      <SelectItem value="Social">Social</SelectItem>
+                      <SelectItem value="Security">Security</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="title">Market Question *</Label>
+                <Input
+                  id="title"
+                  placeholder="e.g. Will load shedding exceed Stage 4 in January 2025?"
+                  value={newMarket.title}
+                  onChange={(e) => setNewMarket(prev => ({ ...prev, title: e.target.value }))}
+                  className="bg-input border-border"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="region">Region</Label>
+                  <Select 
+                    value={newMarket.region} 
+                    onValueChange={(value) => setNewMarket(prev => ({ ...prev, region: value }))}
+                  >
+                    <SelectTrigger className="bg-input border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Southern Africa">Southern Africa</SelectItem>
+                      <SelectItem value="South Africa">South Africa</SelectItem>
+                      <SelectItem value="East Africa">East Africa</SelectItem>
+                      <SelectItem value="West Africa">West Africa</SelectItem>
+                      <SelectItem value="Central Africa">Central Africa</SelectItem>
+                      <SelectItem value="North Africa">North Africa</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="deadline">Resolution Deadline</Label>
+                  <Input
+                    id="deadline"
+                    type="datetime-local"
+                    value={newMarket.deadline}
+                    onChange={(e) => setNewMarket(prev => ({ ...prev, deadline: e.target.value }))}
+                    className="bg-input border-border"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Link to Fragility Signals</Label>
+                <div className="flex flex-wrap gap-2">
+                  {signals.map((signal) => (
+                    <Badge
+                      key={signal.signal_code}
+                      variant={newMarket.linkedSignals.includes(signal.signal_code) ? "default" : "outline"}
+                      className="cursor-pointer transition-colors"
+                      onClick={() => toggleSignal(signal.signal_code)}
+                    >
+                      {signal.signal_code}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">Click to toggle signal links</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="resolutionCriteria">Resolution Criteria (short)</Label>
+                <Input
+                  id="resolutionCriteria"
+                  placeholder="e.g. Based on official Eskom announcements"
+                  value={newMarket.resolutionCriteria}
+                  onChange={(e) => setNewMarket(prev => ({ ...prev, resolutionCriteria: e.target.value }))}
+                  className="bg-input border-border"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="resolutionCriteriaFull">Resolution Criteria (detailed)</Label>
+                <textarea
+                  id="resolutionCriteriaFull"
+                  placeholder="Detailed explanation of how this market will be resolved..."
+                  value={newMarket.resolutionCriteriaFull}
+                  onChange={(e) => setNewMarket(prev => ({ ...prev, resolutionCriteriaFull: e.target.value }))}
+                  className="w-full min-h-[80px] px-3 py-2 text-sm bg-input border border-border rounded-md resize-y"
+                />
+              </div>
+
+              <Button 
+                onClick={handleCreateMarket} 
+                disabled={isCreatingMarket}
+                variant="neon"
+                className="w-full md:w-auto"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                {isCreatingMarket ? 'Registering...' : 'Register Market'}
+              </Button>
+            </CardContent>
+          </Card>
         </section>
 
         {/* Market Management - Layer 2 */}
