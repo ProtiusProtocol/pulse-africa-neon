@@ -74,6 +74,7 @@ export default function AdminDashboard() {
   });
   const [isCreatingMarket, setIsCreatingMarket] = useState(false);
   const [isGeneratingReports, setIsGeneratingReports] = useState(false);
+  const [isSendingEmails, setIsSendingEmails] = useState(false);
   
   const { toast } = useToast();
   const { walletAddress, isConnected, connect, getSigner } = useWallet();
@@ -172,6 +173,39 @@ export default function AdminDashboard() {
       });
     } finally {
       setIsGeneratingReports(false);
+    }
+  };
+
+  const handleSendNotificationEmails = async () => {
+    setIsSendingEmails(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-weekly-emails');
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (data?.success) {
+        toast({ 
+          title: "Emails Sent", 
+          description: `Successfully sent ${data.emailsSent || 0} notification emails for week ${data.weekId}.`
+        });
+      } else {
+        toast({ 
+          title: "Info", 
+          description: data?.message || "No emails were sent",
+          variant: "default"
+        });
+      }
+    } catch (error) {
+      console.error("Error sending emails:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to send notification emails", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsSendingEmails(false);
     }
   };
 
@@ -578,7 +612,7 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Generate Trader Pulse and Executive Brief</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   onClick={handleGenerateWeeklyReports}
                   disabled={isGeneratingReports}
@@ -591,6 +625,20 @@ export default function AdminDashboard() {
                     <FileText className="w-5 h-5 mr-2" />
                   )}
                   {isGeneratingReports ? 'Generating...' : 'Generate Weekly Reports'}
+                </Button>
+                <Button
+                  onClick={handleSendNotificationEmails}
+                  disabled={isSendingEmails}
+                  size="lg"
+                  variant="outline"
+                  className="border-primary text-primary hover:bg-primary/10"
+                >
+                  {isSendingEmails ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <Mail className="w-5 h-5 mr-2" />
+                  )}
+                  {isSendingEmails ? 'Sending...' : 'Send Notification Emails'}
                 </Button>
                 <Link to="/admin/reports">
                   <Button variant="outline" size="lg" className="border-accent text-accent hover:bg-accent/10">
