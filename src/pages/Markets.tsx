@@ -191,21 +191,6 @@ const Markets = () => {
           })}
         </div>
 
-        {/* Stats Banner */}
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="p-6 bg-card border border-border rounded-lg text-center space-y-2 hover:border-primary/50 transition-all glow-primary">
-            <div className="text-4xl font-bold text-primary text-glow-primary">{markets.length}</div>
-            <div className="text-muted-foreground">Active Markets</div>
-          </div>
-          <div className="p-6 bg-card border border-border rounded-lg text-center space-y-2 hover:border-secondary/50 transition-all glow-secondary">
-            <div className="text-4xl font-bold text-secondary text-glow-secondary">Binary</div>
-            <div className="text-muted-foreground">Clear Resolution</div>
-          </div>
-          <div className="p-6 bg-card border border-border rounded-lg text-center space-y-2 hover:border-accent/50 transition-all glow-accent">
-            <div className="text-4xl font-bold text-accent text-glow-accent">On-Chain</div>
-            <div className="text-muted-foreground">Settlement</div>
-          </div>
-        </div>
       </div>
 
       {/* Trade Modal */}
