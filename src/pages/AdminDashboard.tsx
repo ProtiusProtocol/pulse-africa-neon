@@ -478,7 +478,7 @@ export default function AdminDashboard() {
         <Card className="w-full max-w-md border-border bg-card">
           <CardHeader className="text-center">
             <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
-            <CardTitle className="text-2xl text-glow-primary">🔧 Admin Access (Updated Dec 22)</CardTitle>
+            <CardTitle className="text-2xl text-glow-primary">Admin Access</CardTitle>
             <CardDescription>Enter password to access the admin dashboard</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -506,10 +506,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
-      {/* TEST BANNER - REMOVE AFTER CONFIRMING BUILD WORKS */}
-      <div className="bg-red-500 text-white text-center p-4 mb-4 text-xl font-bold">
-        ⚠️ BUILD TEST - If you see this, the build is working! ⚠️
-      </div>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header with Generate Reports Button */}
         <div className="flex flex-col gap-4">
@@ -577,42 +573,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         )}
-
-        {/* Weekly Reports Section - Added Dec 22 */}
-        <section className="bg-accent/10 border-2 border-accent rounded-lg p-6 shadow-lg shadow-accent/20">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-accent" />
-              <h2 className="text-xl font-semibold text-accent">Weekly Reports</h2>
-            </div>
-            <Button
-              onClick={handleGenerateWeeklyReports}
-              disabled={isGeneratingReports}
-              variant="outline"
-              className="border-accent text-accent hover:bg-accent/20"
-            >
-              {isGeneratingReports ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Generate Weekly Reports
-                </>
-              )}
-            </Button>
-          </div>
-          <Card className="border-border bg-card">
-            <CardContent className="p-4">
-              <p className="text-sm text-muted-foreground">
-                Click the button above to generate Trader Pulse and Executive Brief reports for the previous week. 
-                Reports will be saved as drafts and can be reviewed on the <a href="/admin-reports" className="text-accent hover:underline">Reports page</a>.
-              </p>
-            </CardContent>
-          </Card>
-        </section>
 
         {/* Fragility Signals - Layer 1 */}
         <section>
