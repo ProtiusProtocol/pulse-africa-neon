@@ -753,7 +753,7 @@ export default function AdminDashboard() {
                             disabled={isActionLoading}
                             variant="outline"
                             size="sm"
-                            className="border-destructive text-destructive hover:bg-destructive/20"
+                            className="border-muted-foreground text-muted-foreground hover:bg-muted hover:text-destructive hover:border-destructive"
                           >
                             <Trash2 className="w-3 h-3 mr-1" />
                             {isActionLoading ? 'Deleting...' : 'Delete'}
