@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { EmailSubscribeForm } from "@/components/EmailSubscribeForm";
 
 // Types
 interface CoreComponent {
@@ -440,6 +441,11 @@ const Intelligence = () => {
               </div>
             </TabsContent>
           </Tabs>
+
+          {/* Email Subscription Section */}
+          <div className="max-w-2xl mx-auto mt-12">
+            <EmailSubscribeForm />
+          </div>
         </div>
       </section>
     </div>;

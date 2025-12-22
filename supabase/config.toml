@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.market-indexer]
 verify_jwt = false
+
+[functions.send-weekly-emails]
+verify_jwt = false
