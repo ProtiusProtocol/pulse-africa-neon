@@ -74,6 +74,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string | null
+          subscribed_to: string[]
+          unsubscribed_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+          subscribed_to?: string[]
+          unsubscribed_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+          subscribed_to?: string[]
+          unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
       fragility_signals: {
         Row: {
           core_components: Json
