@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/contexts/WalletContext";
 import { AugurionMarketV4Client, WinningSide } from "@/contracts/AugurionMarketV4Client";
@@ -547,19 +548,26 @@ export default function AdminDashboard() {
                   <p className="text-sm text-muted-foreground">Generate Trader Pulse and Executive Brief</p>
                 </div>
               </div>
-              <Button
-                onClick={handleGenerateWeeklyReports}
-                disabled={isGeneratingReports}
-                size="lg"
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                {isGeneratingReports ? (
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                ) : (
-                  <FileText className="w-5 h-5 mr-2" />
-                )}
-                {isGeneratingReports ? 'Generating...' : 'Generate Weekly Reports'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleGenerateWeeklyReports}
+                  disabled={isGeneratingReports}
+                  size="lg"
+                  className="bg-accent text-accent-foreground hover:bg-accent/90"
+                >
+                  {isGeneratingReports ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
+                    <FileText className="w-5 h-5 mr-2" />
+                  )}
+                  {isGeneratingReports ? 'Generating...' : 'Generate Weekly Reports'}
+                </Button>
+                <Link to="/admin/reports">
+                  <Button variant="outline" size="lg" className="border-accent text-accent hover:bg-accent/10">
+                    View & Publish Reports
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
