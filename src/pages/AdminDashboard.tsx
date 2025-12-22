@@ -46,6 +46,7 @@ import {
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
+type EmailSubscriber = Tables<'email_subscribers'>;
 type Market = Tables<'markets'>;
 type FragilitySignal = Tables<'fragility_signals'>;
 
@@ -60,6 +61,8 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [signups, setSignups] = useState<EarlyAccessSignup[]>([]);
   const [signupsLoading, setSignupsLoading] = useState(false);
+  const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
+  const [subscribersLoading, setSubscribersLoading] = useState(false);
   
   // New market form state
   const [newMarket, setNewMarket] = useState({
@@ -93,7 +96,7 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    await Promise.all([fetchMarkets(), fetchSignals(), fetchSignups()]);
+    await Promise.all([fetchMarkets(), fetchSignals(), fetchSignups(), fetchSubscribers()]);
     setIsLoading(false);
   };
 
@@ -136,6 +139,21 @@ export default function AdminDashboard() {
       setSignups(data || []);
     }
     setSignupsLoading(false);
+  };
+
+  const fetchSubscribers = async () => {
+    setSubscribersLoading(true);
+    const { data, error } = await supabase
+      .from('email_subscribers')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      toast({ title: "Error", description: "Failed to fetch subscribers", variant: "destructive" });
+    } else {
+      setSubscribers(data || []);
+    }
+    setSubscribersLoading(false);
   };
 
   const handleLogout = async () => {
@@ -1018,7 +1036,80 @@ export default function AdminDashboard() {
           )}
         </section>
 
-        {/* Resolve Market Section */}
+        {/* Email Subscribers */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Mail className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Email Subscribers</h2>
+              <Badge variant="outline" className="ml-2">{subscribers.filter(s => s.is_active).length} active</Badge>
+            </div>
+            <Button variant="outline" size="sm" onClick={fetchSubscribers} disabled={subscribersLoading}>
+              Refresh
+            </Button>
+          </div>
+          
+          {subscribersLoading ? (
+            <Card className="border-border bg-card p-8 text-center">
+              <p className="text-muted-foreground">Loading subscribers...</p>
+            </Card>
+          ) : subscribers.length === 0 ? (
+            <Card className="border-border bg-card p-8 text-center">
+              <Mail className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">No subscribers yet</p>
+            </Card>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Email</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Name</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Subscriptions</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Subscribed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscribers.map((subscriber) => (
+                    <tr key={subscriber.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                      <td className="p-3">
+                        <div className="flex items-center gap-1 text-sm">
+                          <Mail className="w-3 h-3 text-muted-foreground" />
+                          {subscriber.email}
+                        </div>
+                      </td>
+                      <td className="p-3 text-sm">{subscriber.name || '—'}</td>
+                      <td className="p-3">
+                        <div className="flex flex-wrap gap-1">
+                          {subscriber.subscribed_to.map(sub => (
+                            <Badge key={sub} variant="secondary" className="text-xs">
+                              {sub === 'trader_pulse' ? 'Pulse' : sub === 'executive_brief' ? 'Brief' : sub}
+                            </Badge>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        {subscriber.is_active ? (
+                          <Badge className="bg-primary/20 text-primary border-primary text-xs">Active</Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-muted-foreground">Unsubscribed</Badge>
+                        )}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(subscriber.created_at).toLocaleDateString()}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle>Resolve Market</CardTitle>
