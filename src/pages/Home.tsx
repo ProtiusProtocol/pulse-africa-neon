@@ -45,10 +45,15 @@ const Home = () => {
               </span>
             </div>
 
-            <div className="pt-4 sm:pt-6 animate-slide-up animation-delay-500 motion-reduce:animate-none">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6 animate-slide-up animation-delay-500 motion-reduce:animate-none">
               <Link to="/early-access">
                 <Button variant="neon" size="lg" className="w-full sm:w-auto">
                   Get Early Access
+                </Button>
+              </Link>
+              <Link to="/next-steps">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto border-muted-foreground/50 text-muted-foreground hover:border-foreground hover:text-foreground">
+                  What happens next?
                 </Button>
               </Link>
             </div>
