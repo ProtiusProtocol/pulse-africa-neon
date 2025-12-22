@@ -89,7 +89,16 @@ serve(async (req) => {
       throw eaError;
     }
 
-    console.log(`Found ${subscribers?.length || 0} email subscribers, ${earlyAccessSignups?.length || 0} early access signups`);
+    // Fetch authenticated users from auth.users
+    const { data: authUsersData, error: authError } = await supabase.auth.admin.listUsers();
+
+    if (authError) {
+      console.error("Error fetching auth users:", authError);
+      // Don't throw - continue with other sources
+    }
+
+    const authUsers = authUsersData?.users || [];
+    console.log(`Found ${subscribers?.length || 0} email subscribers, ${earlyAccessSignups?.length || 0} early access signups, ${authUsers.length} authenticated users`);
 
     // Combine and deduplicate by email
     const emailMap = new Map<string, { email: string; name: string | null; subscribed_to: string[]; source: string }>();
@@ -111,8 +120,22 @@ serve(async (req) => {
         emailMap.set(emailKey, {
           email: ea.email,
           name: ea.name,
-          subscribed_to: ["trader_pulse", "executive_brief"], // Send both to early access
+          subscribed_to: ["trader_pulse", "executive_brief"],
           source: "early_access",
+        });
+      }
+    }
+
+    // Add authenticated users (don't overwrite existing entries)
+    for (const user of authUsers) {
+      if (!user.email) continue;
+      const emailKey = user.email.toLowerCase();
+      if (!emailMap.has(emailKey)) {
+        emailMap.set(emailKey, {
+          email: user.email,
+          name: user.user_metadata?.name || user.user_metadata?.full_name || null,
+          subscribed_to: ["trader_pulse", "executive_brief"],
+          source: "auth_user",
         });
       }
     }
