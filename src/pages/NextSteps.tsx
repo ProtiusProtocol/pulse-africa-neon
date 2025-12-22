@@ -101,7 +101,7 @@ const NextSteps = () => {
                   </div>
                   
                   <p className="text-muted-foreground leading-relaxed">
-                    This path is for those who already understand conviction-based markets and are comfortable acting independently to express a view.
+                    This path is for those who already understand prediction markets and are comfortable acting independently to express a view.
                   </p>
                 </div>
 
@@ -120,7 +120,7 @@ const NextSteps = () => {
                     </li>
                     <li className="flex items-start gap-3">
                       <div className="w-1.5 h-1.5 bg-secondary rounded-full mt-2 flex-shrink-0" />
-                      <span>Expressing conviction through informed participation</span>
+                      <span>Expressing views through informed participation</span>
                     </li>
                   </ul>
                 </div>
