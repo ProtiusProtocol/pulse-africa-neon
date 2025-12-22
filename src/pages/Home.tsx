@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Eye, Layers, Target, Globe, Filter, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
-
 const Home = () => {
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden py-12 sm:py-20 lg:py-32">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10" />
@@ -22,7 +20,7 @@ const Home = () => {
             <h1 className="text-2xl sm:text-4xl lg:text-7xl font-bold tracking-tight animate-slide-up motion-reduce:animate-none">
               <span className="text-primary text-glow-primary motion-reduce:text-shadow-none">Fragility signals and Intelligence</span>
               <br />
-              <span className="text-foreground">predicts market movement</span>
+              <span className="text-foreground">predict market movement</span>
             </h1>
 
             <p className="text-sm sm:text-xl lg:text-2xl text-muted-foreground max-w-3xl mx-auto animate-slide-up animation-delay-200 motion-reduce:animate-none px-2">
@@ -327,8 +325,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-    </div>
-  );
+    </div>;
 };
-
 export default Home;
