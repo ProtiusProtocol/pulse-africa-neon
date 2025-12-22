@@ -511,9 +511,9 @@ export default function AdminDashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-glow-primary">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage markets, signals, and generate weekly reports</p>
+            <p className="text-muted-foreground">Manage markets, signals, and weekly reports</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {!isConnected ? (
               <Button onClick={connect} variant="outline" className="border-primary text-primary">
                 <Wallet className="w-4 h-4 mr-2" />
@@ -528,8 +528,7 @@ export default function AdminDashboard() {
             <Button
               onClick={handleGenerateWeeklyReports}
               disabled={isGeneratingReports}
-              variant="outline"
-              className="border-accent text-accent hover:bg-accent/20"
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
             >
               {isGeneratingReports ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />

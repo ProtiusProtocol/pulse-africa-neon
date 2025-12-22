@@ -7,8 +7,9 @@ export const StickyBanner = () => {
   const [isVisible, setIsVisible] = useState(true);
   const location = useLocation();
   
-  // Hide on admin pages
-  if (!isVisible || location.pathname.startsWith('/admin')) return null;
+  // Hide on admin pages and dashboard
+  const isAdminPage = location.pathname.startsWith('/admin') || location.pathname === '/admin';
+  if (!isVisible || isAdminPage) return null;
   return <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-primary/90 via-accent/90 to-primary/90 backdrop-blur-sm border-t border-primary/20 animate-fade-in">
       <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
         <p className="text-sm md:text-base font-medium text-primary-foreground">🚀 Be first to use Africa's first prediction market and outcome intelligence platform</p>
