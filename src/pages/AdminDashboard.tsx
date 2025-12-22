@@ -35,7 +35,9 @@ import {
   Play,
   Plus,
   XCircle,
-  Trash2
+  Trash2,
+  FileText,
+  Loader2
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -69,6 +71,7 @@ export default function AdminDashboard() {
     resolutionCriteriaFull: '',
   });
   const [isCreatingMarket, setIsCreatingMarket] = useState(false);
+  const [isGeneratingReports, setIsGeneratingReports] = useState(false);
   
   const { toast } = useToast();
   const { walletAddress, isConnected, connect, getSigner } = useWallet();
@@ -132,6 +135,39 @@ export default function AdminDashboard() {
       toast({ title: "Access granted", description: "Welcome to Admin Dashboard" });
     } else {
       toast({ title: "Access denied", description: "Invalid password", variant: "destructive" });
+    }
+  };
+
+  const handleGenerateWeeklyReports = async () => {
+    setIsGeneratingReports(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('weekly-generate-drafts');
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (data?.success) {
+        toast({ 
+          title: "Reports Generated", 
+          description: `Successfully generated drafts for ${data.weekId}. ${data.stats?.markets || 0} markets, ${data.stats?.newsItems || 0} news items processed.`
+        });
+      } else {
+        toast({ 
+          title: "Info", 
+          description: data?.message || "Reports may already exist for this week",
+          variant: "default"
+        });
+      }
+    } catch (error) {
+      console.error("Error generating reports:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to generate weekly reports", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsGeneratingReports(false);
     }
   };
 
@@ -509,6 +545,42 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Weekly Reports */}
+        <section>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-accent" />
+              <h2 className="text-xl font-semibold">Weekly Reports</h2>
+            </div>
+            <Button
+              onClick={handleGenerateWeeklyReports}
+              disabled={isGeneratingReports}
+              variant="outline"
+              className="border-accent text-accent hover:bg-accent/20"
+            >
+              {isGeneratingReports ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Generate Weekly Reports
+                </>
+              )}
+            </Button>
+          </div>
+          <Card className="border-border bg-card">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">
+                Click the button above to generate Trader Pulse and Executive Brief reports for the previous week. 
+                Reports will be saved as drafts and can be reviewed on the <a href="/admin-reports" className="text-accent hover:underline">Reports page</a>.
+              </p>
+            </CardContent>
+          </Card>
+        </section>
 
         {/* Fragility Signals - Layer 1 */}
         <section>
