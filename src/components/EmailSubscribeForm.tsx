@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Mail, Bell, Loader2, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { WelcomeFlow } from "./WelcomeFlow";
 
 const subscribeSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -21,6 +22,8 @@ export function EmailSubscribeForm() {
   const [subscribeBrief, setSubscribeBrief] = useState(true);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [subscribedTo, setSubscribedTo] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,16 +42,16 @@ export function EmailSubscribeForm() {
     setLoading(true);
 
     try {
-      const subscribedTo = [];
-      if (subscribePulse) subscribedTo.push("trader_pulse");
-      if (subscribeBrief) subscribedTo.push("executive_brief");
+      const subs: string[] = [];
+      if (subscribePulse) subs.push("trader_pulse");
+      if (subscribeBrief) subs.push("executive_brief");
 
       const { error } = await supabase
         .from("email_subscribers")
         .upsert({
           email: email.toLowerCase().trim(),
           name: name.trim() || null,
-          subscribed_to: subscribedTo,
+          subscribed_to: subs,
           is_active: true,
         }, {
           onConflict: "email",
@@ -61,7 +64,7 @@ export function EmailSubscribeForm() {
             .from("email_subscribers")
             .update({
               name: name.trim() || null,
-              subscribed_to: subscribedTo,
+              subscribed_to: subs,
               is_active: true,
               unsubscribed_at: null,
             })
@@ -76,7 +79,9 @@ export function EmailSubscribeForm() {
         toast.success("Successfully subscribed to weekly reports!");
       }
 
+      setSubscribedTo(subs);
       setSuccess(true);
+      setShowWelcome(true);
     } catch (error) {
       console.error("Subscription error:", error);
       toast.error("Failed to subscribe. Please try again.");
@@ -87,15 +92,23 @@ export function EmailSubscribeForm() {
 
   if (success) {
     return (
-      <Card className="border-primary/30 bg-card/50">
-        <CardContent className="py-8 text-center">
-          <CheckCircle className="h-12 w-12 text-primary mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">You're Subscribed!</h3>
-          <p className="text-muted-foreground">
-            You'll receive weekly intelligence reports in your inbox.
-          </p>
-        </CardContent>
-      </Card>
+      <>
+        <Card className="border-primary/30 bg-card/50">
+          <CardContent className="py-8 text-center">
+            <CheckCircle className="h-12 w-12 text-primary mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">You're Subscribed!</h3>
+            <p className="text-muted-foreground">
+              You'll receive weekly intelligence reports in your inbox.
+            </p>
+          </CardContent>
+        </Card>
+        <WelcomeFlow 
+          isOpen={showWelcome} 
+          onClose={() => setShowWelcome(false)}
+          subscriberName={name || undefined}
+          subscribedTo={subscribedTo}
+        />
+      </>
     );
   }
 
