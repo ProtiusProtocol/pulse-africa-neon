@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 interface SendEmailsRequest {
-  week_id: string;
+  week_id?: string;
   report_type?: "trader_pulse" | "executive_brief" | "both";
 }
 
@@ -24,7 +24,47 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { week_id, report_type = "both" }: SendEmailsRequest = await req.json();
+    // Parse body safely - handle empty body
+    let week_id: string | undefined;
+    let report_type: "trader_pulse" | "executive_brief" | "both" = "both";
+    
+    try {
+      const body = await req.text();
+      if (body && body.trim()) {
+        const parsed = JSON.parse(body) as SendEmailsRequest;
+        week_id = parsed.week_id;
+        report_type = parsed.report_type || "both";
+      }
+    } catch {
+      // Empty or invalid body, will auto-detect week
+    }
+
+    // If no week_id provided, find the latest published report's week
+    if (!week_id) {
+      console.log("No week_id provided, finding latest published week...");
+      const { data: latestReport, error: latestError } = await supabase
+        .from("weekly_reports")
+        .select("week_id")
+        .eq("status", "published")
+        .order("published_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (latestError) {
+        console.error("Error finding latest report:", latestError);
+        throw latestError;
+      }
+
+      if (!latestReport) {
+        return new Response(
+          JSON.stringify({ success: false, message: "No published reports found" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      week_id = latestReport.week_id;
+      console.log(`Auto-detected week_id: ${week_id}`);
+    }
 
     console.log(`Sending weekly emails for ${week_id}, type: ${report_type}`);
 
@@ -167,8 +207,10 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ 
+        success: true,
         message: `Sent ${sentCount} emails`, 
-        sent: sentCount,
+        emailsSent: sentCount,
+        weekId: week_id,
         errors: errors.length > 0 ? errors : undefined 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
