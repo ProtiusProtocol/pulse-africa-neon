@@ -478,7 +478,7 @@ export default function AdminDashboard() {
         <Card className="w-full max-w-md border-border bg-card">
           <CardHeader className="text-center">
             <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
-            <CardTitle className="text-2xl text-glow-primary">Admin Access</CardTitle>
+            <CardTitle className="text-2xl text-glow-primary">🔧 Admin Access (Updated Dec 22)</CardTitle>
             <CardDescription>Enter password to access the admin dashboard</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
