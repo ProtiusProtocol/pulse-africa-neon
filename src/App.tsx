@@ -11,6 +11,7 @@ import Home from "./pages/Home";
 import HowItWorks from "./pages/HowItWorks";
 import Markets from "./pages/Markets";
 import EarlyAccess from "./pages/EarlyAccess";
+import NextSteps from "./pages/NextSteps";
 
 import AdminDashboard from "./pages/AdminDashboard";
 import UserDashboard from "./pages/UserDashboard";
@@ -45,6 +46,7 @@ const App = () => (
                 <Route path="/how-it-works" element={<HowItWorks />} />
                 <Route path="/intelligence" element={<Intelligence />} />
                 <Route path="/markets" element={<Markets />} />
+                <Route path="/next-steps" element={<NextSteps />} />
                 <Route path="/early-access" element={<EarlyAccess />} />
                 
                 <Route path="/pulse" element={<Pulse />} />
