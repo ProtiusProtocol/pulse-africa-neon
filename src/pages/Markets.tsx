@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Activity } from "lucide-react";
+import { ChevronRight, Activity, RefreshCw } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 
 interface Market {
   id: string;
@@ -19,6 +20,7 @@ interface Market {
   deadline: string | null;
   yes_total: number | null;
   no_total: number | null;
+  updated_at: string;
 }
 
 interface FragilitySignal {
@@ -33,6 +35,7 @@ const Markets = () => {
   const [loading, setLoading] = useState(true);
   const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
   const fetchData = async () => {
     const [marketsRes, signalsRes] = await Promise.all([
@@ -40,7 +43,17 @@ const Markets = () => {
       supabase.from("fragility_signals").select("id, signal_code, name").order("signal_code"),
     ]);
 
-    if (marketsRes.data) setMarkets(marketsRes.data);
+    if (marketsRes.data) {
+      setMarkets(marketsRes.data);
+      // Find the most recent updated_at timestamp
+      const mostRecent = marketsRes.data.reduce((latest, market) => {
+        const marketDate = new Date(market.updated_at);
+        return marketDate > latest ? marketDate : latest;
+      }, new Date(0));
+      if (mostRecent.getTime() > 0) {
+        setLastSynced(mostRecent);
+      }
+    }
     if (signalsRes.data) setSignals(signalsRes.data);
     setLoading(false);
   };
@@ -135,10 +148,18 @@ const Markets = () => {
 
         {/* Info Banner */}
         <div className="mb-8 p-4 bg-card/50 border border-border rounded-lg">
-          <p className="text-sm text-muted-foreground text-center">
-            <span className="text-primary font-semibold">{markets.length} Active Markets</span> — 
-            Each market is linked to underlying fragility signals that inform probability drift
-          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground text-center sm:text-left">
+              <span className="text-primary font-semibold">{markets.length} Active Markets</span> — 
+              Each market is linked to underlying fragility signals that inform probability drift
+            </p>
+            {lastSynced && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <RefreshCw className="w-3 h-3" />
+                <span>Last synced: {formatDistanceToNow(lastSynced, { addSuffix: true })}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Markets Grid */}
