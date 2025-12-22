@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      community_responses: {
+        Row: {
+          created_at: string
+          id: string
+          question_text: string
+          report_type: string
+          respondent_name: string | null
+          response_text: string
+          week_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_text: string
+          report_type: string
+          respondent_name?: string | null
+          response_text: string
+          week_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_text?: string
+          report_type?: string
+          respondent_name?: string | null
+          response_text?: string
+          week_id?: string
+        }
+        Relationships: []
+      }
       early_access_signups: {
         Row: {
           country: string

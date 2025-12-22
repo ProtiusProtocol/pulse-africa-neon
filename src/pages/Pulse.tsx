@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Zap, Calendar, ArrowRight, Download, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-
+import { CommunityResponseForm } from "@/components/CommunityResponseForm";
 interface Report {
   id: string;
   week_id: string;
@@ -99,6 +99,40 @@ export default function Pulse() {
     return weekId;
   };
 
+  // Extract community question from report content
+  const extractCommunityQuestion = (content: string): string | null => {
+    const lines = content.split('\n');
+    let inCommunitySection = false;
+    
+    for (const line of lines) {
+      if (line.toLowerCase().includes('community question') || line.toLowerCase().includes('### community')) {
+        inCommunitySection = true;
+        continue;
+      }
+      if (inCommunitySection && line.trim() && !line.startsWith('#')) {
+        // Return the first non-empty, non-heading line after the community question header
+        return line.replace(/^\*+|\*+$/g, '').trim();
+      }
+    }
+    return null;
+  };
+
+  const CommunityQuestionSection = ({ content, weekId, reportType }: { content: string; weekId: string; reportType: "trader_pulse" | "executive_brief" }) => {
+    const question = useMemo(() => extractCommunityQuestion(content), [content]);
+    
+    if (!question) return null;
+    
+    return (
+      <div className="mt-6">
+        <CommunityResponseForm 
+          weekId={weekId} 
+          reportType={reportType} 
+          questionText={question} 
+        />
+      </div>
+    );
+  };
+
   if (loading && !currentReport) {
     return (
       <div className="min-h-screen bg-background pt-24 pb-12">
@@ -155,21 +189,30 @@ export default function Pulse() {
 
         {/* Report Content */}
         {currentReport ? (
-          <Card className="border-border/50 bg-card/50">
-            <CardHeader className="border-b border-border/50">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-primary">
-                  Trader Pulse — {selectedWeek}
-                </CardTitle>
-                <Badge variant="outline" className="text-primary border-primary">
-                  {formatWeekRange(selectedWeek)}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-6">
-              <MarkdownRenderer content={currentReport.content_md} variant="pulse" />
-            </CardContent>
-          </Card>
+          <>
+            <Card className="border-border/50 bg-card/50">
+              <CardHeader className="border-b border-border/50">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-primary">
+                    Trader Pulse — {selectedWeek}
+                  </CardTitle>
+                  <Badge variant="outline" className="text-primary border-primary">
+                    {formatWeekRange(selectedWeek)}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <MarkdownRenderer content={currentReport.content_md} variant="pulse" />
+              </CardContent>
+            </Card>
+            
+            {/* Community Response Form */}
+            <CommunityQuestionSection 
+              content={currentReport.content_md} 
+              weekId={selectedWeek} 
+              reportType="trader_pulse" 
+            />
+          </>
         ) : (
           <Card className="border-border/50 bg-card/50">
             <CardContent className="py-16 text-center">
