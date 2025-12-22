@@ -34,7 +34,8 @@ import {
   RefreshCw,
   Play,
   Plus,
-  XCircle
+  XCircle,
+  Trash2
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -318,6 +319,35 @@ export default function AdminDashboard() {
       });
     }
     setIsLoading(false);
+  };
+
+  const handleDeleteMarket = async (market: Market) => {
+    if (!confirm(`Are you sure you want to delete "${market.title}"? This cannot be undone.`)) {
+      return;
+    }
+    
+    setActionLoading(market.id);
+    try {
+      const { error } = await supabase
+        .from('markets')
+        .delete()
+        .eq('id', market.id);
+      
+      if (error) throw error;
+      
+      toast({ 
+        title: "Market deleted", 
+        description: `${market.title} has been removed` 
+      });
+      await fetchMarkets();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to delete market", 
+        variant: "destructive" 
+      });
+    }
+    setActionLoading(null);
   };
 
   const handleCreateMarket = async () => {
@@ -707,16 +737,28 @@ export default function AdminDashboard() {
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2">
                       {market.status === 'pending' && (
-                        <Button 
-                          onClick={() => handleOpenMarket(market)}
-                          disabled={isActionLoading || !isConnected || !hasContract}
-                          variant="outline"
-                          size="sm"
-                          className="border-primary text-primary hover:bg-primary/20"
-                        >
-                          <Play className="w-3 h-3 mr-1" />
-                          {isActionLoading ? 'Opening...' : 'Open'}
-                        </Button>
+                        <>
+                          <Button 
+                            onClick={() => handleOpenMarket(market)}
+                            disabled={isActionLoading || !isConnected || !hasContract}
+                            variant="outline"
+                            size="sm"
+                            className="border-primary text-primary hover:bg-primary/20"
+                          >
+                            <Play className="w-3 h-3 mr-1" />
+                            {isActionLoading ? 'Opening...' : 'Open'}
+                          </Button>
+                          <Button 
+                            onClick={() => handleDeleteMarket(market)}
+                            disabled={isActionLoading}
+                            variant="outline"
+                            size="sm"
+                            className="border-destructive text-destructive hover:bg-destructive/20"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            {isActionLoading ? 'Deleting...' : 'Delete'}
+                          </Button>
+                        </>
                       )}
                       {market.status === 'active' && (
                         <Button 
