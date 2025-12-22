@@ -546,12 +546,12 @@ export default function AdminDashboard() {
           </Card>
         )}
 
-        {/* Weekly Reports */}
-        <section>
+        {/* Weekly Reports Section */}
+        <section className="bg-card/50 border border-accent/30 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-accent" />
-              <h2 className="text-xl font-semibold">Weekly Reports</h2>
+              <h2 className="text-xl font-semibold text-accent">Weekly Reports</h2>
             </div>
             <Button
               onClick={handleGenerateWeeklyReports}
