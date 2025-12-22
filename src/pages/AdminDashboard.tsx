@@ -525,6 +525,19 @@ export default function AdminDashboard() {
                 {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
               </Badge>
             )}
+            <Button
+              onClick={handleGenerateWeeklyReports}
+              disabled={isGeneratingReports}
+              variant="outline"
+              className="border-accent text-accent hover:bg-accent/20"
+            >
+              {isGeneratingReports ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <FileText className="w-4 h-4 mr-2" />
+              )}
+              {isGeneratingReports ? 'Generating...' : 'Generate Reports'}
+            </Button>
             <Button 
               variant="outline" 
               onClick={() => setIsAuthenticated(false)}
