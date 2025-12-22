@@ -21,6 +21,7 @@ import Brief from "./pages/Brief";
 import Reports from "./pages/Reports";
 import AdminReports from "./pages/AdminReports";
 import AdminReportWeek from "./pages/AdminReportWeek";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -52,7 +53,8 @@ const App = () => (
                 <Route path="/pulse" element={<Pulse />} />
                 <Route path="/brief" element={<Brief />} />
                 <Route path="/reports" element={<Reports />} />
-                <Route path="/admin" element={<AdminDashboard />} /> {/* Admin with reports */}
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/admin/reports" element={<AdminReports />} />
                 <Route path="/admin/reports/:weekId" element={<AdminReportWeek />} />
                 <Route path="/dashboard" element={<UserDashboard />} />
