@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.send-weekly-emails]
 verify_jwt = false
+
+[functions.unsubscribe]
+verify_jwt = false
