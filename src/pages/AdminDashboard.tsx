@@ -506,6 +506,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen p-4 md:p-8">
+      {/* TEST BANNER - REMOVE AFTER CONFIRMING BUILD WORKS */}
+      <div className="bg-red-500 text-white text-center p-4 mb-4 text-xl font-bold">
+        ⚠️ BUILD TEST - If you see this, the build is working! ⚠️
+      </div>
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header with Generate Reports Button */}
         <div className="flex flex-col gap-4">
