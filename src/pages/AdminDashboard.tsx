@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/contexts/WalletContext";
+import { useAuth } from "@/hooks/useAuth";
 import { AugurionMarketV4Client, WinningSide } from "@/contracts/AugurionMarketV4Client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Lock, 
   Unlock, 
@@ -38,7 +40,8 @@ import {
   XCircle,
   Trash2,
   FileText,
-  Loader2
+  Loader2,
+  LogOut
 } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -46,11 +49,9 @@ type EarlyAccessSignup = Tables<'early_access_signups'>;
 type Market = Tables<'markets'>;
 type FragilitySignal = Tables<'fragility_signals'>;
 
-const ADMIN_PASSWORD = "augurion2024"; // In production, use proper auth
-
 export default function AdminDashboard() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
+  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
   const [selectedMarket, setSelectedMarket] = useState<string>("");
@@ -78,10 +79,16 @@ export default function AdminDashboard() {
   const { walletAddress, isConnected, connect, getSigner } = useWallet();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (isAdmin) {
       fetchData();
     }
-  }, [isAuthenticated]);
+  }, [isAdmin]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -130,13 +137,9 @@ export default function AdminDashboard() {
     setSignupsLoading(false);
   };
 
-  const handleLogin = () => {
-    if (password === ADMIN_PASSWORD) {
-      setIsAuthenticated(true);
-      toast({ title: "Access granted", description: "Welcome to Admin Dashboard" });
-    } else {
-      toast({ title: "Access denied", description: "Invalid password", variant: "destructive" });
-    }
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/auth");
   };
 
   const handleGenerateWeeklyReports = async () => {
@@ -473,31 +476,55 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!isAuthenticated) {
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not logged in - redirect handled by useEffect
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-border bg-card">
           <CardHeader className="text-center">
             <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
             <CardTitle className="text-2xl text-glow-primary">Admin Access</CardTitle>
-            <CardDescription>Enter password to access the admin dashboard</CardDescription>
+            <CardDescription>Redirecting to login...</CardDescription>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Logged in but not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-border bg-card">
+          <CardHeader className="text-center">
+            <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
+            <CardTitle className="text-2xl">Access Denied</CardTitle>
+            <CardDescription>
+              You don't have admin privileges. Contact an administrator to request access.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                placeholder="Enter admin password"
-                className="bg-input border-border"
-              />
-            </div>
-            <Button onClick={handleLogin} variant="neon" className="w-full">
-              <Lock className="w-4 h-4 mr-2" />
-              Access Dashboard
+            <p className="text-sm text-muted-foreground text-center">
+              Logged in as: {user.email}
+            </p>
+            <Button onClick={handleLogout} variant="outline" className="w-full">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
             </Button>
           </CardContent>
         </Card>
@@ -527,13 +554,16 @@ export default function AdminDashboard() {
                   {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
                 </Badge>
               )}
+              <Badge variant="outline" className="px-3 py-1 text-xs text-muted-foreground">
+                {user.email}
+              </Badge>
               <Button 
                 variant="outline" 
-                onClick={() => setIsAuthenticated(false)}
+                onClick={handleLogout}
                 className="border-border"
               >
-                <Unlock className="w-4 h-4 mr-2" />
-                Logout
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
               </Button>
             </div>
           </div>
