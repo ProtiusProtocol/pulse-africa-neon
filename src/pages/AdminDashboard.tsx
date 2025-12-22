@@ -546,8 +546,8 @@ export default function AdminDashboard() {
           </Card>
         )}
 
-        {/* Weekly Reports Section */}
-        <section className="bg-card/50 border border-accent/30 rounded-lg p-6">
+        {/* Weekly Reports Section - Added Dec 22 */}
+        <section className="bg-accent/10 border-2 border-accent rounded-lg p-6 shadow-lg shadow-accent/20">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-accent" />
