@@ -68,10 +68,10 @@ serve(async (req) => {
 
     console.log(`Sending weekly emails for ${week_id}, type: ${report_type}`);
 
-    // Fetch active subscribers
+    // Fetch active email subscribers
     const { data: subscribers, error: subError } = await supabase
       .from("email_subscribers")
-      .select("*")
+      .select("email, name, subscribed_to")
       .eq("is_active", true);
 
     if (subError) {
@@ -79,11 +79,50 @@ serve(async (req) => {
       throw subError;
     }
 
-    console.log(`Found ${subscribers?.length || 0} active subscribers`);
+    // Fetch early access signups
+    const { data: earlyAccessSignups, error: eaError } = await supabase
+      .from("early_access_signups")
+      .select("email, name");
 
-    if (!subscribers || subscribers.length === 0) {
+    if (eaError) {
+      console.error("Error fetching early access signups:", eaError);
+      throw eaError;
+    }
+
+    console.log(`Found ${subscribers?.length || 0} email subscribers, ${earlyAccessSignups?.length || 0} early access signups`);
+
+    // Combine and deduplicate by email
+    const emailMap = new Map<string, { email: string; name: string | null; subscribed_to: string[]; source: string }>();
+
+    // Add email subscribers first (they have preferences)
+    for (const sub of subscribers || []) {
+      emailMap.set(sub.email.toLowerCase(), {
+        email: sub.email,
+        name: sub.name,
+        subscribed_to: sub.subscribed_to || ["trader_pulse", "executive_brief"],
+        source: "subscriber",
+      });
+    }
+
+    // Add early access signups (send both reports by default, don't overwrite existing subscribers)
+    for (const ea of earlyAccessSignups || []) {
+      const emailKey = ea.email.toLowerCase();
+      if (!emailMap.has(emailKey)) {
+        emailMap.set(emailKey, {
+          email: ea.email,
+          name: ea.name,
+          subscribed_to: ["trader_pulse", "executive_brief"], // Send both to early access
+          source: "early_access",
+        });
+      }
+    }
+
+    const allRecipients = Array.from(emailMap.values());
+    console.log(`Total unique recipients: ${allRecipients.length}`);
+
+    if (allRecipients.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No active subscribers", sent: 0 }),
+        JSON.stringify({ success: false, message: "No recipients found", emailsSent: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -107,7 +146,7 @@ serve(async (req) => {
 
     if (!reports || reports.length === 0) {
       return new Response(
-        JSON.stringify({ message: "No published reports found for this week", sent: 0 }),
+        JSON.stringify({ success: false, message: "No published reports found for this week", emailsSent: 0 }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -117,7 +156,7 @@ serve(async (req) => {
       .from("weekly_digest")
       .select("week_start, week_end")
       .eq("week_id", week_id)
-      .single();
+      .maybeSingle();
 
     const weekRange = digest 
       ? `${new Date(digest.week_start).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${new Date(digest.week_end).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
@@ -126,15 +165,15 @@ serve(async (req) => {
     let sentCount = 0;
     const errors: string[] = [];
 
-    // Send emails to each subscriber
-    for (const subscriber of subscribers) {
-      const subscribedReports = reports.filter(r => 
-        subscriber.subscribed_to.includes(r.report_type)
+    // Send emails to each recipient
+    for (const recipient of allRecipients) {
+      const recipientReports = reports.filter(r => 
+        recipient.subscribed_to.includes(r.report_type)
       );
 
-      if (subscribedReports.length === 0) continue;
+      if (recipientReports.length === 0) continue;
 
-      const reportLinks = subscribedReports.map(r => {
+      const reportLinks = recipientReports.map(r => {
         const path = r.report_type === "trader_pulse" ? "pulse" : "brief";
         return `<li><a href="https://pulse-africa-neon.lovable.app/${path}?week=${week_id}" style="color: #10b981;">${r.report_type === "trader_pulse" ? "Trader Pulse" : "Executive Brief"}</a></li>`;
       }).join("");
@@ -156,6 +195,7 @@ serve(async (req) => {
             a:hover { text-decoration: underline; }
             .footer { margin-top: 32px; padding-top: 24px; border-top: 1px solid #262626; font-size: 12px; color: #737373; }
             .cta { display: inline-block; background: #10b981; color: #0a0a0a; padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; margin: 16px 0; }
+            .cta-secondary { display: inline-block; background: transparent; color: #f59e0b; padding: 12px 24px; border-radius: 8px; font-weight: 600; text-decoration: none; margin: 8px 8px 8px 0; border: 1px solid #f59e0b; }
           </style>
         </head>
         <body>
@@ -163,19 +203,20 @@ serve(async (req) => {
             <h1>📊 Weekly Intelligence Report</h1>
             <span class="week-badge">${weekRange}</span>
             
-            <p>Hi${subscriber.name ? ` ${subscriber.name}` : ""},</p>
+            <p>Hi${recipient.name ? ` ${recipient.name}` : ""},</p>
             
             <p>Your weekly intelligence reports are ready:</p>
             
             <ul>${reportLinks}</ul>
             
             <a href="https://pulse-africa-neon.lovable.app/intelligence" class="cta">View All Reports</a>
+            <a href="https://pulse-africa-neon.lovable.app/markets" class="cta-secondary">Trade Now →</a>
             
-            <p>These reports provide insights on Southern Africa's political risk landscape to help inform your decisions.</p>
+            <p>These reports provide insights on Southern Africa's political risk landscape. Ready to act on your insights? <strong>Place a trade</strong> on our prediction markets.</p>
             
             <div class="footer">
-              <p>You're receiving this because you subscribed to Augurion intelligence updates.</p>
-              <p><a href="https://pulse-africa-neon.lovable.app/unsubscribe?email=${encodeURIComponent(subscriber.email)}">Unsubscribe</a></p>
+              <p>You're receiving this because you signed up for Augurion updates.</p>
+              <p><a href="https://pulse-africa-neon.lovable.app/unsubscribe?email=${encodeURIComponent(recipient.email)}">Unsubscribe</a></p>
             </div>
           </div>
         </body>
@@ -185,21 +226,21 @@ serve(async (req) => {
       try {
         const { error: sendError } = await resend.emails.send({
           from: "Augurion <onboarding@resend.dev>",
-          to: [subscriber.email],
+          to: [recipient.email],
           subject: `📊 Weekly Intelligence Report – ${weekRange}`,
           html: emailHtml,
         });
 
         if (sendError) {
-          console.error(`Error sending to ${subscriber.email}:`, sendError);
-          errors.push(`${subscriber.email}: ${sendError.message}`);
+          console.error(`Error sending to ${recipient.email}:`, sendError);
+          errors.push(`${recipient.email}: ${sendError.message}`);
         } else {
           sentCount++;
-          console.log(`Sent email to ${subscriber.email}`);
+          console.log(`Sent email to ${recipient.email} (${recipient.source})`);
         }
       } catch (e) {
-        console.error(`Exception sending to ${subscriber.email}:`, e);
-        errors.push(`${subscriber.email}: ${e instanceof Error ? e.message : "Unknown error"}`);
+        console.error(`Exception sending to ${recipient.email}:`, e);
+        errors.push(`${recipient.email}: ${e instanceof Error ? e.message : "Unknown error"}`);
       }
     }
 
