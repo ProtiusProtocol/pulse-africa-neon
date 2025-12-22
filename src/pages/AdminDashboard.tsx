@@ -511,7 +511,7 @@ export default function AdminDashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-glow-primary">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage markets and monitor fragility indicators</p>
+            <p className="text-muted-foreground">Manage markets, signals, and generate weekly reports</p>
           </div>
           <div className="flex items-center gap-2">
             {!isConnected ? (
