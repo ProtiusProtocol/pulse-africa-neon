@@ -737,28 +737,28 @@ export default function AdminDashboard() {
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2">
                       {market.status === 'pending' && (
-                        <>
-                          <Button 
-                            onClick={() => handleOpenMarket(market)}
-                            disabled={isActionLoading || !isConnected || !hasContract}
-                            variant="outline"
-                            size="sm"
-                            className="border-primary text-primary hover:bg-primary/20"
-                          >
-                            <Play className="w-3 h-3 mr-1" />
-                            {isActionLoading ? 'Opening...' : 'Open'}
-                          </Button>
-                          <Button 
-                            onClick={() => handleDeleteMarket(market)}
-                            disabled={isActionLoading}
-                            variant="outline"
-                            size="sm"
-                            className="border-muted-foreground text-muted-foreground hover:bg-muted hover:text-destructive hover:border-destructive"
-                          >
-                            <Trash2 className="w-3 h-3 mr-1" />
-                            {isActionLoading ? 'Deleting...' : 'Delete'}
-                          </Button>
-                        </>
+                        <Button 
+                          onClick={() => handleOpenMarket(market)}
+                          disabled={isActionLoading || !isConnected || !hasContract}
+                          variant="outline"
+                          size="sm"
+                          className="border-primary text-primary hover:bg-primary/20"
+                        >
+                          <Play className="w-3 h-3 mr-1" />
+                          {isActionLoading ? 'Opening...' : 'Open'}
+                        </Button>
+                      )}
+                      {market.status === 'pending' && (
+                        <Button 
+                          onClick={() => handleDeleteMarket(market)}
+                          disabled={isActionLoading}
+                          variant="ghost"
+                          size="sm"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" />
+                          Delete
+                        </Button>
                       )}
                       {market.status === 'active' && (
                         <Button 
