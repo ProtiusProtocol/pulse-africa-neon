@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,14 +11,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
-  Lock, 
+  Shield, 
   Save, 
   Sparkles, 
   Send,
   FileText,
   Briefcase,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  LogOut,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,9 +51,8 @@ interface Report {
 export default function AdminReportWeek() {
   const { weekId } = useParams<{ weekId: string }>();
   const navigate = useNavigate();
+  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
   
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState("");
   const [digest, setDigest] = useState<Digest | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [adminInputs, setAdminInputs] = useState<AdminInputs>({
@@ -65,18 +67,20 @@ export default function AdminReportWeek() {
   const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && weekId) {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [authLoading, user, navigate]);
+
+  useEffect(() => {
+    if (isAdmin && weekId) {
       fetchData();
     }
-  }, [isAuthenticated, weekId]);
+  }, [isAdmin, weekId]);
 
-  const handleLogin = () => {
-    if (password === "augurion2024") {
-      setIsAuthenticated(true);
-      toast.success("Authenticated successfully");
-    } else {
-      toast.error("Invalid password");
-    }
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/auth");
   };
 
   const fetchData = async () => {
@@ -207,31 +211,54 @@ export default function AdminReportWeek() {
       });
   };
 
-  if (!isAuthenticated) {
+  // Loading state
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-background pt-24 pb-12">
-        <div className="container mx-auto px-4 max-w-md">
-          <Card className="border-border/50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5" />
-                Admin Access
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input
-                type="password"
-                placeholder="Enter admin password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-              />
-              <Button onClick={handleLogin} className="w-full">
-                Login
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Not logged in
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-border bg-card">
+          <CardHeader className="text-center">
+            <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
+            <CardTitle className="text-2xl">Admin Access</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Logged in but not admin
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md border-border bg-card">
+          <CardHeader className="text-center">
+            <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
+            <CardTitle className="text-2xl">Access Denied</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground text-center">
+              You don't have admin privileges. Logged in as: {user.email}
+            </p>
+            <Button onClick={handleLogout} variant="outline" className="w-full">
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
