@@ -507,44 +507,60 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-glow-primary">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage markets, signals, and weekly reports</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {!isConnected ? (
-              <Button onClick={connect} variant="outline" className="border-primary text-primary">
-                <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet
-              </Button>
-            ) : (
-              <Badge variant="outline" className="px-3 py-1 text-xs">
-                <Wallet className="w-3 h-3 mr-1" />
-                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
-              </Badge>
-            )}
-            <Button
-              onClick={handleGenerateWeeklyReports}
-              disabled={isGeneratingReports}
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
-            >
-              {isGeneratingReports ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        {/* Header with Generate Reports Button */}
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-glow-primary">Admin Dashboard</h1>
+              <p className="text-muted-foreground">Manage markets, signals, and weekly reports</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {!isConnected ? (
+                <Button onClick={connect} variant="outline" className="border-primary text-primary">
+                  <Wallet className="w-4 h-4 mr-2" />
+                  Connect Wallet
+                </Button>
               ) : (
-                <FileText className="w-4 h-4 mr-2" />
+                <Badge variant="outline" className="px-3 py-1 text-xs">
+                  <Wallet className="w-3 h-3 mr-1" />
+                  {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+                </Badge>
               )}
-              {isGeneratingReports ? 'Generating...' : 'Generate Reports'}
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => setIsAuthenticated(false)}
-              className="border-border"
-            >
-              <Unlock className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAuthenticated(false)}
+                className="border-border"
+              >
+                <Unlock className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+          
+          {/* Prominent Generate Reports Button */}
+          <div className="bg-accent/20 border-2 border-accent rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileText className="w-6 h-6 text-accent" />
+                <div>
+                  <h2 className="font-semibold text-accent">Weekly Reports</h2>
+                  <p className="text-sm text-muted-foreground">Generate Trader Pulse and Executive Brief</p>
+                </div>
+              </div>
+              <Button
+                onClick={handleGenerateWeeklyReports}
+                disabled={isGeneratingReports}
+                size="lg"
+                className="bg-accent text-accent-foreground hover:bg-accent/90"
+              >
+                {isGeneratingReports ? (
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <FileText className="w-5 h-5 mr-2" />
+                )}
+                {isGeneratingReports ? 'Generating...' : 'Generate Weekly Reports'}
+              </Button>
+            </div>
           </div>
         </div>
 
