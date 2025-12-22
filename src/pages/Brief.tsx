@@ -66,7 +66,11 @@ export default function Brief() {
         .select("week_id, week_start, week_end")
         .in("week_id", uniqueWeeks);
       
-      setWeeks(digests || []);
+      // Sort by week_id descending to ensure latest is first
+      const sortedDigests = (digests || []).sort((a, b) => 
+        b.week_id.localeCompare(a.week_id)
+      );
+      setWeeks(sortedDigests);
     }
     setLoading(false);
   };
