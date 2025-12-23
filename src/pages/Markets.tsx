@@ -177,6 +177,8 @@ const Markets = () => {
                   title={market.title}
                   yes={odds.yes}
                   no={odds.no}
+                  yesAmount={market.yes_total || 0}
+                  noAmount={market.no_total || 0}
                   volatility="medium"
                   deadline={market.deadline || undefined}
                   trend="up"
