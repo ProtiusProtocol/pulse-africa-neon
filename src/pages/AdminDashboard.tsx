@@ -552,7 +552,7 @@ export default function AdminDashboard() {
               const totalPool = totalYes + totalNo;
               const totalFees = markets.reduce((sum, m) => {
                 const pool = (m.yes_total || 0) + (m.no_total || 0);
-                const feeBps = m.fee_bps || 100; // default 1%
+                const feeBps = m.fee_bps || 200; // default 2%
                 return sum + (pool * feeBps / 10000);
               }, 0);
               
