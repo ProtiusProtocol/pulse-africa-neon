@@ -7,6 +7,8 @@ interface MarketCardProps {
   title: string;
   yes: number;
   no: number;
+  yesAmount?: number;
+  noAmount?: number;
   volatility: "low" | "medium" | "high";
   endsIn?: string;
   deadline?: string | Date;
@@ -17,6 +19,14 @@ interface MarketCardProps {
   resolutionCriteria?: string;
   onTrade?: () => void;
 }
+
+const formatAmount = (microAlgos: number): string => {
+  const algos = microAlgos / 1_000_000;
+  if (algos >= 1000) {
+    return `${(algos / 1000).toFixed(1)}K`;
+  }
+  return algos.toFixed(2);
+};
 
 const formatCountdown = (ms: number): string => {
   if (ms <= 0) return "Resolved";
@@ -41,6 +51,8 @@ export const MarketCard = ({
   title,
   yes,
   no,
+  yesAmount,
+  noAmount,
   volatility,
   endsIn,
   deadline,
@@ -120,7 +132,14 @@ export const MarketCard = ({
         {/* Probability Bars */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">YES</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">YES</span>
+              {yesAmount !== undefined && (
+                <span className="text-xs text-primary/70 font-mono">
+                  {formatAmount(yesAmount)} ALGO
+                </span>
+              )}
+            </div>
             <span className="text-2xl font-bold text-primary text-glow-primary">
               {yes}%
             </span>
@@ -133,7 +152,14 @@ export const MarketCard = ({
           </div>
 
           <div className="flex items-center justify-between mt-3">
-            <span className="text-sm font-medium text-muted-foreground">NO</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-muted-foreground">NO</span>
+              {noAmount !== undefined && (
+                <span className="text-xs text-secondary/70 font-mono">
+                  {formatAmount(noAmount)} ALGO
+                </span>
+              )}
+            </div>
             <span className="text-2xl font-bold text-secondary text-glow-secondary">
               {no}%
             </span>
