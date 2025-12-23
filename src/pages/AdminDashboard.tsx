@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useWallet } from "@/contexts/WalletContext";
 import { useAuth } from "@/hooks/useAuth";
-import { AugurionMarketV4Client, WinningSide } from "@/contracts/AugurionMarketV4Client";
+import { AugurionMarketV4Client } from "@/contracts/AugurionMarketV4Client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +19,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  Lock, 
-  Unlock, 
   TrendingUp, 
   TrendingDown, 
   Minus,
@@ -37,7 +35,6 @@ import {
   RefreshCw,
   Play,
   Plus,
-  XCircle,
   Trash2,
   FileText,
   Loader2,
@@ -55,8 +52,6 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
-  const [selectedMarket, setSelectedMarket] = useState<string>("");
-  const [winningSide, setWinningSide] = useState<'YES' | 'NO'>('YES');
   const [isLoading, setIsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [signups, setSignups] = useState<EarlyAccessSignup[]>([]);
@@ -264,130 +259,6 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to open market", variant: "destructive" });
-    }
-    setActionLoading(null);
-  };
-
-  const handleFreezeMarket = async (market: Market) => {
-    if (!isConnected || !walletAddress) {
-      toast({ title: "Error", description: "Connect your wallet first", variant: "destructive" });
-      return;
-    }
-
-    const numericAppId = getNumericAppId(market.app_id);
-    if (!numericAppId) {
-      toast({ title: "Error", description: "Market contract not deployed yet", variant: "destructive" });
-      return;
-    }
-
-    setActionLoading(market.id);
-    try {
-      const client = new AugurionMarketV4Client(numericAppId);
-      const signer = getSigner();
-      const result = await client.freezeMarket(walletAddress, signer);
-
-      if (result.success) {
-        // Update Supabase
-        await supabase
-          .from('markets')
-          .update({ status: 'frozen' })
-          .eq('id', market.id);
-
-        await fetchMarkets();
-        toast({ title: "Market frozen", description: `${market.title} has been frozen` });
-      } else {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
-      }
-    } catch (error) {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to freeze market", variant: "destructive" });
-    }
-    setActionLoading(null);
-  };
-
-  const handleCancelMarket = async (market: Market) => {
-    if (!isConnected || !walletAddress) {
-      toast({ title: "Error", description: "Connect your wallet first", variant: "destructive" });
-      return;
-    }
-
-    const numericAppId = getNumericAppId(market.app_id);
-    if (!numericAppId) {
-      toast({ title: "Error", description: "Market contract not deployed yet", variant: "destructive" });
-      return;
-    }
-
-    setActionLoading(market.id);
-    try {
-      const client = new AugurionMarketV4Client(numericAppId);
-      const signer = getSigner();
-      const result = await client.cancelMarket(walletAddress, signer);
-
-      if (result.success) {
-        // Update Supabase
-        await supabase
-          .from('markets')
-          .update({ status: 'cancelled' })
-          .eq('id', market.id);
-
-        await fetchMarkets();
-        toast({ title: "Market cancelled", description: `${market.title} has been cancelled` });
-      } else {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
-      }
-    } catch (error) {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to cancel market", variant: "destructive" });
-    }
-    setActionLoading(null);
-  };
-
-  const handleResolve = async () => {
-    if (!selectedMarket) {
-      toast({ title: "Error", description: "Select a market to resolve", variant: "destructive" });
-      return;
-    }
-
-    if (!isConnected || !walletAddress) {
-      toast({ title: "Error", description: "Connect your wallet first", variant: "destructive" });
-      return;
-    }
-
-    const market = markets.find(m => m.id === selectedMarket);
-    if (!market) return;
-
-    const numericAppId = getNumericAppId(market.app_id);
-    if (!numericAppId) {
-      toast({ title: "Error", description: "Market contract not deployed yet", variant: "destructive" });
-      return;
-    }
-
-    setActionLoading(selectedMarket);
-    try {
-      const client = new AugurionMarketV4Client(numericAppId);
-      const signer = getSigner();
-      const side = winningSide === 'YES' ? WinningSide.YES : WinningSide.NO;
-      const result = await client.resolveMarket(side, walletAddress, signer);
-
-      if (result.success) {
-        // Update Supabase
-        await supabase
-          .from('markets')
-          .update({ 
-            status: 'resolved',
-            outcome_ref: winningSide 
-          })
-          .eq('id', market.id);
-
-        await fetchMarkets();
-        toast({ 
-          title: "Market resolved", 
-          description: `${market.title} resolved with ${winningSide} as winner` 
-        });
-        setSelectedMarket("");
-      } else {
-        toast({ title: "Error", description: result.error, variant: "destructive" });
-      }
-    } catch (error) {
-      toast({ title: "Error", description: error instanceof Error ? error.message : "Failed to resolve market", variant: "destructive" });
     }
     setActionLoading(null);
   };
@@ -870,7 +741,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-3 text-sm">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
                       <div className="bg-muted/50 rounded-lg p-2 text-center">
                         <p className="text-xs text-muted-foreground">YES</p>
                         <p className="font-semibold text-primary">{(market.yes_total || 0).toLocaleString()}</p>
@@ -878,10 +749,6 @@ export default function AdminDashboard() {
                       <div className="bg-muted/50 rounded-lg p-2 text-center">
                         <p className="text-xs text-muted-foreground">NO</p>
                         <p className="font-semibold text-accent">{(market.no_total || 0).toLocaleString()}</p>
-                      </div>
-                      <div className="bg-muted/50 rounded-lg p-2 text-center">
-                        <p className="text-xs text-muted-foreground">Fee</p>
-                        <p className="font-semibold">{((market.fee_bps || 100) / 100)}%</p>
                       </div>
                     </div>
 
@@ -926,30 +793,6 @@ export default function AdminDashboard() {
                         >
                           <Trash2 className="w-3 h-3 mr-1" />
                           Delete
-                        </Button>
-                      )}
-                      {market.status === 'active' && (
-                        <Button 
-                          onClick={() => handleFreezeMarket(market)}
-                          disabled={isActionLoading || !isConnected || !hasContract}
-                          variant="outline"
-                          size="sm"
-                          className="border-secondary text-secondary hover:bg-secondary/20"
-                        >
-                          <Lock className="w-3 h-3 mr-1" />
-                          {isActionLoading ? 'Freezing...' : 'Freeze'}
-                        </Button>
-                      )}
-                      {(market.status === 'active' || market.status === 'pending') && (
-                        <Button 
-                          onClick={() => handleCancelMarket(market)}
-                          disabled={isActionLoading || !isConnected || !hasContract}
-                          variant="outline"
-                          size="sm"
-                          className="border-destructive text-destructive hover:bg-destructive/20"
-                        >
-                          <XCircle className="w-3 h-3 mr-1" />
-                          {isActionLoading ? 'Cancelling...' : 'Cancel'}
                         </Button>
                       )}
                     </div>
@@ -1110,56 +953,6 @@ export default function AdminDashboard() {
           )}
         </section>
 
-        <Card className="border-border bg-card">
-          <CardHeader>
-            <CardTitle>Resolve Market</CardTitle>
-            <CardDescription>Select a frozen market and declare the winning side</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Select Market</Label>
-                <Select value={selectedMarket} onValueChange={setSelectedMarket}>
-                  <SelectTrigger className="bg-input border-border">
-                    <SelectValue placeholder="Choose a frozen market" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {markets.filter(m => m.status === 'frozen').map((market) => (
-                      <SelectItem key={market.id} value={market.id}>
-                        {market.title.slice(0, 50)}...
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Winning Side</Label>
-                <Select value={winningSide} onValueChange={(v) => setWinningSide(v as 'YES' | 'NO')}>
-                  <SelectTrigger className="bg-input border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    <SelectItem value="YES">YES</SelectItem>
-                    <SelectItem value="NO">NO</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  onClick={handleResolve}
-                  disabled={!!actionLoading || !selectedMarket || !isConnected}
-                  variant="neon"
-                  className="w-full"
-                >
-                  {actionLoading === selectedMarket ? 'Resolving...' : 'Resolve Market'}
-                </Button>
-              </div>
-            </div>
-            {!isConnected && (
-              <p className="text-xs text-muted-foreground">Connect your wallet to resolve markets on-chain.</p>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
