@@ -668,6 +668,7 @@ export default function AdminDashboard() {
                       <SelectItem value="Infrastructure">Infrastructure</SelectItem>
                       <SelectItem value="Social">Social</SelectItem>
                       <SelectItem value="Security">Security</SelectItem>
+                      <SelectItem value="Sport">Sport</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
