@@ -539,12 +539,72 @@ export default function AdminDashboard() {
           </div>
         </div>
 
+        {/* Pool & Fees Summary */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">Pool & Fees Summary</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {(() => {
+              const totalYes = markets.reduce((sum, m) => sum + (m.yes_total || 0), 0);
+              const totalNo = markets.reduce((sum, m) => sum + (m.no_total || 0), 0);
+              const totalPool = totalYes + totalNo;
+              const totalFees = markets.reduce((sum, m) => {
+                const pool = (m.yes_total || 0) + (m.no_total || 0);
+                const feeBps = m.fee_bps || 100; // default 1%
+                return sum + (pool * feeBps / 10000);
+              }, 0);
+              
+              const formatAlgo = (microAlgos: number) => {
+                const algos = microAlgos / 1_000_000;
+                if (algos >= 1000000) return `${(algos / 1000000).toFixed(2)}M`;
+                if (algos >= 1000) return `${(algos / 1000).toFixed(2)}K`;
+                return algos.toFixed(2);
+              };
+
+              return (
+                <>
+                  <Card className="border-border bg-card">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Total YES Pool</p>
+                      <p className="text-2xl font-bold text-primary">{formatAlgo(totalYes)}</p>
+                      <p className="text-xs text-muted-foreground">ALGO</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border bg-card">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Total NO Pool</p>
+                      <p className="text-2xl font-bold text-secondary">{formatAlgo(totalNo)}</p>
+                      <p className="text-xs text-muted-foreground">ALGO</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-border bg-card">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Combined Pool</p>
+                      <p className="text-2xl font-bold text-foreground">{formatAlgo(totalPool)}</p>
+                      <p className="text-xs text-muted-foreground">ALGO</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="border-primary/30 bg-primary/5">
+                    <CardContent className="p-4 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Fees Generated</p>
+                      <p className="text-2xl font-bold text-primary text-glow-primary">{formatAlgo(totalFees)}</p>
+                      <p className="text-xs text-muted-foreground">ALGO (accrued)</p>
+                    </CardContent>
+                  </Card>
+                </>
+              );
+            })()}
+          </div>
+        </section>
+
         {/* Wallet Warning */}
         {!isConnected && (
           <Card className="border-secondary bg-secondary/10">
             <CardContent className="flex items-center gap-3 p-4">
               <AlertTriangle className="w-5 h-5 text-secondary" />
-              <p className="text-sm">Connect your admin wallet to perform on-chain market operations (freeze, resolve, cancel).</p>
+              <p className="text-sm">Connect your admin wallet to perform on-chain market operations.</p>
             </CardContent>
           </Card>
         )}
