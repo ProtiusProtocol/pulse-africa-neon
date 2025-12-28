@@ -1,13 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Eye, Layers, Target, Globe, Filter, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SpinningGlobe } from "@/components/SpinningGlobe";
+
 const Home = () => {
   return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden py-12 sm:py-20 lg:py-32">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/5 to-accent/10" />
         <div className="absolute inset-0 motion-reduce:hidden">
-          <div className="absolute top-20 left-10 w-48 sm:w-72 h-48 sm:h-72 bg-primary/20 rounded-full blur-3xl animate-pulse-glow" />
+          <div className="absolute top-10 -left-20 sm:top-20 sm:left-10 opacity-60">
+            <SpinningGlobe size={350} />
+          </div>
           <div className="absolute bottom-20 right-10 w-64 sm:w-96 h-64 sm:h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse-glow animation-delay-1000" />
         </div>
 
