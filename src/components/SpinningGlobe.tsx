@@ -31,44 +31,49 @@ export const SpinningGlobe = ({ size = 300, className = "" }: SpinningGlobeProps
     // Globe geometry
     const geometry = new THREE.SphereGeometry(1, 64, 64);
 
-    // Create a simple wireframe globe with glow effect
+    // Load Earth texture
+    const textureLoader = new THREE.TextureLoader();
+    const earthTexture = textureLoader.load(
+      'https://unpkg.com/three-globe@2.31.0/example/img/earth-blue-marble.jpg'
+    );
+    
+    // Create textured globe material
     const material = new THREE.MeshBasicMaterial({
-      color: 0x22c55e, // Primary green color
-      wireframe: true,
+      map: earthTexture,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.9,
     });
 
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
 
-    // Add continent outlines using a second sphere
-    const continentMaterial = new THREE.MeshBasicMaterial({
-      color: 0x4ade80, // Lighter green
-      wireframe: true,
-      transparent: true,
-      opacity: 0.3,
-    });
-    
-    const continentSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1.02, 32, 32),
-      continentMaterial
-    );
-    scene.add(continentSphere);
-
-    // Add glow effect using a larger transparent sphere
+    // Add atmosphere glow effect
     const glowMaterial = new THREE.MeshBasicMaterial({
       color: 0x22c55e,
       transparent: true,
-      opacity: 0.15,
+      opacity: 0.12,
       side: THREE.BackSide,
     });
     
     const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1.3, 32, 32),
+      new THREE.SphereGeometry(1.15, 32, 32),
       glowMaterial
     );
     scene.add(glowSphere);
+
+    // Add subtle outer glow
+    const outerGlowMaterial = new THREE.MeshBasicMaterial({
+      color: 0x22c55e,
+      transparent: true,
+      opacity: 0.06,
+      side: THREE.BackSide,
+    });
+    
+    const outerGlowSphere = new THREE.Mesh(
+      new THREE.SphereGeometry(1.3, 32, 32),
+      outerGlowMaterial
+    );
+    scene.add(outerGlowSphere);
 
     // Animation
     let animationId: number;
@@ -76,13 +81,14 @@ export const SpinningGlobe = ({ size = 300, className = "" }: SpinningGlobeProps
       animationId = requestAnimationFrame(animate);
       
       // Slow rotation
-      globe.rotation.y += 0.002;
-      continentSphere.rotation.y += 0.002;
-      glowSphere.rotation.y += 0.001;
+      globe.rotation.y += 0.001;
+      glowSphere.rotation.y += 0.0008;
+      outerGlowSphere.rotation.y += 0.0005;
       
-      // Slight tilt animation
-      globe.rotation.x = Math.sin(Date.now() * 0.0003) * 0.1 + 0.3;
-      continentSphere.rotation.x = globe.rotation.x;
+      // Slight tilt for realistic Earth angle
+      globe.rotation.x = 0.4;
+      glowSphere.rotation.x = 0.4;
+      outerGlowSphere.rotation.x = 0.4;
       
       renderer.render(scene, camera);
     };
@@ -95,8 +101,9 @@ export const SpinningGlobe = ({ size = 300, className = "" }: SpinningGlobeProps
       renderer.dispose();
       geometry.dispose();
       material.dispose();
-      continentMaterial.dispose();
+      earthTexture.dispose();
       glowMaterial.dispose();
+      outerGlowMaterial.dispose();
       if (containerRef.current && renderer.domElement) {
         containerRef.current.removeChild(renderer.domElement);
       }
