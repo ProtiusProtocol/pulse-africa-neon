@@ -588,9 +588,9 @@ export default function AdminDashboard() {
                   </Card>
                   <Card className="border-primary/30 bg-primary/5">
                     <CardContent className="p-4 text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Fees Generated</p>
+                      <p className="text-xs text-muted-foreground mb-1">Fees (2% of trades)</p>
                       <p className="text-2xl font-bold text-primary text-glow-primary">{formatAlgo(totalFees)}</p>
-                      <p className="text-xs text-muted-foreground">ALGO (accrued)</p>
+                      <p className="text-xs text-muted-foreground">ALGO (accumulated)</p>
                     </CardContent>
                   </Card>
                 </>
