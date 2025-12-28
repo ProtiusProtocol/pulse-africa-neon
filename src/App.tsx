@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { StickyBanner } from "@/components/StickyBanner";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { WalletProvider } from "@/contexts/WalletContext";
 import Home from "./pages/Home";
 import HowItWorks from "./pages/HowItWorks";
@@ -65,6 +66,7 @@ const App = () => (
             </main>
             <Footer />
             <StickyBanner />
+            <WhatsAppButton />
           </div>
         </BrowserRouter>
       </TooltipProvider>
