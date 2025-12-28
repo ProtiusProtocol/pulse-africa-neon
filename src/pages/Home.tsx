@@ -31,17 +31,6 @@ const Home = () => {
               A pre-market outcome intelligence platform presenting signals, structured data, and disciplined interpretation.
             </p>
 
-            <div className="flex flex-wrap gap-2 sm:gap-3 justify-center pt-2 animate-slide-up animation-delay-400 motion-reduce:animate-none">
-              <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/30 rounded-full text-xs sm:text-sm font-bold text-primary">
-                Africa-first
-              </span>
-              <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-secondary/10 border border-secondary/30 rounded-full text-xs sm:text-sm font-bold text-secondary">
-                Outcome-first
-              </span>
-              <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-accent/10 border border-accent/30 rounded-full text-xs sm:text-sm font-bold text-accent">
-                Regulation-aligned
-              </span>
-            </div>
 
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6 animate-slide-up animation-delay-500 motion-reduce:animate-none">
               <Link to="/early-access">
