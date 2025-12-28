@@ -17,7 +17,7 @@ export const StickyBanner = () => {
       icon: BookOpen,
       text: "FREE E-Book: Master Precision Market Trading",
       cta: "Get Your Copy",
-      link: "/subscribe",
+      link: "/early-access",
       highlight: "📘"
     },
     {
