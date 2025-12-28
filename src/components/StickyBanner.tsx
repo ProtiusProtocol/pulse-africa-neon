@@ -22,7 +22,7 @@ export const StickyBanner = () => {
     },
     {
       icon: Zap,
-      text: "Join our Tester Programme — Trade in the Sandbox with ZERO Fees",
+      text: "Join our Tester Programme — Trade with ZERO Fees",
       cta: "Start Testing",
       link: "/early-access",
       highlight: "⚡"
