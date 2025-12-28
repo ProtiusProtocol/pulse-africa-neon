@@ -158,8 +158,8 @@ export const MarketCard = ({
                 </span>
               )}
               {yesMultiplier > 0 && (
-                <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
-                  {yesMultiplier.toFixed(2)}x
+                <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded" title={`${yesMultiplier.toFixed(2)}x payout`}>
+                  10→{(10 * yesMultiplier).toFixed(0)}
                 </span>
               )}
             </div>
@@ -183,8 +183,8 @@ export const MarketCard = ({
                 </span>
               )}
               {noMultiplier > 0 && (
-                <span className="text-xs font-bold text-secondary bg-secondary/10 px-1.5 py-0.5 rounded">
-                  {noMultiplier.toFixed(2)}x
+                <span className="text-xs font-bold text-secondary bg-secondary/10 px-1.5 py-0.5 rounded" title={`${noMultiplier.toFixed(2)}x payout`}>
+                  10→{(10 * noMultiplier).toFixed(0)}
                 </span>
               )}
             </div>
