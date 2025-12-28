@@ -34,8 +34,21 @@ interface Trade {
     status: string;
     yes_total: number | null;
     no_total: number | null;
+    deadline: string | null;
   };
 }
+
+const formatCountdown = (deadline: string): string => {
+  const ms = new Date(deadline).getTime() - Date.now();
+  if (ms <= 0) return "Ended";
+  
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((ms % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  
+  if (days > 30) return `${Math.floor(days / 30)}mo left`;
+  if (days > 0) return `${days}d ${hours}h left`;
+  return `${hours}h left`;
+};
 
 export default function UserDashboard() {
   const { walletAddress, isConnected, connect } = useWallet();
@@ -54,7 +67,7 @@ export default function UserDashboard() {
       .from('user_trades')
       .select(`
         *,
-        market:markets(title, category, status, yes_total, no_total)
+        market:markets(title, category, status, yes_total, no_total, deadline)
       `)
       .eq('wallet_address', walletAddress)
       .order('created_at', { ascending: false });
@@ -258,10 +271,19 @@ export default function UserDashboard() {
                           <h4 className="font-medium text-foreground truncate">
                             {trade.market?.title || 'Unknown Market'}
                           </h4>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
                             <span>{trade.market?.category}</span>
                             <span>•</span>
                             <span>{new Date(trade.created_at).toLocaleDateString()}</span>
+                            {trade.market?.deadline && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1 text-primary">
+                                  <Clock className="w-3 h-3" />
+                                  {formatCountdown(trade.market.deadline)}
+                                </span>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
