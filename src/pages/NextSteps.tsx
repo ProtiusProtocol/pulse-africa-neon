@@ -177,7 +177,7 @@ const NextSteps = () => {
                   <ul className="space-y-2 text-sm text-foreground">
                     <li className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 bg-secondary rounded-full mt-2 flex-shrink-0" />
-                      <span>Connecting a wallet to the platform</span>
+                      <span><strong>Pera Wallet</strong> (Algorand) — the only supported wallet</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <div className="w-1.5 h-1.5 bg-secondary rounded-full mt-2 flex-shrink-0" />
@@ -188,6 +188,36 @@ const NextSteps = () => {
                       <span>Expressing views through informed participation</span>
                     </li>
                   </ul>
+                </div>
+
+                {/* Pera Wallet Setup Guide */}
+                <div className="p-4 bg-secondary/5 border border-secondary/20 rounded-lg space-y-3">
+                  <h4 className="text-sm font-semibold text-secondary flex items-center gap-2">
+                    <Wallet className="w-4 h-4" />
+                    How to Get Started with Pera Wallet
+                  </h4>
+                  <ol className="space-y-2 text-xs text-muted-foreground">
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary font-bold">1.</span>
+                      <span>Download Pera Wallet from the <a href="https://perawallet.app/" target="_blank" rel="noopener noreferrer" className="text-secondary underline hover:no-underline">App Store or Google Play</a></span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary font-bold">2.</span>
+                      <span>Create a new wallet and securely save your recovery phrase</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary font-bold">3.</span>
+                      <span>Switch to <strong>TestNet</strong> in Settings → Node Settings</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary font-bold">4.</span>
+                      <span>Get free TestNet ALGO from the <a href="https://dispenser.testnet.aws.algodev.network/" target="_blank" rel="noopener noreferrer" className="text-secondary underline hover:no-underline">Algorand TestNet Dispenser</a></span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-secondary font-bold">5.</span>
+                      <span>Connect your wallet on our Markets page to start trading</span>
+                    </li>
+                  </ol>
                 </div>
 
                 <div className="pt-4 border-t border-border">
