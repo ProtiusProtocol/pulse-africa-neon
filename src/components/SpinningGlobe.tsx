@@ -114,7 +114,7 @@ export const SpinningGlobe = ({ size = 300, className = "" }: SpinningGlobeProps
     <div 
       ref={containerRef} 
       className={`pointer-events-none ${className}`}
-      style={{ width: size, height: size }}
+      style={{ width: size, height: size, overflow: 'visible' }}
     />
   );
 };
