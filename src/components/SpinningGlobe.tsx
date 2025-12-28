@@ -47,33 +47,6 @@ export const SpinningGlobe = ({ size = 300, className = "" }: SpinningGlobeProps
     const globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
 
-    // Add atmosphere glow effect
-    const glowMaterial = new THREE.MeshBasicMaterial({
-      color: 0x22c55e,
-      transparent: true,
-      opacity: 0.12,
-      side: THREE.BackSide,
-    });
-    
-    const glowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1.15, 32, 32),
-      glowMaterial
-    );
-    scene.add(glowSphere);
-
-    // Add subtle outer glow
-    const outerGlowMaterial = new THREE.MeshBasicMaterial({
-      color: 0x22c55e,
-      transparent: true,
-      opacity: 0.06,
-      side: THREE.BackSide,
-    });
-    
-    const outerGlowSphere = new THREE.Mesh(
-      new THREE.SphereGeometry(1.3, 32, 32),
-      outerGlowMaterial
-    );
-    scene.add(outerGlowSphere);
 
     // Animation
     let animationId: number;
@@ -82,13 +55,9 @@ export const SpinningGlobe = ({ size = 300, className = "" }: SpinningGlobeProps
       
       // Slow rotation
       globe.rotation.y += 0.001;
-      glowSphere.rotation.y += 0.0008;
-      outerGlowSphere.rotation.y += 0.0005;
       
       // Slight tilt for realistic Earth angle
       globe.rotation.x = 0.4;
-      glowSphere.rotation.x = 0.4;
-      outerGlowSphere.rotation.x = 0.4;
       
       renderer.render(scene, camera);
     };
@@ -102,8 +71,6 @@ export const SpinningGlobe = ({ size = 300, className = "" }: SpinningGlobeProps
       geometry.dispose();
       material.dispose();
       earthTexture.dispose();
-      glowMaterial.dispose();
-      outerGlowMaterial.dispose();
       if (containerRef.current && renderer.domElement) {
         containerRef.current.removeChild(renderer.domElement);
       }
@@ -114,7 +81,11 @@ export const SpinningGlobe = ({ size = 300, className = "" }: SpinningGlobeProps
     <div 
       ref={containerRef} 
       className={`pointer-events-none ${className}`}
-      style={{ width: size, height: size, overflow: 'visible' }}
+      style={{ 
+        width: size, 
+        height: size,
+        filter: 'drop-shadow(0 0 20px hsl(142 71% 45% / 0.3)) drop-shadow(0 0 40px hsl(142 71% 45% / 0.15))'
+      }}
     />
   );
 };
