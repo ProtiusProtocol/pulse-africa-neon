@@ -171,8 +171,7 @@ export class AugurionMarketV4Client {
       const suggestedParams = await algodClient.getTransactionParams().do();
       const method = side === 'yes' ? METHODS.bet_yes : METHODS.bet_no;
 
-      const atc = new AtomicTransactionComposer();
-
+      // Build transactions manually for better control
       // Payment transaction (must be first in group)
       const paymentTxn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
         sender,
@@ -181,30 +180,46 @@ export class AugurionMarketV4Client {
         suggestedParams,
       });
 
-      atc.addTransaction({ txn: paymentTxn, signer });
-
-      // App call transaction with box references for user's bet storage
-      atc.addMethodCall({
-        appID: this.appId,
-        method,
-        methodArgs: [amount],
+      // App call transaction with box references
+      const appCallTxn = algosdk.makeApplicationCallTxnFromObject({
+        appIndex: this.appId,
+        onComplete: algosdk.OnApplicationComplete.NoOpOC,
         sender,
         suggestedParams,
-        signer,
+        appArgs: [
+          method.getSelector(),
+          algosdk.encodeUint64(amount),
+        ],
         boxes: [
           { appIndex: this.appId, name: new Uint8Array([...Buffer.from(side + ':'), ...algosdk.decodeAddress(sender).publicKey]) },
         ],
       });
 
-      const result = await atc.execute(algodClient, 4);
-      const methodResult = result.methodResults[0];
+      // Assign group ID to both transactions
+      const txnGroup = algosdk.assignGroupID([paymentTxn, appCallTxn]);
+
+      console.log('Requesting wallet signature for', txnGroup.length, 'transactions...');
+
+      // Sign with wallet - request signature for both transactions
+      const signedTxns = await signer(txnGroup, [0, 1]);
+
+      console.log('Signed', signedTxns.length, 'transactions, submitting...');
+
+      // Submit the signed transaction group
+      const { txid } = await algodClient.sendRawTransaction(signedTxns).do();
+
+      // Wait for confirmation
+      await algosdk.waitForConfirmation(algodClient, txid, 4);
+
+      console.log('Transaction confirmed:', txid);
 
       return {
         success: true,
-        txId: result.txIDs[1],
-        result: methodResult?.returnValue?.toString(),
+        txId: txid,
+        result: 'Bet placed successfully',
       };
     } catch (error) {
+      console.error('placeBet error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',

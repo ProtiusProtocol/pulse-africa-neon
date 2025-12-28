@@ -79,15 +79,26 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       throw new Error('Wallet not connected');
     }
 
-    // Prepare transactions for signing
+    console.log('Preparing', txnGroup.length, 'transactions for signing, indexes:', indexesToSign);
+
+    // Prepare transactions for Pera Wallet signing format
+    // Pera expects SignerTransaction[] with { txn: Transaction, signers?: string[] }
     const txnsToSign = txnGroup.map((txn, index) => {
       if (indexesToSign.includes(index)) {
-        return { txn, signers: [walletAddress] };
+        // This transaction needs to be signed
+        return { txn };
       }
-      return { txn, signers: [] };
+      // Skip signing this transaction (empty signers array)
+      return { txn, signers: [] as string[] };
     });
 
+    console.log('Sending', txnsToSign.length, 'transactions to Pera Wallet for signing...');
+
+    // Sign with Pera Wallet - it expects SignerTransaction[][] (array of groups)
     const signedTxns = await peraWallet.signTransaction([txnsToSign]);
+    
+    console.log('Received', signedTxns.length, 'signed transactions from wallet');
+
     return signedTxns;
   }, [walletAddress]);
 
