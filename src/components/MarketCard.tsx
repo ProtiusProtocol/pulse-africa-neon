@@ -35,9 +35,14 @@ const formatCountdown = (ms: number): string => {
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
+  const months = Math.floor(days / 30);
+  const remainingDays = days % 30;
+  const remainingHours = hours % 24;
 
-  if (days > 0) {
-    return `${days}d ${hours % 24}h`;
+  if (months > 0) {
+    return `${months}mo ${remainingDays}d ${remainingHours}h`;
+  } else if (days > 0) {
+    return `${days}d ${remainingHours}h`;
   } else if (hours > 0) {
     return `${hours}h ${minutes % 60}m`;
   } else if (minutes > 0) {
