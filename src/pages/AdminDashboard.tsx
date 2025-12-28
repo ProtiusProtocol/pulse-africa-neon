@@ -910,10 +910,16 @@ export default function AdminDashboard() {
                         </div>
                       </td>
                       <td className="p-3">
-                        <div className="flex items-center gap-1 text-sm">
-                          <Phone className="w-3 h-3 text-muted-foreground" />
+                        <a 
+                          href={`https://wa.me/${signup.whatsapp.replace(/[^0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-sm text-primary hover:text-primary/80 hover:underline transition-colors"
+                          title="Open WhatsApp chat"
+                        >
+                          <Phone className="w-3 h-3" />
                           {signup.whatsapp}
-                        </div>
+                        </a>
                       </td>
                       <td className="p-3">
                         <div className="flex items-center gap-1 text-sm">
