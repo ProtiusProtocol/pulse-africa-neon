@@ -1,7 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Clock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+type SortMode = "pool" | "deadline";
 
 interface Market {
   id: string;
@@ -38,7 +41,9 @@ const formatCountdown = (deadline: string): string => {
 };
 
 export const MarketMatrixView = ({ markets, onTrade, getOdds }: MarketMatrixViewProps) => {
-  // Group markets by category and sort by total pool
+  const [sortMode, setSortMode] = useState<SortMode>("pool");
+
+  // Group markets by category and sort by selected mode
   const { categories, matrixData, maxRows } = useMemo(() => {
     // Get unique categories
     const cats = [...new Set(markets.map(m => m.category))].sort();
@@ -49,9 +54,16 @@ export const MarketMatrixView = ({ markets, onTrade, getOdds }: MarketMatrixView
       grouped[cat] = markets
         .filter(m => m.category === cat)
         .sort((a, b) => {
-          const aTotal = (a.yes_total || 0) + (a.no_total || 0);
-          const bTotal = (b.yes_total || 0) + (b.no_total || 0);
-          return bTotal - aTotal; // Highest activity first
+          if (sortMode === "pool") {
+            const aTotal = (a.yes_total || 0) + (a.no_total || 0);
+            const bTotal = (b.yes_total || 0) + (b.no_total || 0);
+            return bTotal - aTotal; // Highest activity first
+          } else {
+            // Sort by deadline - shortest first, nulls at end
+            const aDeadline = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+            const bDeadline = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+            return aDeadline - bDeadline;
+          }
         });
     });
     
@@ -59,7 +71,7 @@ export const MarketMatrixView = ({ markets, onTrade, getOdds }: MarketMatrixView
     const max = Math.max(...Object.values(grouped).map(arr => arr.length));
     
     return { categories: cats, matrixData: grouped, maxRows: max };
-  }, [markets]);
+  }, [markets, sortMode]);
 
   if (categories.length === 0) {
     return <p className="text-muted-foreground text-center py-8">No markets to display</p>;
@@ -85,10 +97,24 @@ export const MarketMatrixView = ({ markets, onTrade, getOdds }: MarketMatrixView
           ))}
         </div>
 
-        {/* Activity Rank Label */}
-        <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
-          <TrendingUp className="w-3 h-3" />
-          <span>Ranked by pool size (highest activity at top)</span>
+        {/* Sort Toggle */}
+        <div className="flex items-center gap-4 mb-4">
+          <span className="text-xs text-muted-foreground">Sort by:</span>
+          <ToggleGroup 
+            type="single" 
+            value={sortMode} 
+            onValueChange={(v) => v && setSortMode(v as SortMode)}
+            size="sm"
+          >
+            <ToggleGroupItem value="pool" className="text-xs gap-1">
+              <TrendingUp className="w-3 h-3" />
+              Pool Size
+            </ToggleGroupItem>
+            <ToggleGroupItem value="deadline" className="text-xs gap-1">
+              <Clock className="w-3 h-3" />
+              Expires Soon
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
         {/* Matrix Rows */}
