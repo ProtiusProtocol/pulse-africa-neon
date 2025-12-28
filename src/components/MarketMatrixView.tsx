@@ -78,56 +78,56 @@ export const MarketMatrixView = ({ markets, onTrade, getOdds }: MarketMatrixView
   }
 
   return (
-    <div className="overflow-x-auto">
-      <div className="min-w-max">
-        {/* Category Headers */}
-        <div 
-          className="grid gap-4 mb-4 sticky top-0 bg-background z-10 pb-2 border-b border-border"
-          style={{ gridTemplateColumns: `repeat(${categories.length}, minmax(280px, 1fr))` }}
+    <div className="w-full">
+      {/* Sort Toggle */}
+      <div className="flex items-center gap-4 mb-3">
+        <span className="text-xs text-muted-foreground">Sort by:</span>
+        <ToggleGroup 
+          type="single" 
+          value={sortMode} 
+          onValueChange={(v) => v && setSortMode(v as SortMode)}
+          size="sm"
         >
-          {categories.map(category => (
-            <div key={category} className="text-center">
-              <h3 className="text-lg font-bold text-primary uppercase tracking-wide">
-                {category}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                {matrixData[category].length} markets
-              </p>
-            </div>
-          ))}
-        </div>
+          <ToggleGroupItem value="pool" className="text-xs gap-1 h-7 px-2">
+            <TrendingUp className="w-3 h-3" />
+            Pool
+          </ToggleGroupItem>
+          <ToggleGroupItem value="deadline" className="text-xs gap-1 h-7 px-2">
+            <Clock className="w-3 h-3" />
+            Expiry
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </div>
 
-        {/* Sort Toggle */}
-        <div className="flex items-center gap-4 mb-4">
-          <span className="text-xs text-muted-foreground">Sort by:</span>
-          <ToggleGroup 
-            type="single" 
-            value={sortMode} 
-            onValueChange={(v) => v && setSortMode(v as SortMode)}
-            size="sm"
-          >
-            <ToggleGroupItem value="pool" className="text-xs gap-1">
-              <TrendingUp className="w-3 h-3" />
-              Pool Size
-            </ToggleGroupItem>
-            <ToggleGroupItem value="deadline" className="text-xs gap-1">
-              <Clock className="w-3 h-3" />
-              Expires Soon
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+      {/* Category Headers */}
+      <div 
+        className="grid gap-2 mb-2 pb-2 border-b border-border"
+        style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}
+      >
+        {categories.map(category => (
+          <div key={category} className="text-center">
+            <h3 className="text-xs font-bold text-primary uppercase tracking-wide truncate">
+              {category}
+            </h3>
+            <p className="text-[10px] text-muted-foreground">
+              {matrixData[category].length}
+            </p>
+          </div>
+        ))}
+      </div>
 
-        {/* Matrix Rows */}
+      {/* Matrix Rows */}
+      <div className="space-y-2">
         {Array.from({ length: maxRows }).map((_, rowIndex) => (
           <div
             key={rowIndex}
-            className="grid gap-4 mb-4"
-            style={{ gridTemplateColumns: `repeat(${categories.length}, minmax(280px, 1fr))` }}
+            className="grid gap-2"
+            style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}
           >
             {categories.map(category => {
               const market = matrixData[category][rowIndex];
               if (!market) {
-                return <div key={`${category}-${rowIndex}-empty`} className="min-h-[120px]" />;
+                return <div key={`${category}-${rowIndex}-empty`} className="min-h-[60px]" />;
               }
               
               const odds = getOdds(market);
@@ -136,41 +136,30 @@ export const MarketMatrixView = ({ markets, onTrade, getOdds }: MarketMatrixView
               return (
                 <Card 
                   key={market.id}
-                  className="p-4 bg-card border-border hover:border-primary/50 transition-all cursor-pointer group"
+                  className="p-2 bg-card border-border hover:border-primary/50 transition-all cursor-pointer group"
                   onClick={() => onTrade(market)}
                 >
-                  <div className="space-y-3">
-                    {/* Rank Badge */}
+                  <div className="space-y-1">
+                    {/* Header row with rank and deadline */}
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                      <span className="text-[10px] font-mono text-muted-foreground">
                         #{rowIndex + 1}
                       </span>
                       {market.deadline && (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                          <Clock className="w-2.5 h-2.5" />
                           {formatCountdown(market.deadline)}
                         </span>
                       )}
                     </div>
 
                     {/* Title */}
-                    <h4 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                    <h4 className="text-[11px] font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2 leading-tight">
                       {market.title}
                     </h4>
 
-                    {/* Odds & Pool */}
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex gap-3">
-                        <span className="text-primary font-bold">{odds.yes}% YES</span>
-                        <span className="text-secondary font-bold">{odds.no}% NO</span>
-                      </div>
-                      <span className="text-muted-foreground font-mono">
-                        {formatAmount(totalPool)} pool
-                      </span>
-                    </div>
-
-                    {/* Mini progress bar */}
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden flex">
+                    {/* Odds bar */}
+                    <div className="h-1 bg-muted rounded-full overflow-hidden flex">
                       <div 
                         className="h-full bg-primary" 
                         style={{ width: `${odds.yes}%` }}
@@ -181,9 +170,14 @@ export const MarketMatrixView = ({ markets, onTrade, getOdds }: MarketMatrixView
                       />
                     </div>
 
-                    <Button variant="outline" size="sm" className="w-full text-xs">
-                      Trade
-                    </Button>
+                    {/* Odds text */}
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-primary font-semibold">{odds.yes}%</span>
+                      <span className="text-muted-foreground font-mono">
+                        {formatAmount(totalPool)}
+                      </span>
+                      <span className="text-secondary font-semibold">{odds.no}%</span>
+                    </div>
                   </div>
                 </Card>
               );
