@@ -32,7 +32,7 @@ const Home = () => {
             </p>
 
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6 animate-slide-up animation-delay-500 motion-reduce:animate-none">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6 justify-center animate-slide-up animation-delay-500 motion-reduce:animate-none">
               <Link to="/early-access">
                 <Button variant="neon" size="lg" className="w-full sm:w-auto">
                   Get Early Access
