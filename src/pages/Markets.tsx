@@ -1,11 +1,12 @@
 import { MarketCard } from "@/components/MarketCard";
+import { MarketMatrixView } from "@/components/MarketMatrixView";
 import { TradeModal } from "@/components/TradeModal";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Activity, RefreshCw } from "lucide-react";
+import { ChevronRight, Activity, RefreshCw, LayoutGrid, TableProperties } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 interface Market {
   id: string;
@@ -29,6 +30,8 @@ interface FragilitySignal {
   name: string;
 }
 
+type ViewMode = "grid" | "matrix";
+
 const Markets = () => {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
@@ -36,6 +39,7 @@ const Markets = () => {
   const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const fetchData = async () => {
     const [marketsRes, signalsRes] = await Promise.all([
@@ -146,52 +150,82 @@ const Markets = () => {
           </a>
         </div>
 
-        {/* Info Banner */}
+        {/* Info Banner with View Toggle */}
         <div className="mb-8 p-4 bg-card/50 border border-border rounded-lg">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground text-center sm:text-left">
               <span className="text-primary font-semibold">{markets.length} Active Markets</span> — 
               Each market is linked to underlying fragility signals that inform probability drift
             </p>
-            {lastSynced && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <RefreshCw className="w-3 h-3" />
-                <span>Last synced: {formatDistanceToNow(lastSynced, { addSuffix: true })}</span>
+            <div className="flex items-center gap-4">
+              {/* View Toggle */}
+              <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+                <Button
+                  variant={viewMode === "grid" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-7 px-2"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "matrix" ? "default" : "ghost"}
+                  size="sm"
+                  className="h-7 px-2"
+                  onClick={() => setViewMode("matrix")}
+                  title="Matrix view: categories as columns, ranked by activity"
+                >
+                  <TableProperties className="w-4 h-4" />
+                </Button>
               </div>
-            )}
+              {lastSynced && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Synced {formatDistanceToNow(lastSynced, { addSuffix: true })}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Markets Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {markets.map((market, index) => {
-            const odds = getOdds(market);
-            const linkedSignals = getLinkedSignalNames(market.linked_signals);
-            return (
-              <div
-                key={market.id}
-                className="animate-slide-up"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <MarketCard
-                  title={market.title}
-                  yes={odds.yes}
-                  no={odds.no}
-                  yesAmount={market.yes_total || 0}
-                  noAmount={market.no_total || 0}
-                  volatility="medium"
-                  deadline={market.deadline || undefined}
-                  trend="up"
-                  trendValue={0}
-                  category={market.category}
-                  linkedSignals={linkedSignals}
-                  resolutionCriteria={market.resolution_criteria || undefined}
-                  onTrade={() => handleTrade(market)}
-                />
-              </div>
-            );
-          })}
-        </div>
+        {/* Markets Display */}
+        {viewMode === "matrix" ? (
+          <MarketMatrixView 
+            markets={markets} 
+            onTrade={handleTrade} 
+            getOdds={getOdds}
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {markets.map((market, index) => {
+              const odds = getOdds(market);
+              const linkedSignals = getLinkedSignalNames(market.linked_signals);
+              return (
+                <div
+                  key={market.id}
+                  className="animate-slide-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <MarketCard
+                    title={market.title}
+                    yes={odds.yes}
+                    no={odds.no}
+                    yesAmount={market.yes_total || 0}
+                    noAmount={market.no_total || 0}
+                    volatility="medium"
+                    deadline={market.deadline || undefined}
+                    trend="up"
+                    trendValue={0}
+                    category={market.category}
+                    linkedSignals={linkedSignals}
+                    resolutionCriteria={market.resolution_criteria || undefined}
+                    onTrade={() => handleTrade(market)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        )}
 
       </div>
 
