@@ -20,12 +20,15 @@ interface MarketCardProps {
   onTrade?: () => void;
 }
 
-const formatAmount = (microAlgos: number): string => {
-  const algos = microAlgos / 1_000_000;
-  if (algos >= 1000) {
-    return `${(algos / 1000).toFixed(1)}K`;
+const formatAmount = (amount: number): string => {
+  // Amount is already in ALGO (from database)
+  if (amount >= 1000000) {
+    return `${(amount / 1000000).toFixed(1)}M`;
   }
-  return algos.toFixed(2);
+  if (amount >= 1000) {
+    return `${(amount / 1000).toFixed(1)}K`;
+  }
+  return amount.toFixed(2);
 };
 
 const formatCountdown = (ms: number): string => {
