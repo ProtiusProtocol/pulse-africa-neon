@@ -13,9 +13,6 @@ export const Footer = () => {
             <p className="text-sm text-muted-foreground">
               Outcome Intelligence Before Markets Move.
             </p>
-            <p className="text-xs text-muted-foreground">
-              Africa-first. Outcome-first. Regulation-aligned.
-            </p>
           </div>
 
           {/* Platform */}
