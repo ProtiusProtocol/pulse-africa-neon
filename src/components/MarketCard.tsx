@@ -102,6 +102,16 @@ export const MarketCard = ({
   const vol = volatilityConfig[volatility];
   const isUrgent = deadline && new Date(deadline).getTime() - Date.now() < 24 * 60 * 60 * 1000;
 
+  // Calculate potential payout multipliers
+  const yesPool = yesAmount || 0;
+  const noPool = noAmount || 0;
+  const totalPool = yesPool + noPool;
+  
+  // Payout multiplier: if you bet 1 ALGO on YES and win, you get back (totalPool / yesPool)
+  // This assumes winner-takes-all proportional payout
+  const yesMultiplier = yesPool > 0 ? totalPool / yesPool : 0;
+  const noMultiplier = noPool > 0 ? totalPool / noPool : 0;
+
   return (
     <Card className="group p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover:glow-primary cursor-pointer">
       <div className="space-y-4">
@@ -144,7 +154,12 @@ export const MarketCard = ({
               <span className="text-sm font-medium text-muted-foreground">YES</span>
               {yesAmount !== undefined && (
                 <span className="text-xs text-primary/70 font-mono">
-                  {formatAmount(yesAmount)} ALGO
+                  Pool: {formatAmount(yesAmount)}
+                </span>
+              )}
+              {yesMultiplier > 0 && (
+                <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                  {yesMultiplier.toFixed(2)}x
                 </span>
               )}
             </div>
@@ -164,7 +179,12 @@ export const MarketCard = ({
               <span className="text-sm font-medium text-muted-foreground">NO</span>
               {noAmount !== undefined && (
                 <span className="text-xs text-secondary/70 font-mono">
-                  {formatAmount(noAmount)} ALGO
+                  Pool: {formatAmount(noAmount)}
+                </span>
+              )}
+              {noMultiplier > 0 && (
+                <span className="text-xs font-bold text-secondary bg-secondary/10 px-1.5 py-0.5 rounded">
+                  {noMultiplier.toFixed(2)}x
                 </span>
               )}
             </div>
