@@ -20,6 +20,10 @@ const CATEGORY_KEYWORDS: Record<string, string[]> = {
   'RUGBY': ['springboks', 'rugby south africa', 'URC', 'currie cup', 'rassie erasmus'],
   'CRICKET': ['proteas cricket', 'CSA', 'T20 south africa', 'test match proteas'],
   'SOCCER': ['bafana bafana', 'PSL', 'kaizer chiefs', 'orlando pirates', 'mamelodi sundowns'],
+  'MINING': ['mining south africa', 'platinum', 'gold mining', 'coal mining', 'Anglo American', 'mine strikes'],
+  'HEALTHCARE': ['healthcare south africa', 'NHI', 'hospitals', 'public health', 'disease outbreak', 'health minister'],
+  'EDUCATION': ['education south africa', 'matric', 'NSFAS', 'universities', 'schools', 'fees must fall'],
+  'TOURISM': ['tourism south africa', 'travel', 'tourists', 'safari', 'hospitality', 'Cape Town tourism'],
 };
 
 // Function to calculate week ID (ISO week format)
@@ -52,6 +56,10 @@ async function fetchNewsAttention(categoryCode: string, keywords: string[]): Pro
       'RUGBY': 70,
       'CRICKET': 45,
       'SOCCER': 60,
+      'MINING': 55,
+      'HEALTHCARE': 45,
+      'EDUCATION': 40,
+      'TOURISM': 50,
     };
     const variance = Math.random() * 20 - 10; // -10 to +10
     return { 
@@ -136,6 +144,10 @@ function calculateMarketWorthiness(categoryCode: string, attentionScore: number)
     'RUGBY': 100,         // Match outcomes clear
     'CRICKET': 100,       // Match outcomes clear
     'SOCCER': 100,        // Match outcomes clear
+    'MINING': 75,         // Production data available
+    'HEALTHCARE': 65,     // Some metrics available
+    'EDUCATION': 70,      // Exam results, pass rates
+    'TOURISM': 70,        // Visitor numbers trackable
   };
   
   const baseWorthiness = settlabilityFactors[categoryCode] || 50;
