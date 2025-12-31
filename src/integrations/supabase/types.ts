@@ -14,6 +14,122 @@ export type Database = {
   }
   public: {
     Tables: {
+      attention_categories: {
+        Row: {
+          category_group: string
+          code: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          keywords: Json
+          name: string
+        }
+        Insert: {
+          category_group: string
+          code: string
+          created_at?: string
+          description?: string | null
+          display_order: number
+          id?: string
+          keywords?: Json
+          name: string
+        }
+        Update: {
+          category_group?: string
+          code?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          keywords?: Json
+          name?: string
+        }
+        Relationships: []
+      }
+      attention_scores: {
+        Row: {
+          attention_score: number
+          category_id: string
+          combined_score: number | null
+          created_at: string
+          engagement_score: number
+          id: string
+          market_worthiness_score: number
+          raw_data: Json | null
+          updated_at: string
+          week_id: string
+        }
+        Insert: {
+          attention_score?: number
+          category_id: string
+          combined_score?: number | null
+          created_at?: string
+          engagement_score?: number
+          id?: string
+          market_worthiness_score?: number
+          raw_data?: Json | null
+          updated_at?: string
+          week_id: string
+        }
+        Update: {
+          attention_score?: number
+          category_id?: string
+          combined_score?: number | null
+          created_at?: string
+          engagement_score?: number
+          id?: string
+          market_worthiness_score?: number
+          raw_data?: Json | null
+          updated_at?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attention_scores_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "attention_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attention_snapshots: {
+        Row: {
+          created_at: string
+          deprioritised_topics: Json | null
+          generated_at: string | null
+          id: string
+          recommended_markets: Json | null
+          sport_percentage: number | null
+          summary_md: string | null
+          updated_at: string
+          week_id: string
+        }
+        Insert: {
+          created_at?: string
+          deprioritised_topics?: Json | null
+          generated_at?: string | null
+          id?: string
+          recommended_markets?: Json | null
+          sport_percentage?: number | null
+          summary_md?: string | null
+          updated_at?: string
+          week_id: string
+        }
+        Update: {
+          created_at?: string
+          deprioritised_topics?: Json | null
+          generated_at?: string | null
+          id?: string
+          recommended_markets?: Json | null
+          sport_percentage?: number | null
+          summary_md?: string | null
+          updated_at?: string
+          week_id?: string
+        }
+        Relationships: []
+      }
       community_responses: {
         Row: {
           created_at: string
