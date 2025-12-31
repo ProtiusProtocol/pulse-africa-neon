@@ -361,6 +361,71 @@ export type Database = {
         }
         Relationships: []
       }
+      outcomes_watchlist: {
+        Row: {
+          ai_analysis: string | null
+          category: string
+          created_at: string
+          deadline: string
+          drift_direction: string | null
+          id: string
+          linked_market_id: string | null
+          probability_current: number | null
+          probability_previous: number | null
+          question_text: string
+          region: string
+          research_context: string | null
+          resolution_criteria: string | null
+          signal_code: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ai_analysis?: string | null
+          category?: string
+          created_at?: string
+          deadline: string
+          drift_direction?: string | null
+          id?: string
+          linked_market_id?: string | null
+          probability_current?: number | null
+          probability_previous?: number | null
+          question_text: string
+          region?: string
+          research_context?: string | null
+          resolution_criteria?: string | null
+          signal_code: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ai_analysis?: string | null
+          category?: string
+          created_at?: string
+          deadline?: string
+          drift_direction?: string | null
+          id?: string
+          linked_market_id?: string | null
+          probability_current?: number | null
+          probability_previous?: number | null
+          question_text?: string
+          region?: string
+          research_context?: string | null
+          resolution_criteria?: string | null
+          signal_code?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outcomes_watchlist_linked_market_id_fkey"
+            columns: ["linked_market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
