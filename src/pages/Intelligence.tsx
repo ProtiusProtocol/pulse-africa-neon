@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity, Target, Clock, ChevronRight, Zap, Globe, Link2, ArrowRight, RefreshCw, Flame } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity, Target, Clock, ChevronRight, Zap, Globe, Link2, ArrowRight, RefreshCw, Flame, ListChecks } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailSubscribeForm } from "@/components/EmailSubscribeForm";
 import { AttentionAnalytics } from "@/components/AttentionAnalytics";
+import { OutcomesWatchlist } from "@/components/OutcomesWatchlist";
 
 // Types
 interface CoreComponent {
@@ -209,8 +210,12 @@ const Intelligence = () => {
       <section className="py-8">
         <div className="container mx-auto px-4">
           <Tabs defaultValue="signals" className="space-y-6">
-            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 bg-card border border-border">
+            <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 bg-card border border-border">
               <TabsTrigger value="signals">Signals & Markets</TabsTrigger>
+              <TabsTrigger value="outcomes" className="gap-1">
+                <ListChecks className="w-3 h-3" />
+                Outcomes
+              </TabsTrigger>
               <TabsTrigger value="drift">Drift Map</TabsTrigger>
               <TabsTrigger value="analytics" className="gap-1">
                 <Flame className="w-3 h-3" />
@@ -359,6 +364,11 @@ const Intelligence = () => {
                   </div>
                 </div>
               </div>
+            </TabsContent>
+
+            {/* Outcomes Watchlist Tab */}
+            <TabsContent value="outcomes">
+              <OutcomesWatchlist />
             </TabsContent>
 
             {/* Drift Map Tab */}
