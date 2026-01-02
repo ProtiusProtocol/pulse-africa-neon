@@ -37,7 +37,7 @@ export const Footer = () => {
             <h3 className="font-bold text-foreground mb-4">Company</h3>
             <ul className="space-y-2">
               <li>
-                <a href="https://augurionpete.substack.com" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                <a href="https://substack.com/@augurionpete" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                   Learn
                 </a>
               </li>

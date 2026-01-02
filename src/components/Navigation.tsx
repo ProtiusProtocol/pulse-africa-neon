@@ -32,7 +32,7 @@ export const Navigation = () => {
   ];
 
   const externalLinks = [
-    { href: "https://augurionpete.substack.com", label: "Learn" },
+    { href: "https://substack.com/@augurionpete", label: "Learn" },
   ];
 
   return (
