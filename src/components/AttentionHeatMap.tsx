@@ -70,25 +70,32 @@ export function AttentionHeatMap({
       .sort((a, b) => b.combined - a.combined);
   }, [categories, scores, previousScores, emphasisMode]);
 
-  // Get heat color based on combined score
-  const getHeatColor = (score: number, isSport: boolean) => {
-    if (score >= 80) return isSport ? 'bg-secondary/80 border-secondary' : 'bg-destructive/80 border-destructive';
-    if (score >= 60) return isSport ? 'bg-secondary/50 border-secondary/50' : 'bg-destructive/50 border-destructive/50';
-    if (score >= 40) return 'bg-accent/40 border-accent/40';
-    if (score >= 20) return 'bg-muted border-border';
-    return 'bg-card border-border';
+  // Warm-to-cool gradient based on activity (most active = warmest)
+  const getHeatColor = (score: number, index: number, total: number) => {
+    // Top items get warmest colors, bottom items get coolest
+    const position = index / Math.max(total - 1, 1);
+    
+    if (score >= 80) return 'bg-gradient-to-br from-red-500/90 to-orange-500/80 border-red-500 shadow-red-500/30 shadow-lg';
+    if (score >= 70) return 'bg-gradient-to-br from-orange-500/80 to-amber-500/70 border-orange-500 shadow-orange-500/20 shadow-md';
+    if (score >= 60) return 'bg-gradient-to-br from-amber-500/70 to-yellow-500/60 border-amber-500';
+    if (score >= 50) return 'bg-gradient-to-br from-yellow-500/50 to-lime-500/40 border-yellow-500/70';
+    if (score >= 40) return 'bg-gradient-to-br from-lime-500/40 to-emerald-500/30 border-lime-500/50';
+    if (score >= 30) return 'bg-gradient-to-br from-emerald-500/30 to-cyan-500/25 border-emerald-500/40';
+    if (score >= 20) return 'bg-gradient-to-br from-cyan-500/25 to-blue-500/20 border-cyan-500/30';
+    return 'bg-gradient-to-br from-blue-500/15 to-indigo-500/10 border-blue-500/20';
   };
 
   const getTrendIcon = (trend: number) => {
-    if (trend > 5) return <TrendingUp className="w-3 h-3 text-destructive" />;
-    if (trend < -5) return <TrendingDown className="w-3 h-3 text-primary" />;
+    if (trend > 5) return <TrendingUp className="w-3 h-3 text-red-400 animate-pulse" />;
+    if (trend < -5) return <TrendingDown className="w-3 h-3 text-cyan-400" />;
     return <Minus className="w-3 h-3 text-muted-foreground" />;
   };
 
   const getIntensityIcon = (score: number) => {
-    if (score >= 80) return <Flame className="w-4 h-4 text-destructive animate-pulse" />;
-    if (score >= 60) return <Zap className="w-4 h-4 text-accent" />;
-    return <Activity className="w-4 h-4 text-muted-foreground" />;
+    if (score >= 80) return <Flame className="w-5 h-5 text-red-400 animate-pulse drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]" />;
+    if (score >= 60) return <Zap className="w-5 h-5 text-amber-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.4)]" />;
+    if (score >= 40) return <Activity className="w-4 h-4 text-lime-400" />;
+    return <Activity className="w-4 h-4 text-cyan-400/60" />;
   };
 
   if (categoryData.length === 0) {
@@ -101,41 +108,50 @@ export function AttentionHeatMap({
 
   return (
     <div className="space-y-4">
-      {/* Heat Legend */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">Heat Level:</span>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-3 bg-destructive/80 rounded" />
-            <span className="text-xs">Hot (80+)</span>
+      {/* Heat Legend - Warm to Cool Gradient */}
+      <div className="flex items-center justify-between flex-wrap gap-4 p-3 bg-card/50 rounded-lg border border-border/50">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-medium text-foreground">Activity Heat:</span>
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-3 bg-gradient-to-r from-red-500 to-orange-500 rounded shadow-sm" />
+            <span className="text-xs text-muted-foreground">80+</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-3 bg-destructive/50 rounded" />
-            <span className="text-xs">Warm (60-80)</span>
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-3 bg-gradient-to-r from-orange-500 to-amber-500 rounded" />
+            <span className="text-xs text-muted-foreground">70</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-3 bg-accent/40 rounded" />
-            <span className="text-xs">Moderate (40-60)</span>
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-3 bg-gradient-to-r from-amber-500 to-yellow-500 rounded" />
+            <span className="text-xs text-muted-foreground">60</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-3 bg-muted rounded" />
-            <span className="text-xs">Cool (&lt;40)</span>
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-3 bg-gradient-to-r from-yellow-500 to-lime-500 rounded" />
+            <span className="text-xs text-muted-foreground">50</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-3 bg-gradient-to-r from-lime-500 to-emerald-500 rounded" />
+            <span className="text-xs text-muted-foreground">40</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-5 h-3 bg-gradient-to-r from-cyan-500 to-blue-500 rounded" />
+            <span className="text-xs text-muted-foreground">&lt;30</span>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <Target className="w-3 h-3" />
-          <span>Combined = Attention (40%) + Engagement (30%) + Market-Ready (30%)</span>
+          <span>Sorted by activity • Most active first</span>
         </div>
       </div>
 
-      {/* Heat Map Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      {/* Heat Map Grid - Most active signals first */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categoryData.map((cat, index) => (
           <Tooltip key={cat.id}>
             <TooltipTrigger asChild>
               <Card 
-                className={`${getHeatColor(cat.combined, cat.category_group === 'sport')} border-2 cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg ${
-                  cat.category_group === 'sport' ? 'ring-1 ring-secondary/30' : ''
+                className={`${getHeatColor(cat.combined, index, categoryData.length)} border-2 cursor-pointer transition-all duration-300 hover:scale-[1.03] hover:shadow-xl ${
+                  cat.category_group === 'sport' ? 'ring-2 ring-secondary/40' : ''
+                } ${index === 0 ? 'md:col-span-2 lg:col-span-1' : ''}
                 }`}
                 onClick={() => onCategoryClick?.(cat)}
               >
