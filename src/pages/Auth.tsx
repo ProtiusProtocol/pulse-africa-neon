@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,40 +14,74 @@ const authSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-type AuthMode = 'login' | 'signup' | 'forgot';
+type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
+  const [isRecoverySession, setIsRecoverySession] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if already logged in
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
+      // If this is a password recovery event, show reset form instead of redirecting
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoverySession(true);
+        setMode('reset');
+        return;
+      }
+      
+      // Only redirect if logged in AND not in recovery mode
+      if (session?.user && !isRecoverySession && mode !== 'reset') {
         navigate("/admin");
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      // Check URL for recovery token indicators
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get('type') || searchParams.get('type');
+      
+      if (type === 'recovery') {
+        setIsRecoverySession(true);
+        setMode('reset');
+        return;
+      }
+      
+      if (session?.user && !isRecoverySession) {
         navigate("/admin");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isRecoverySession, mode, searchParams]);
 
   const validateForm = () => {
     if (mode === 'forgot') {
       const emailResult = z.string().email("Please enter a valid email address").safeParse(email);
       if (!emailResult.success) {
         setErrors({ email: emailResult.error.errors[0].message });
+        return false;
+      }
+      setErrors({});
+      return true;
+    }
+    
+    if (mode === 'reset') {
+      const passwordResult = z.string().min(6, "Password must be at least 6 characters").safeParse(password);
+      if (!passwordResult.success) {
+        setErrors({ password: passwordResult.error.errors[0].message });
+        return false;
+      }
+      if (password !== confirmPassword) {
+        setErrors({ confirmPassword: "Passwords do not match" });
         return false;
       }
       setErrors({});
@@ -66,6 +100,22 @@ export default function Auth() {
     }
     setErrors({});
     return true;
+  };
+
+  const handleResetPassword = async () => {
+    const { error } = await supabase.auth.updateUser({ password });
+    
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Password updated", description: "Your password has been reset successfully." });
+    setIsRecoverySession(false);
+    setMode('login');
+    setPassword("");
+    setConfirmPassword("");
+    navigate("/admin");
   };
 
   const handleForgotPassword = async () => {
@@ -94,7 +144,9 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (mode === 'forgot') {
+      if (mode === 'reset') {
+        await handleResetPassword();
+      } else if (mode === 'forgot') {
         await handleForgotPassword();
       } else if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({
@@ -151,6 +203,7 @@ export default function Auth() {
 
   const getTitle = () => {
     switch (mode) {
+      case 'reset': return "Set New Password";
       case 'forgot': return "Reset Password";
       case 'signup': return "Create Account";
       default: return "Admin Login";
@@ -159,6 +212,7 @@ export default function Auth() {
 
   const getDescription = () => {
     switch (mode) {
+      case 'reset': return "Enter your new password";
       case 'forgot': return "Enter your email to receive a reset link";
       case 'signup': return "Sign up for an account";
       default: return "Sign in to access the admin dashboard";
@@ -168,12 +222,14 @@ export default function Auth() {
   const getButtonText = () => {
     if (loading) {
       switch (mode) {
+        case 'reset': return "Updating...";
         case 'forgot': return "Sending...";
         case 'signup': return "Creating account...";
         default: return "Signing in...";
       }
     }
     switch (mode) {
+      case 'reset': return "Update Password";
       case 'forgot': return "Send Reset Link";
       case 'signup': return "Sign Up";
       default: return "Sign In";
@@ -194,28 +250,30 @@ export default function Auth() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@example.com"
-                  className="pl-10 bg-input border-border"
-                  disabled={loading}
-                />
-              </div>
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
-            </div>
-
-            {mode !== 'forgot' && (
+            {mode !== 'reset' && (
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@example.com"
+                    className="pl-10 bg-input border-border"
+                    disabled={loading}
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                )}
+              </div>
+            )}
+
+            {(mode !== 'forgot') && (
+              <div className="space-y-2">
+                <Label htmlFor="password">{mode === 'reset' ? 'New Password' : 'Password'}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -242,6 +300,27 @@ export default function Auth() {
                 </div>
                 {errors.password && (
                   <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+            )}
+
+            {mode === 'reset' && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pl-10 bg-input border-border"
+                    disabled={loading}
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-sm text-destructive">{errors.confirmPassword}</p>
                 )}
               </div>
             )}
@@ -274,29 +353,31 @@ export default function Auth() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center space-y-2">
-            {mode === 'forgot' ? (
-              <button
-                type="button"
-                onClick={() => setMode('login')}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                disabled={loading}
-              >
-                Back to login
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                disabled={loading}
-              >
-                {mode === 'login' 
-                  ? "Don't have an account? Sign up" 
-                  : "Already have an account? Sign in"}
-              </button>
-            )}
-          </div>
+          {mode !== 'reset' && (
+            <div className="mt-6 text-center space-y-2">
+              {mode === 'forgot' ? (
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  disabled={loading}
+                >
+                  Back to login
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  disabled={loading}
+                >
+                  {mode === 'login' 
+                    ? "Don't have an account? Sign up" 
+                    : "Already have an account? Sign in"}
+                </button>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
