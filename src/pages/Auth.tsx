@@ -14,8 +14,10 @@ const authSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+type AuthMode = 'login' | 'signup' | 'forgot';
+
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,16 @@ export default function Auth() {
   }, [navigate]);
 
   const validateForm = () => {
+    if (mode === 'forgot') {
+      const emailResult = z.string().email("Please enter a valid email address").safeParse(email);
+      if (!emailResult.success) {
+        setErrors({ email: emailResult.error.errors[0].message });
+        return false;
+      }
+      setErrors({});
+      return true;
+    }
+    
     const result = authSchema.safeParse({ email, password });
     if (!result.success) {
       const fieldErrors: { email?: string; password?: string } = {};
@@ -56,6 +68,25 @@ export default function Auth() {
     return true;
   };
 
+  const handleForgotPassword = async () => {
+    const redirectUrl = `${window.location.origin}/auth`;
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectUrl,
+    });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ 
+      title: "Check your email", 
+      description: "We've sent you a password reset link." 
+    });
+    setMode('login');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -63,7 +94,9 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isLogin) {
+      if (mode === 'forgot') {
+        await handleForgotPassword();
+      } else if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -103,7 +136,7 @@ export default function Auth() {
           title: "Account created", 
           description: "You can now log in. Note: Admin access requires role assignment." 
         });
-        setIsLogin(true);
+        setMode('login');
       }
     } catch (error) {
       toast({ 
@@ -116,18 +149,47 @@ export default function Auth() {
     }
   };
 
+  const getTitle = () => {
+    switch (mode) {
+      case 'forgot': return "Reset Password";
+      case 'signup': return "Create Account";
+      default: return "Admin Login";
+    }
+  };
+
+  const getDescription = () => {
+    switch (mode) {
+      case 'forgot': return "Enter your email to receive a reset link";
+      case 'signup': return "Sign up for an account";
+      default: return "Sign in to access the admin dashboard";
+    }
+  };
+
+  const getButtonText = () => {
+    if (loading) {
+      switch (mode) {
+        case 'forgot': return "Sending...";
+        case 'signup': return "Creating account...";
+        default: return "Signing in...";
+      }
+    }
+    switch (mode) {
+      case 'forgot': return "Send Reset Link";
+      case 'signup': return "Sign Up";
+      default: return "Sign In";
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md border-border bg-card">
         <CardHeader className="text-center">
           <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
           <CardTitle className="text-2xl text-glow-primary">
-            {isLogin ? "Admin Login" : "Create Account"}
+            {getTitle()}
           </CardTitle>
           <CardDescription>
-            {isLogin 
-              ? "Sign in to access the admin dashboard" 
-              : "Sign up for an account"}
+            {getDescription()}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -151,63 +213,89 @@ export default function Auth() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 bg-input border-border"
-                  disabled={loading}
-                />
+            {mode !== 'forgot' && (
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="pl-10 pr-10 bg-input border-border"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password}</p>
+                )}
+              </div>
+            )}
+
+            {mode === 'login' && (
+              <div className="text-right">
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
+                  onClick={() => setMode('forgot')}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                  disabled={loading}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
+                  Forgot password?
                 </button>
               </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-            </div>
+            )}
 
             <Button type="submit" className="w-full" variant="neon" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isLogin ? "Signing in..." : "Creating account..."}
+                  {getButtonText()}
                 </>
               ) : (
                 <>
                   <Shield className="w-4 h-4 mr-2" />
-                  {isLogin ? "Sign In" : "Sign Up"}
+                  {getButtonText()}
                 </>
               )}
             </Button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
-              disabled={loading}
-            >
-              {isLogin 
-                ? "Don't have an account? Sign up" 
-                : "Already have an account? Sign in"}
-            </button>
+          <div className="mt-6 text-center space-y-2">
+            {mode === 'forgot' ? (
+              <button
+                type="button"
+                onClick={() => setMode('login')}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                disabled={loading}
+              >
+                Back to login
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                disabled={loading}
+              >
+                {mode === 'login' 
+                  ? "Don't have an account? Sign up" 
+                  : "Already have an account? Sign in"}
+              </button>
+            )}
           </div>
         </CardContent>
       </Card>
