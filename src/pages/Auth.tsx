@@ -30,38 +30,71 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check URL for recovery token indicators FIRST before any auth checks
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get('type') || searchParams.get('type');
+    
+    if (type === 'recovery') {
+      setIsRecoverySession(true);
+      setMode('reset');
+      // Don't return - still need to set up the listener
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
+      
       // If this is a password recovery event, show reset form instead of redirecting
-      if (event === 'PASSWORD_RECOVERY') {
+      // Use string comparison to handle type mismatch
+      if ((event as string) === 'PASSWORD_RECOVERY') {
+        setIsRecoverySession(true);
+        setMode('reset');
+        return;
+      }
+      
+      // Check URL again for recovery indicator
+      const currentHash = new URLSearchParams(window.location.hash.substring(1));
+      const currentType = currentHash.get('type');
+      
+      if (currentType === 'recovery') {
         setIsRecoverySession(true);
         setMode('reset');
         return;
       }
       
       // Only redirect if logged in AND not in recovery mode
-      if (session?.user && !isRecoverySession && mode !== 'reset') {
-        navigate("/admin");
+      if (session?.user && (event as string) !== 'PASSWORD_RECOVERY') {
+        // Use a ref-like check with the actual URL to avoid stale closure
+        const urlHash = new URLSearchParams(window.location.hash.substring(1));
+        if (urlHash.get('type') !== 'recovery') {
+          // Small delay to allow state to settle
+          setTimeout(() => {
+            const stillRecovery = window.location.hash.includes('type=recovery');
+            if (!stillRecovery) {
+              navigate("/admin");
+            }
+          }, 100);
+        }
       }
     });
 
+    // Initial session check (but skip redirect if recovery)
     supabase.auth.getSession().then(({ data: { session } }) => {
-      // Check URL for recovery token indicators
-      const hashParams = new URLSearchParams(window.location.hash.substring(1));
-      const type = hashParams.get('type') || searchParams.get('type');
+      const currentHashParams = new URLSearchParams(window.location.hash.substring(1));
+      const currentType = currentHashParams.get('type') || searchParams.get('type');
       
-      if (type === 'recovery') {
+      if (currentType === 'recovery') {
         setIsRecoverySession(true);
         setMode('reset');
         return;
       }
       
-      if (session?.user && !isRecoverySession) {
+      if (session?.user && currentType !== 'recovery') {
         navigate("/admin");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, isRecoverySession, mode, searchParams]);
+  }, [navigate, searchParams]);
 
   const validateForm = () => {
     if (mode === 'forgot') {
