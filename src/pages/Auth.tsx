@@ -30,64 +30,65 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check URL for recovery token indicators FIRST before any auth checks
+    // Check for recovery indicators - URL hash, query params, or search params
     const checkForRecovery = () => {
       const hash = window.location.hash;
       const hashParams = new URLSearchParams(hash.substring(1));
       const type = hashParams.get('type') || searchParams.get('type');
+      const resetParam = searchParams.get('reset');
       const accessToken = hashParams.get('access_token');
       
       // If URL contains recovery indicators, show reset form
-      if (type === 'recovery' || (accessToken && hash.includes('type=recovery'))) {
-        console.log('Recovery detected in URL');
-        setIsRecoverySession(true);
-        setMode('reset');
+      if (type === 'recovery' || resetParam === 'true' || (accessToken && hash.includes('type=recovery'))) {
+        console.log('Recovery detected - type:', type, 'reset:', resetParam);
         return true;
       }
       return false;
     };
 
-    // Check immediately
-    const isRecovery = checkForRecovery();
-    
-    if (isRecovery) {
-      // Don't set up redirect logic if we're in recovery mode
+    // Check immediately on mount
+    if (checkForRecovery()) {
+      console.log('Setting recovery mode');
+      setIsRecoverySession(true);
+      setMode('reset');
+      
+      // Set up listener that never redirects in recovery mode
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         console.log('Auth event (recovery mode):', event);
-        // In recovery mode, never redirect - just stay on reset form
+        // Stay on reset form, don't redirect
       });
       return () => subscription.unsubscribe();
     }
 
+    // Normal auth flow (not recovery)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event);
       
-      // Check for recovery on every event
+      // Re-check for recovery on every event
       if (checkForRecovery()) {
+        setIsRecoverySession(true);
+        setMode('reset');
         return;
       }
       
-      // If this is a password recovery event, show reset form
+      // If this is a password recovery event
       if ((event as string) === 'PASSWORD_RECOVERY') {
         setIsRecoverySession(true);
         setMode('reset');
         return;
       }
       
-      // Only redirect if logged in and definitely not in recovery
-      if (session?.user) {
-        // Double-check URL doesn't have recovery
-        const currentHash = window.location.hash;
-        if (!currentHash.includes('type=recovery') && !currentHash.includes('access_token')) {
-          navigate("/admin");
-        }
+      // Only redirect if logged in and not in recovery
+      if (session?.user && !checkForRecovery()) {
+        navigate("/admin");
       }
     });
 
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      // Re-check for recovery
       if (checkForRecovery()) {
+        setIsRecoverySession(true);
+        setMode('reset');
         return;
       }
       
@@ -155,7 +156,8 @@ export default function Auth() {
   };
 
   const handleForgotPassword = async () => {
-    const redirectUrl = `${window.location.origin}/auth`;
+    // Add query param to indicate this is a password reset flow
+    const redirectUrl = `${window.location.origin}/auth?reset=true`;
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl,
