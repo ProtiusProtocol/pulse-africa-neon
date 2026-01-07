@@ -31,64 +31,67 @@ export default function Auth() {
 
   useEffect(() => {
     // Check URL for recovery token indicators FIRST before any auth checks
-    const hashParams = new URLSearchParams(window.location.hash.substring(1));
-    const type = hashParams.get('type') || searchParams.get('type');
+    const checkForRecovery = () => {
+      const hash = window.location.hash;
+      const hashParams = new URLSearchParams(hash.substring(1));
+      const type = hashParams.get('type') || searchParams.get('type');
+      const accessToken = hashParams.get('access_token');
+      
+      // If URL contains recovery indicators, show reset form
+      if (type === 'recovery' || (accessToken && hash.includes('type=recovery'))) {
+        console.log('Recovery detected in URL');
+        setIsRecoverySession(true);
+        setMode('reset');
+        return true;
+      }
+      return false;
+    };
+
+    // Check immediately
+    const isRecovery = checkForRecovery();
     
-    if (type === 'recovery') {
-      setIsRecoverySession(true);
-      setMode('reset');
-      // Don't return - still need to set up the listener
+    if (isRecovery) {
+      // Don't set up redirect logic if we're in recovery mode
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        console.log('Auth event (recovery mode):', event);
+        // In recovery mode, never redirect - just stay on reset form
+      });
+      return () => subscription.unsubscribe();
     }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event);
       
-      // If this is a password recovery event, show reset form instead of redirecting
-      // Use string comparison to handle type mismatch
+      // Check for recovery on every event
+      if (checkForRecovery()) {
+        return;
+      }
+      
+      // If this is a password recovery event, show reset form
       if ((event as string) === 'PASSWORD_RECOVERY') {
         setIsRecoverySession(true);
         setMode('reset');
         return;
       }
       
-      // Check URL again for recovery indicator
-      const currentHash = new URLSearchParams(window.location.hash.substring(1));
-      const currentType = currentHash.get('type');
-      
-      if (currentType === 'recovery') {
-        setIsRecoverySession(true);
-        setMode('reset');
-        return;
-      }
-      
-      // Only redirect if logged in AND not in recovery mode
-      if (session?.user && (event as string) !== 'PASSWORD_RECOVERY') {
-        // Use a ref-like check with the actual URL to avoid stale closure
-        const urlHash = new URLSearchParams(window.location.hash.substring(1));
-        if (urlHash.get('type') !== 'recovery') {
-          // Small delay to allow state to settle
-          setTimeout(() => {
-            const stillRecovery = window.location.hash.includes('type=recovery');
-            if (!stillRecovery) {
-              navigate("/admin");
-            }
-          }, 100);
+      // Only redirect if logged in and definitely not in recovery
+      if (session?.user) {
+        // Double-check URL doesn't have recovery
+        const currentHash = window.location.hash;
+        if (!currentHash.includes('type=recovery') && !currentHash.includes('access_token')) {
+          navigate("/admin");
         }
       }
     });
 
-    // Initial session check (but skip redirect if recovery)
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
-      const currentHashParams = new URLSearchParams(window.location.hash.substring(1));
-      const currentType = currentHashParams.get('type') || searchParams.get('type');
-      
-      if (currentType === 'recovery') {
-        setIsRecoverySession(true);
-        setMode('reset');
+      // Re-check for recovery
+      if (checkForRecovery()) {
         return;
       }
       
-      if (session?.user && currentType !== 'recovery') {
+      if (session?.user) {
         navigate("/admin");
       }
     });
