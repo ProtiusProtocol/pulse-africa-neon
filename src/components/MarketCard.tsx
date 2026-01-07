@@ -9,6 +9,7 @@ interface MarketCardProps {
   no: number;
   yesAmount?: number;
   noAmount?: number;
+  tradeCount?: number;
   volatility: "low" | "medium" | "high";
   endsIn?: string;
   deadline?: string | Date;
@@ -61,6 +62,7 @@ export const MarketCard = ({
   no,
   yesAmount,
   noAmount,
+  tradeCount,
   volatility,
   endsIn,
   deadline,
@@ -206,17 +208,24 @@ export const MarketCard = ({
             <Clock className={`w-3 h-3 ${isUrgent ? "text-accent" : ""}`} />
             {timeLeft}
           </div>
-          <div
-            className={`flex items-center gap-1 text-sm font-bold ${
-              trend === "up" ? "text-primary" : "text-accent"
-            }`}
-          >
-            {trend === "up" ? (
-              <TrendingUp className="w-4 h-4" />
-            ) : (
-              <TrendingDown className="w-4 h-4" />
+          <div className="flex items-center gap-3">
+            {tradeCount !== undefined && (
+              <span className="text-xs text-muted-foreground">
+                {tradeCount} trade{tradeCount !== 1 ? 's' : ''}
+              </span>
             )}
-            {trendValue}%
+            <div
+              className={`flex items-center gap-1 text-sm font-bold ${
+                trend === "up" ? "text-primary" : "text-accent"
+              }`}
+            >
+              {trend === "up" ? (
+                <TrendingUp className="w-4 h-4" />
+              ) : (
+                <TrendingDown className="w-4 h-4" />
+              )}
+              {trendValue}%
+            </div>
           </div>
         </div>
 

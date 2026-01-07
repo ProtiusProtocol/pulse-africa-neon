@@ -46,12 +46,14 @@ type EarlyAccessSignup = Tables<'early_access_signups'>;
 type EmailSubscriber = Tables<'email_subscribers'>;
 type Market = Tables<'markets'>;
 type FragilitySignal = Tables<'fragility_signals'>;
+type TradeCounts = Record<string, number>;
 
 export default function AdminDashboard() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
+  const [tradeCounts, setTradeCounts] = useState<TradeCounts>({});
   const [isLoading, setIsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [signups, setSignups] = useState<EarlyAccessSignup[]>([]);
@@ -91,7 +93,7 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     setIsLoading(true);
-    await Promise.all([fetchMarkets(), fetchSignals(), fetchSignups(), fetchSubscribers()]);
+    await Promise.all([fetchMarkets(), fetchSignals(), fetchSignups(), fetchSubscribers(), fetchTradeCounts()]);
     setIsLoading(false);
   };
 
@@ -106,6 +108,24 @@ export default function AdminDashboard() {
     } else {
       setMarkets(data || []);
     }
+  };
+
+  const fetchTradeCounts = async () => {
+    const { data, error } = await supabase
+      .from('user_trades')
+      .select('market_id');
+    
+    if (error) {
+      console.error("Failed to fetch trade counts:", error);
+      return;
+    }
+    
+    // Count trades per market
+    const counts: TradeCounts = {};
+    (data || []).forEach(trade => {
+      counts[trade.market_id] = (counts[trade.market_id] || 0) + 1;
+    });
+    setTradeCounts(counts);
   };
 
   const fetchSignals = async () => {
@@ -802,7 +822,7 @@ export default function AdminDashboard() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-3 gap-3 text-sm">
                       <div className="bg-muted/50 rounded-lg p-2 text-center">
                         <p className="text-xs text-muted-foreground">YES</p>
                         <p className="font-semibold text-primary">{(market.yes_total || 0).toLocaleString()}</p>
@@ -810,6 +830,10 @@ export default function AdminDashboard() {
                       <div className="bg-muted/50 rounded-lg p-2 text-center">
                         <p className="text-xs text-muted-foreground">NO</p>
                         <p className="font-semibold text-accent">{(market.no_total || 0).toLocaleString()}</p>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-2 text-center">
+                        <p className="text-xs text-muted-foreground">Trades</p>
+                        <p className="font-semibold text-foreground">{tradeCounts[market.id] || 0}</p>
                       </div>
                     </div>
 

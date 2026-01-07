@@ -30,11 +30,13 @@ interface FragilitySignal {
   name: string;
 }
 
+type TradeCounts = Record<string, number>;
 type ViewMode = "grid" | "matrix";
 
 const Markets = () => {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
+  const [tradeCounts, setTradeCounts] = useState<TradeCounts>({});
   const [loading, setLoading] = useState(true);
   const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
@@ -42,9 +44,10 @@ const Markets = () => {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const fetchData = async () => {
-    const [marketsRes, signalsRes] = await Promise.all([
+    const [marketsRes, signalsRes, tradesRes] = await Promise.all([
       supabase.from("markets").select("*").eq("status", "active").order("created_at"),
       supabase.from("fragility_signals").select("id, signal_code, name").order("signal_code"),
+      supabase.from("user_trades").select("market_id"),
     ]);
 
     if (marketsRes.data) {
@@ -59,6 +62,16 @@ const Markets = () => {
       }
     }
     if (signalsRes.data) setSignals(signalsRes.data);
+    
+    // Count trades per market
+    if (tradesRes.data) {
+      const counts: TradeCounts = {};
+      tradesRes.data.forEach(trade => {
+        counts[trade.market_id] = (counts[trade.market_id] || 0) + 1;
+      });
+      setTradeCounts(counts);
+    }
+    
     setLoading(false);
   };
 
@@ -212,6 +225,7 @@ const Markets = () => {
                     no={odds.no}
                     yesAmount={market.yes_total || 0}
                     noAmount={market.no_total || 0}
+                    tradeCount={tradeCounts[market.id] || 0}
                     volatility="medium"
                     deadline={market.deadline || undefined}
                     trend="up"
