@@ -17,68 +17,77 @@ const authSchema = z.object({
 type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 
 export default function Auth() {
-  const [mode, setMode] = useState<AuthMode>('login');
+  const [mode, setMode] = useState<AuthMode>(() => {
+    // Check URL immediately during initialization
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    if (urlParams.get('reset') === 'true' || hash.includes('type=recovery')) {
+      return 'reset';
+    }
+    return 'login';
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
-  const [isRecoverySession, setIsRecoverySession] = useState(false);
+  const [isRecoverySession, setIsRecoverySession] = useState(() => {
+    // Check URL immediately during initialization
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    return urlParams.get('reset') === 'true' || hash.includes('type=recovery');
+  });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check for recovery indicators - URL hash, query params, or search params
+    // Check for recovery indicators using window.location directly (more reliable than React Router)
     const checkForRecovery = () => {
+      const urlParams = new URLSearchParams(window.location.search);
       const hash = window.location.hash;
       const hashParams = new URLSearchParams(hash.substring(1));
-      const type = hashParams.get('type') || searchParams.get('type');
-      const resetParam = searchParams.get('reset');
-      const accessToken = hashParams.get('access_token');
+      const type = hashParams.get('type');
+      const resetParam = urlParams.get('reset');
       
-      // If URL contains recovery indicators, show reset form
-      if (type === 'recovery' || resetParam === 'true' || (accessToken && hash.includes('type=recovery'))) {
-        console.log('Recovery detected - type:', type, 'reset:', resetParam);
-        return true;
-      }
-      return false;
+      return type === 'recovery' || resetParam === 'true' || hash.includes('type=recovery');
     };
 
-    // Check immediately on mount
-    if (checkForRecovery()) {
-      console.log('Setting recovery mode');
-      setIsRecoverySession(true);
-      setMode('reset');
+    // If already in recovery mode (detected during init), don't redirect
+    if (isRecoverySession || mode === 'reset') {
+      console.log('Recovery mode active, skipping redirect logic');
+      setInitialCheckDone(true);
       
-      // Set up listener that never redirects in recovery mode
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        console.log('Auth event (recovery mode):', event);
-        // Stay on reset form, don't redirect
+        console.log('Auth event (recovery):', event);
+        // Never redirect in recovery mode
       });
       return () => subscription.unsubscribe();
     }
 
-    // Normal auth flow (not recovery)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event);
       
-      // Re-check for recovery on every event
+      // Check for recovery
       if (checkForRecovery()) {
         setIsRecoverySession(true);
         setMode('reset');
+        setInitialCheckDone(true);
         return;
       }
       
-      // If this is a password recovery event
       if ((event as string) === 'PASSWORD_RECOVERY') {
         setIsRecoverySession(true);
         setMode('reset');
+        setInitialCheckDone(true);
         return;
       }
       
-      // Only redirect if logged in and not in recovery
+      setInitialCheckDone(true);
+      
+      // Only redirect if logged in and not recovery
       if (session?.user && !checkForRecovery()) {
         navigate("/admin");
       }
@@ -89,8 +98,11 @@ export default function Auth() {
       if (checkForRecovery()) {
         setIsRecoverySession(true);
         setMode('reset');
+        setInitialCheckDone(true);
         return;
       }
+      
+      setInitialCheckDone(true);
       
       if (session?.user) {
         navigate("/admin");
@@ -98,7 +110,7 @@ export default function Auth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, searchParams]);
+  }, [navigate, isRecoverySession, mode]);
 
   const validateForm = () => {
     if (mode === 'forgot') {
