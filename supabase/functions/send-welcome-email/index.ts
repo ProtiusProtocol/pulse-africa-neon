@@ -39,6 +39,10 @@ const handler = async (req: Request): Promise<Response> => {
             h1 { color: #fff; font-size: 24px; margin-bottom: 20px; }
             p { color: #aaa; line-height: 1.6; margin-bottom: 16px; }
             .highlight { color: #c4ff00; }
+            .ebook-box { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border: 2px solid #c4ff00; border-radius: 12px; padding: 24px; margin: 24px 0; text-align: center; }
+            .ebook-title { color: #fff; font-size: 18px; font-weight: bold; margin-bottom: 12px; }
+            .ebook-btn { display: inline-block; background: #c4ff00; color: #0a0a0a; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; }
+            .ebook-btn:hover { background: #b3e600; }
             .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; font-size: 12px; color: #666; }
           </style>
         </head>
@@ -47,6 +51,13 @@ const handler = async (req: Request): Promise<Response> => {
             <div class="logo">Augurion</div>
             <h1>Welcome aboard, ${name}! 🚀</h1>
             <p>You're now on the <span class="highlight">early access list</span> for Augurion Africa.</p>
+            
+            <div class="ebook-box">
+              <div class="ebook-title">🎁 Your Free Gift: Predictive Markets E-Book</div>
+              <p style="color: #ccc; margin-bottom: 16px;">Learn how predictive markets work and how to spot opportunities before they move.</p>
+              <a href="https://augurionpulse.lovable.app/ebooks/augurion-predictive-markets-ebook.pdf" class="ebook-btn">📖 Download Your E-Book</a>
+            </div>
+            
             <p>We're building the continent's first outcome intelligence platform — tracking real-world fragilities before markets move.</p>
             <p>What happens next:</p>
             <ul style="color: #aaa; line-height: 2;">
