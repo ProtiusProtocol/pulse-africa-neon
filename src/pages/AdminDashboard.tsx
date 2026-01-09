@@ -868,18 +868,16 @@ export default function AdminDashboard() {
                           {isActionLoading ? 'Opening...' : 'Open'}
                         </Button>
                       )}
-                      {market.status === 'pending' && (
-                        <Button 
-                          onClick={() => handleDeleteMarket(market)}
-                          disabled={isActionLoading}
-                          variant="ghost"
-                          size="sm"
-                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="w-3 h-3 mr-1" />
-                          Delete
-                        </Button>
-                      )}
+                      <Button 
+                        onClick={() => handleDeleteMarket(market)}
+                        disabled={isActionLoading}
+                        variant="ghost"
+                        size="sm"
+                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Delete
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
