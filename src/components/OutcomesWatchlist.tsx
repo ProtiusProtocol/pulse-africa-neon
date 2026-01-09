@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import { Target, Clock, TrendingUp, TrendingDown, Minus, Filter, Calendar, AlertCircle, CheckCircle, Eye, Zap } from "lucide-react";
+import { Target, Clock, TrendingUp, TrendingDown, Minus, Filter, Calendar, AlertCircle, CheckCircle, Eye, Zap, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface OutcomeQuestion {
   id: string;
@@ -72,9 +74,11 @@ const SIGNAL_NAMES: Record<string, string> = {
 export const OutcomesWatchlist = () => {
   const [outcomes, setOutcomes] = useState<OutcomeQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [filterSignal, setFilterSignal] = useState<string>('ALL');
   const [filterStatus, setFilterStatus] = useState<string>('ALL');
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchOutcomes();
@@ -93,6 +97,44 @@ export const OutcomesWatchlist = () => {
       console.error('Error fetching outcomes:', error);
     }
     setLoading(false);
+  };
+
+  const handleExportDocx = async () => {
+    setExporting(true);
+    try {
+      const response = await supabase.functions.invoke('export-outcomes-docx');
+      
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      // Convert the response data to a blob and download
+      const blob = new Blob([response.data], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Augurion_Outcomes_Watchlist.docx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export complete",
+        description: "Outcomes watchlist downloaded as Word document",
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Could not export outcomes",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
   const getDriftIcon = (drift: string) => {
@@ -235,8 +277,19 @@ export const OutcomesWatchlist = () => {
           </SelectContent>
         </Select>
 
-        <div className="text-sm text-muted-foreground ml-auto">
-          Showing {filteredOutcomes.length} of {outcomes.length}
+        <div className="flex items-center gap-3 ml-auto">
+          <div className="text-sm text-muted-foreground">
+            Showing {filteredOutcomes.length} of {outcomes.length}
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExportDocx}
+            disabled={exporting}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            {exporting ? 'Exporting...' : 'Export DOCX'}
+          </Button>
         </div>
       </div>
 
