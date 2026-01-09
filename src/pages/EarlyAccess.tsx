@@ -5,11 +5,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Download, CheckCircle } from "lucide-react";
+
+const EBOOK_URL = "/ebooks/augurion-predictive-markets-ebook.pdf";
+
 const EarlyAccess = () => {
   const {
     toast
   } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     country: "",
@@ -41,8 +46,9 @@ const EarlyAccess = () => {
       }).catch(console.error);
       toast({
         title: "Welcome to Augurion Africa! 🎉",
-        description: "You're on the early access list. Check your email!"
+        description: "You're on the early access list. Check your email for your free ebook!"
       });
+      setIsSuccess(true);
       setFormData({
         name: "",
         country: "",
@@ -60,6 +66,60 @@ const EarlyAccess = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Success state with ebook download
+  if (isSuccess) {
+    return (
+      <div className="min-h-screen bg-background py-20">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center space-y-8">
+            <div className="flex justify-center">
+              <CheckCircle className="w-20 h-20 text-primary" />
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-bold">
+              <span className="text-primary text-glow-primary">You're In!</span>
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Welcome to Augurion Africa Early Access. Check your email for more details.
+            </p>
+            
+            {/* Ebook Download Box */}
+            <div className="p-8 bg-gradient-to-br from-card to-muted border-2 border-primary rounded-xl space-y-4">
+              <div className="text-2xl font-bold text-foreground">
+                🎁 Here's Your Free E-Book!
+              </div>
+              <p className="text-muted-foreground">
+                Learn how predictive markets work and how to spot opportunities before they move.
+              </p>
+              <a 
+                href={EBOOK_URL}
+                download
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="neon" size="lg" className="mt-4">
+                  <Download className="w-5 h-5 mr-2" />
+                  Download Your E-Book
+                </Button>
+              </a>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              We'll contact you on WhatsApp when we launch. Stay sharp!
+            </p>
+
+            <Button 
+              variant="outline" 
+              onClick={() => setIsSuccess(false)}
+              className="mt-4"
+            >
+              Sign Up Another Email
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return <div className="min-h-screen bg-background py-20">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
