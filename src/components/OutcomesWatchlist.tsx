@@ -102,16 +102,25 @@ export const OutcomesWatchlist = () => {
   const handleExportDocx = async () => {
     setExporting(true);
     try {
-      const response = await supabase.functions.invoke('export-outcomes-docx');
+      // Use direct fetch for binary response (supabase.functions.invoke doesn't handle binary well)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       
-      if (response.error) {
-        throw new Error(response.error.message);
+      const response = await fetch(`${supabaseUrl}/functions/v1/export-outcomes-docx`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Export failed');
       }
 
-      // Convert the response data to a blob and download
-      const blob = new Blob([response.data], { 
-        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-      });
+      // Get the binary blob directly
+      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
