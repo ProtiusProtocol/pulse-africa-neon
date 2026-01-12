@@ -1,8 +1,15 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useLanguage, LANGUAGES, Language } from "@/contexts/LanguageContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface MarketCardProps {
   id?: string; // Market ID for translations
@@ -77,13 +84,23 @@ export const MarketCard = ({
   onTrade,
 }: MarketCardProps) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const { language: globalLanguage } = useLanguage();
+  const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   
-  // Use translated title if available (only when id is provided)
-  const { text: translatedTitle } = useTranslation(
+  // Determine which language to show as secondary (per-card selection or global)
+  const secondaryLang = selectedLanguage || (globalLanguage !== 'en' ? globalLanguage : null);
+  
+  // Available languages for per-card selector (exclude English since it's always shown)
+  const availableLanguages = LANGUAGES.filter(l => l.code !== 'en');
+  const currentSecondaryLang = availableLanguages.find(l => l.code === secondaryLang);
+  
+  // Use translated title if available (only when id is provided and secondary language selected)
+  const { text: translatedTitle, isLoading: isTranslating } = useTranslation(
     'markets',
     id || '',
     'title',
-    title
+    title,
+    secondaryLang // Pass the per-card language selection
   );
 
   useEffect(() => {
@@ -129,20 +146,75 @@ export const MarketCard = ({
     <Card className="group p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover:glow-primary cursor-pointer">
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="space-y-1 flex-1">
             {category && (
               <span className="text-xs font-semibold text-primary uppercase tracking-wide">
                 {category}
               </span>
             )}
+            {/* English title (always shown) */}
             <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-              {id ? translatedTitle : title}
+              {title}
             </h3>
+            {/* Secondary language translation (shown when selected) */}
+            {id && secondaryLang && translatedTitle !== title && (
+              <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-2 mt-1">
+                {isTranslating ? (
+                  <span className="animate-pulse">Loading...</span>
+                ) : (
+                  <>
+                    <span className="text-[10px] font-mono text-primary/60 uppercase mr-1">
+                      {secondaryLang}
+                    </span>
+                    {translatedTitle}
+                  </>
+                )}
+              </p>
+            )}
           </div>
-          <span className={`text-xs font-bold ${vol.color} flex items-center gap-1`}>
-            {vol.icon} {vol.text}
-          </span>
+          <div className="flex flex-col items-end gap-1">
+            <span className={`text-xs font-bold ${vol.color} flex items-center gap-1`}>
+              {vol.icon} {vol.text}
+            </span>
+            {/* Per-card language selector */}
+            {id && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors px-1.5 py-0.5 rounded border border-border hover:border-primary/50">
+                    <Globe className="w-3 h-3" />
+                    {currentSecondaryLang ? currentSecondaryLang.flag : '🌐'}
+                    <ChevronDown className="w-2 h-2" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-36 bg-card border-border z-50">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedLanguage(null);
+                    }}
+                    className={`cursor-pointer text-xs ${!selectedLanguage ? 'bg-primary/10 text-primary' : ''}`}
+                  >
+                    <span className="mr-2">🌐</span>
+                    <span>Auto (Global)</span>
+                  </DropdownMenuItem>
+                  {availableLanguages.map((lang) => (
+                    <DropdownMenuItem
+                      key={lang.code}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedLanguage(lang.code);
+                      }}
+                      className={`cursor-pointer text-xs ${selectedLanguage === lang.code ? 'bg-primary/10 text-primary' : ''}`}
+                    >
+                      <span className="mr-2">{lang.flag}</span>
+                      <span>{lang.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </div>
 
         {/* Linked Signals */}
