@@ -38,8 +38,11 @@ import {
   Trash2,
   FileText,
   Loader2,
-  LogOut
+  LogOut,
+  Languages
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
@@ -71,12 +74,15 @@ export default function AdminDashboard() {
     deadline: '',
     resolutionCriteria: '',
     resolutionCriteriaFull: '',
+    skipTranslation: false,
   });
   const [isCreatingMarket, setIsCreatingMarket] = useState(false);
   const [isGeneratingReports, setIsGeneratingReports] = useState(false);
   const [isSendingEmails, setIsSendingEmails] = useState(false);
+  const [translatingMarketId, setTranslatingMarketId] = useState<string | null>(null);
   
   const { toast } = useToast();
+  const { translateMarket, isTranslating } = useAutoTranslate();
   const { walletAddress, isConnected, connect, getSigner } = useWallet();
 
   useEffect(() => {
@@ -333,7 +339,7 @@ export default function AdminDashboard() {
     setActionLoading(null);
   };
 
-  const handleCreateMarket = async () => {
+const handleCreateMarket = async () => {
     if (!newMarket.appId.trim() || !newMarket.title.trim() || !newMarket.category.trim()) {
       toast({ title: "Error", description: "App ID, Title and Category are required", variant: "destructive" });
       return;
@@ -341,7 +347,7 @@ export default function AdminDashboard() {
 
     setIsCreatingMarket(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('markets')
         .insert({
           app_id: newMarket.appId.trim(),
@@ -353,11 +359,18 @@ export default function AdminDashboard() {
           resolution_criteria: newMarket.resolutionCriteria.trim() || null,
           resolution_criteria_full: newMarket.resolutionCriteriaFull.trim() || null,
           status: 'active',
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
       toast({ title: "Market registered", description: `${newMarket.title} has been added` });
+      
+      // Auto-translate if not skipped
+      if (!newMarket.skipTranslation && data) {
+        translateMarket(data.id, data.title, data.resolution_criteria || undefined);
+      }
       
       // Reset form
       setNewMarket({
@@ -369,6 +382,7 @@ export default function AdminDashboard() {
         deadline: '',
         resolutionCriteria: '',
         resolutionCriteriaFull: '',
+        skipTranslation: false,
       });
       
       await fetchMarkets();
@@ -380,6 +394,12 @@ export default function AdminDashboard() {
       });
     }
     setIsCreatingMarket(false);
+  };
+
+  const handleTranslateMarket = async (market: Market) => {
+    setTranslatingMarketId(market.id);
+    await translateMarket(market.id, market.title, market.resolution_criteria || undefined);
+    setTranslatingMarketId(null);
   };
 
   const toggleSignal = (signalCode: string) => {
@@ -776,15 +796,32 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <Button 
-                onClick={handleCreateMarket} 
-                disabled={isCreatingMarket}
-                variant="neon"
-                className="w-full md:w-auto"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                {isCreatingMarket ? 'Registering...' : 'Register Market'}
-              </Button>
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="skipTranslation"
+                    checked={newMarket.skipTranslation}
+                    onCheckedChange={(checked) => 
+                      setNewMarket(prev => ({ ...prev, skipTranslation: checked === true }))
+                    }
+                  />
+                  <Label 
+                    htmlFor="skipTranslation" 
+                    className="text-sm text-muted-foreground cursor-pointer"
+                  >
+                    Skip auto-translation (English only)
+                  </Label>
+                </div>
+                <Button 
+                  onClick={handleCreateMarket} 
+                  disabled={isCreatingMarket}
+                  variant="neon"
+                  className="w-full md:w-auto"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  {isCreatingMarket ? 'Registering...' : 'Register Market'}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>
@@ -868,6 +905,20 @@ export default function AdminDashboard() {
                           {isActionLoading ? 'Opening...' : 'Open'}
                         </Button>
                       )}
+                      <Button 
+                        onClick={() => handleTranslateMarket(market)}
+                        disabled={translatingMarketId === market.id || isTranslating}
+                        variant="outline"
+                        size="sm"
+                        className="border-secondary text-secondary hover:bg-secondary/20"
+                      >
+                        {translatingMarketId === market.id ? (
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        ) : (
+                          <Languages className="w-3 h-3 mr-1" />
+                        )}
+                        {translatingMarketId === market.id ? 'Translating...' : 'Translate'}
+                      </Button>
                       <Button 
                         onClick={() => handleDeleteMarket(market)}
                         disabled={isActionLoading}
