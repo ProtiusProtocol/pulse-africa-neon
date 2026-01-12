@@ -709,6 +709,7 @@ const handleCreateMarket = async () => {
                       <SelectItem value="Social">Social</SelectItem>
                       <SelectItem value="Security">Security</SelectItem>
                       <SelectItem value="Sport">Sport</SelectItem>
+                      <SelectItem value="Tourism">Tourism</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
