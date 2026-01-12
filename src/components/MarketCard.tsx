@@ -153,24 +153,27 @@ export const MarketCard = ({
                 {category}
               </span>
             )}
-            {/* English title (always shown) */}
-            <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-              {title}
-            </h3>
-            {/* Secondary language translation (shown when selected) */}
-            {id && secondaryLang && translatedTitle !== title && (
-              <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-2 mt-1">
-                {isTranslating ? (
-                  <span className="animate-pulse">Loading...</span>
-                ) : (
-                  <>
-                    <span className="text-[10px] font-mono text-primary/60 uppercase mr-1">
-                      {secondaryLang}
-                    </span>
-                    {translatedTitle}
-                  </>
-                )}
-              </p>
+            {/* Title display - swaps when translation is selected */}
+            {id && secondaryLang && translatedTitle !== title ? (
+              // Translation selected: translated title is primary, English is secondary
+              <>
+                <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                  {isTranslating ? (
+                    <span className="animate-pulse">Loading...</span>
+                  ) : (
+                    translatedTitle
+                  )}
+                </h3>
+                <p className="text-sm text-muted-foreground italic border-l-2 border-primary/30 pl-2 mt-1">
+                  <span className="text-[10px] font-mono text-primary/60 uppercase mr-1">EN</span>
+                  {title}
+                </p>
+              </>
+            ) : (
+              // No translation: English title only
+              <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                {title}
+              </h3>
             )}
           </div>
           <div className="flex flex-col items-end gap-1">
@@ -187,7 +190,10 @@ export const MarketCard = ({
                     <ChevronDown className="w-2 h-2" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-36 bg-card border-border z-50">
+                <DropdownMenuContent align="end" className="w-40 bg-card border-border z-50">
+                  <div className="px-2 py-1.5 text-[10px] text-muted-foreground border-b border-border">
+                    Choose your preferred language for the question
+                  </div>
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation();
