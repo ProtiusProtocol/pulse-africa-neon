@@ -908,9 +908,8 @@ const handleCreateMarket = async () => {
                       <Button 
                         onClick={() => handleTranslateMarket(market)}
                         disabled={translatingMarketId === market.id || isTranslating}
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
-                        className="border-secondary text-secondary hover:bg-secondary/20"
                       >
                         {translatingMarketId === market.id ? (
                           <Loader2 className="w-3 h-3 mr-1 animate-spin" />
