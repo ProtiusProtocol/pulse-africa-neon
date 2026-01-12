@@ -268,6 +268,39 @@ export type Database = {
         }
         Relationships: []
       }
+      market_translations: {
+        Row: {
+          created_at: string
+          field: string
+          id: string
+          language: string
+          source_id: string
+          source_table: string
+          translated_text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          field: string
+          id?: string
+          language: string
+          source_id: string
+          source_table: string
+          translated_text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          field?: string
+          id?: string
+          language?: string
+          source_id?: string
+          source_table?: string
+          translated_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       markets: {
         Row: {
           app_id: string
