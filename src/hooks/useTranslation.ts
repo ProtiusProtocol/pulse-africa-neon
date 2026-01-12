@@ -13,15 +13,21 @@ export const useTranslation = (
   sourceTable: 'markets' | 'outcomes_watchlist',
   sourceId: string,
   field: string,
-  fallbackText: string
+  fallbackText: string,
+  overrideLanguage?: Language | null // Optional language override for per-component selection
 ) => {
-  const { language, isEnglish } = useLanguage();
+  const { language: globalLanguage, isEnglish: globalIsEnglish } = useLanguage();
+  
+  // Use override language if provided, otherwise use global
+  const language = overrideLanguage ?? globalLanguage;
+  const isEnglish = overrideLanguage ? overrideLanguage === 'en' : globalIsEnglish;
+  
   const [translatedText, setTranslatedText] = useState(fallbackText);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // If English, always use fallback (English is source of truth)
-    if (isEnglish) {
+    if (isEnglish || !language || language === 'en') {
       setTranslatedText(fallbackText);
       return;
     }
