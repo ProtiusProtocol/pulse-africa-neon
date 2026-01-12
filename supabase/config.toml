@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.attention-ingest]
 verify_jwt = false
+
+[functions.translate-market]
+verify_jwt = false
+
+[functions.export-outcomes-docx]
+verify_jwt = false
