@@ -39,8 +39,12 @@ import {
   FileText,
   Loader2,
   LogOut,
-  Languages
+  Languages,
+  Pencil,
+  X,
+  Save
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import type { Tables } from "@/integrations/supabase/types";
@@ -50,6 +54,7 @@ type EmailSubscriber = Tables<'email_subscribers'>;
 type Market = Tables<'markets'>;
 type FragilitySignal = Tables<'fragility_signals'>;
 type TradeCounts = Record<string, number>;
+type RealTradeCounts = Record<string, number>; // Trades excluding SEED_DATA
 
 export default function AdminDashboard() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
@@ -57,12 +62,26 @@ export default function AdminDashboard() {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
   const [tradeCounts, setTradeCounts] = useState<TradeCounts>({});
+  const [realTradeCounts, setRealTradeCounts] = useState<RealTradeCounts>({}); // Excludes SEED_DATA
   const [isLoading, setIsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [signups, setSignups] = useState<EarlyAccessSignup[]>([]);
   const [signupsLoading, setSignupsLoading] = useState(false);
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
   const [subscribersLoading, setSubscribersLoading] = useState(false);
+  
+  // Edit market state
+  const [editingMarket, setEditingMarket] = useState<Market | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    category: '',
+    region: 'Southern Africa',
+    linkedSignals: [] as string[],
+    deadline: '',
+    resolutionCriteria: '',
+    resolutionCriteriaFull: '',
+  });
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   
   // New market form state
   const [newMarket, setNewMarket] = useState({
@@ -119,19 +138,27 @@ export default function AdminDashboard() {
   const fetchTradeCounts = async () => {
     const { data, error } = await supabase
       .from('user_trades')
-      .select('market_id');
+      .select('market_id, wallet_address');
     
     if (error) {
       console.error("Failed to fetch trade counts:", error);
       return;
     }
     
-    // Count trades per market
+    // Count all trades per market
     const counts: TradeCounts = {};
+    // Count only real user trades (excluding SEED_DATA)
+    const realCounts: RealTradeCounts = {};
+    
     (data || []).forEach(trade => {
       counts[trade.market_id] = (counts[trade.market_id] || 0) + 1;
+      // Only count as real trade if not SEED_DATA
+      if (trade.wallet_address !== 'SEED_DATA') {
+        realCounts[trade.market_id] = (realCounts[trade.market_id] || 0) + 1;
+      }
     });
     setTradeCounts(counts);
+    setRealTradeCounts(realCounts);
   };
 
   const fetchSignals = async () => {
@@ -337,6 +364,71 @@ export default function AdminDashboard() {
       });
     }
     setActionLoading(null);
+  };
+
+  // Edit market handlers
+  const handleStartEdit = (market: Market) => {
+    setEditingMarket(market);
+    setEditForm({
+      title: market.title,
+      category: market.category,
+      region: market.region,
+      linkedSignals: market.linked_signals || [],
+      deadline: market.deadline ? new Date(market.deadline).toISOString().slice(0, 16) : '',
+      resolutionCriteria: market.resolution_criteria || '',
+      resolutionCriteriaFull: market.resolution_criteria_full || '',
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMarket(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingMarket) return;
+    
+    if (!editForm.title.trim() || !editForm.category.trim()) {
+      toast({ title: "Error", description: "Title and Category are required", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const { error } = await supabase
+        .from('markets')
+        .update({
+          title: editForm.title.trim(),
+          category: editForm.category.trim(),
+          region: editForm.region,
+          linked_signals: editForm.linkedSignals.length > 0 ? editForm.linkedSignals : null,
+          deadline: editForm.deadline ? new Date(editForm.deadline).toISOString() : null,
+          resolution_criteria: editForm.resolutionCriteria.trim() || null,
+          resolution_criteria_full: editForm.resolutionCriteriaFull.trim() || null,
+        })
+        .eq('id', editingMarket.id);
+
+      if (error) throw error;
+
+      toast({ title: "Market updated", description: `${editForm.title} has been saved` });
+      setEditingMarket(null);
+      await fetchMarkets();
+    } catch (error) {
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to update market", 
+        variant: "destructive" 
+      });
+    }
+    setIsSavingEdit(false);
+  };
+
+  const toggleEditSignal = (signalCode: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      linkedSignals: prev.linkedSignals.includes(signalCode)
+        ? prev.linkedSignals.filter(s => s !== signalCode)
+        : [...prev.linkedSignals, signalCode]
+    }));
   };
 
 const handleCreateMarket = async () => {
@@ -920,6 +1012,17 @@ const handleCreateMarket = async () => {
                         {translatingMarketId === market.id ? 'Translating...' : 'Translate'}
                       </Button>
                       <Button 
+                        onClick={() => handleStartEdit(market)}
+                        disabled={(realTradeCounts[market.id] || 0) > 0}
+                        variant="outline"
+                        size="sm"
+                        className="border-secondary text-secondary hover:bg-secondary/10"
+                        title={(realTradeCounts[market.id] || 0) > 0 ? 'Cannot edit: market has user trades' : 'Edit market details'}
+                      >
+                        <Pencil className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button 
                         onClick={() => handleDeleteMarket(market)}
                         disabled={isActionLoading}
                         variant="ghost"
@@ -1092,6 +1195,158 @@ const handleCreateMarket = async () => {
             </div>
           )}
         </section>
+
+        {/* Edit Market Modal */}
+        {editingMarket && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border-primary/50 bg-card m-4">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Pencil className="w-5 h-5 text-primary" />
+                      Edit Market
+                    </CardTitle>
+                    <CardDescription className="text-xs mt-1">
+                      App ID: {editingMarket.app_id}
+                    </CardDescription>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Title */}
+                <div className="space-y-2">
+                  <Label htmlFor="editTitle">Market Question *</Label>
+                  <Textarea
+                    id="editTitle"
+                    value={editForm.title}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="bg-input border-border min-h-[80px]"
+                  />
+                </div>
+
+                {/* Category & Region */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="editCategory">Category *</Label>
+                    <Select 
+                      value={editForm.category} 
+                      onValueChange={(value) => setEditForm(prev => ({ ...prev, category: value }))}
+                    >
+                      <SelectTrigger className="bg-input border-border">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Politics">Politics</SelectItem>
+                        <SelectItem value="Economy">Economy</SelectItem>
+                        <SelectItem value="Energy">Energy</SelectItem>
+                        <SelectItem value="Climate">Climate</SelectItem>
+                        <SelectItem value="Infrastructure">Infrastructure</SelectItem>
+                        <SelectItem value="Social">Social</SelectItem>
+                        <SelectItem value="Security">Security</SelectItem>
+                        <SelectItem value="Sport">Sport</SelectItem>
+                        <SelectItem value="Tourism">Tourism</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="editRegion">Region</Label>
+                    <Select 
+                      value={editForm.region} 
+                      onValueChange={(value) => setEditForm(prev => ({ ...prev, region: value }))}
+                    >
+                      <SelectTrigger className="bg-input border-border">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Southern Africa">Southern Africa</SelectItem>
+                        <SelectItem value="East Africa">East Africa</SelectItem>
+                        <SelectItem value="West Africa">West Africa</SelectItem>
+                        <SelectItem value="North Africa">North Africa</SelectItem>
+                        <SelectItem value="Central Africa">Central Africa</SelectItem>
+                        <SelectItem value="Pan-Africa">Pan-Africa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {/* Deadline */}
+                <div className="space-y-2">
+                  <Label htmlFor="editDeadline">Resolution Deadline</Label>
+                  <Input
+                    id="editDeadline"
+                    type="datetime-local"
+                    value={editForm.deadline}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, deadline: e.target.value }))}
+                    className="bg-input border-border"
+                  />
+                </div>
+
+                {/* Linked Signals */}
+                <div className="space-y-2">
+                  <Label>Linked Fragility Signals</Label>
+                  <div className="flex flex-wrap gap-2 p-3 bg-muted/30 rounded-lg">
+                    {signals.map((signal) => (
+                      <Badge
+                        key={signal.signal_code}
+                        variant={editForm.linkedSignals.includes(signal.signal_code) ? "default" : "outline"}
+                        className="cursor-pointer transition-all hover:scale-105"
+                        onClick={() => toggleEditSignal(signal.signal_code)}
+                      >
+                        {signal.signal_code}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Resolution Criteria */}
+                <div className="space-y-2">
+                  <Label htmlFor="editResolutionCriteria">Resolution Criteria (Short)</Label>
+                  <Input
+                    id="editResolutionCriteria"
+                    value={editForm.resolutionCriteria}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, resolutionCriteria: e.target.value }))}
+                    className="bg-input border-border"
+                    placeholder="Brief criteria for card display"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="editResolutionCriteriaFull">Resolution Criteria (Full)</Label>
+                  <Textarea
+                    id="editResolutionCriteriaFull"
+                    value={editForm.resolutionCriteriaFull}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, resolutionCriteriaFull: e.target.value }))}
+                    className="bg-input border-border min-h-[100px]"
+                    placeholder="Detailed resolution criteria..."
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-2 pt-4 border-t border-border">
+                  <Button variant="outline" onClick={handleCancelEdit}>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleSaveEdit} 
+                    disabled={isSavingEdit}
+                    variant="neon"
+                  >
+                    {isSavingEdit ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4 mr-2" />
+                    )}
+                    {isSavingEdit ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
       </div>
     </div>
