@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface MarketCardProps {
+  id?: string; // Market ID for translations
   title: string;
   yes: number;
   no: number;
@@ -57,6 +59,7 @@ const formatCountdown = (ms: number): string => {
 };
 
 export const MarketCard = ({
+  id,
   title,
   yes,
   no,
@@ -74,6 +77,14 @@ export const MarketCard = ({
   onTrade,
 }: MarketCardProps) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
+  
+  // Use translated title if available (only when id is provided)
+  const { text: translatedTitle } = useTranslation(
+    'markets',
+    id || '',
+    'title',
+    title
+  );
 
   useEffect(() => {
     if (!deadline) {
@@ -126,7 +137,7 @@ export const MarketCard = ({
               </span>
             )}
             <h3 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-              {title}
+              {id ? translatedTitle : title}
             </h3>
           </div>
           <span className={`text-xs font-bold ${vol.color} flex items-center gap-1`}>

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +71,7 @@ export const Navigation = () => {
                 {link.label}
               </a>
             ))}
+            <LanguageSelector />
             {walletAddress ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -139,6 +141,9 @@ export const Navigation = () => {
                 {link.label}
               </a>
             ))}
+            <div className="px-2 py-3">
+              <LanguageSelector />
+            </div>
             {walletAddress ? (
               <div className="space-y-2">
                 <Button variant="outline" size="sm" className="w-full font-mono text-xs justify-between">

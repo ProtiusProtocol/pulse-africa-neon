@@ -220,6 +220,7 @@ const Markets = () => {
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <MarketCard
+                    id={market.id}
                     title={market.title}
                     yes={odds.yes}
                     no={odds.no}
