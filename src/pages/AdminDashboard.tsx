@@ -829,6 +829,7 @@ const handleCreateMarket = async () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="International">International</SelectItem>
                       <SelectItem value="Africa">Africa</SelectItem>
                       <SelectItem value="Southern Africa">Southern Africa</SelectItem>
                       <SelectItem value="South Africa">South Africa</SelectItem>
@@ -1263,12 +1264,14 @@ const handleCreateMarket = async () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="International">International</SelectItem>
+                        <SelectItem value="Africa">Africa</SelectItem>
                         <SelectItem value="Southern Africa">Southern Africa</SelectItem>
+                        <SelectItem value="South Africa">South Africa</SelectItem>
                         <SelectItem value="East Africa">East Africa</SelectItem>
                         <SelectItem value="West Africa">West Africa</SelectItem>
-                        <SelectItem value="North Africa">North Africa</SelectItem>
                         <SelectItem value="Central Africa">Central Africa</SelectItem>
-                        <SelectItem value="Pan-Africa">Pan-Africa</SelectItem>
+                        <SelectItem value="North Africa">North Africa</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
