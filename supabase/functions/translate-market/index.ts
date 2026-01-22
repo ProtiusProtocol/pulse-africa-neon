@@ -12,6 +12,7 @@ const LANGUAGES = [
   { code: "de", name: "German" },
   { code: "af", name: "Afrikaans" },
   { code: "zu", name: "Zulu (isiZulu)" },
+  { code: "xh", name: "Xhosa (isiXhosa)" },
   { code: "es", name: "Spanish" },
   { code: "it", name: "Italian" },
 ];

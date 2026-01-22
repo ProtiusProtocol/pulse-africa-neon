@@ -99,6 +99,7 @@ export default function AdminDashboard() {
   const [isGeneratingReports, setIsGeneratingReports] = useState(false);
   const [isSendingEmails, setIsSendingEmails] = useState(false);
   const [translatingMarketId, setTranslatingMarketId] = useState<string | null>(null);
+  const [isBatchTranslating, setIsBatchTranslating] = useState(false);
   
   const { toast } = useToast();
   const { translateMarket, isTranslating } = useAutoTranslate();
@@ -272,6 +273,41 @@ export default function AdminDashboard() {
       });
     } finally {
       setIsSendingEmails(false);
+    }
+  };
+
+  const handleBatchTranslateMarkets = async () => {
+    setIsBatchTranslating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('translate-all-markets', {
+        body: { source_table: 'markets', only_missing: true }
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (data?.success) {
+        toast({ 
+          title: "Translations Complete", 
+          description: `Translated ${data.items_processed} markets with ${data.total_translations_added} new translations across ${data.languages.length} languages.`
+        });
+      } else {
+        toast({ 
+          title: "Info", 
+          description: data?.message || "Translation process completed",
+          variant: "default"
+        });
+      }
+    } catch (error) {
+      console.error("Error batch translating:", error);
+      toast({ 
+        title: "Error", 
+        description: error instanceof Error ? error.message : "Failed to batch translate markets", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsBatchTranslating(false);
     }
   };
 
@@ -928,10 +964,25 @@ const handleCreateMarket = async () => {
               <BarChart3 className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold">Market Management (Layer 2)</h2>
             </div>
-            <Button variant="outline" size="sm" onClick={triggerIndexer} disabled={isLoading}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Sync from Chain
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={handleBatchTranslateMarkets} 
+                disabled={isBatchTranslating}
+              >
+                {isBatchTranslating ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Languages className="w-4 h-4 mr-2" />
+                )}
+                {isBatchTranslating ? 'Translating All...' : 'Translate All'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={triggerIndexer} disabled={isLoading}>
+                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                Sync from Chain
+              </Button>
+            </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {markets.map((market) => {
