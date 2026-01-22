@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type Language = 'en' | 'fr' | 'pt' | 'de' | 'af' | 'zu' | 'es' | 'it';
+export type Language = 'en' | 'fr' | 'pt' | 'de' | 'af' | 'zu' | 'xh' | 'es' | 'it';
 
 export const LANGUAGES: { code: Language; name: string; flag: string }[] = [
   { code: 'en', name: 'English', flag: '🇬🇧' },
@@ -9,6 +9,7 @@ export const LANGUAGES: { code: Language; name: string; flag: string }[] = [
   { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
   { code: 'af', name: 'Afrikaans', flag: '🇿🇦' },
   { code: 'zu', name: 'isiZulu', flag: '🇿🇦' },
+  { code: 'xh', name: 'isiXhosa', flag: '🇿🇦' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'it', name: 'Italiano', flag: '🇮🇹' },
 ];
