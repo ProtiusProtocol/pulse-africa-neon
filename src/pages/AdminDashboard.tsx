@@ -801,9 +801,24 @@ const handleCreateMarket = async () => {
 
         {/* Register New Market */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Plus className="w-5 h-5 text-primary" />
-            <h2 className="text-xl font-semibold">Register Market from Lora</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-primary" />
+              <h2 className="text-xl font-semibold">Register Market from Lora</h2>
+            </div>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={handleBatchTranslateMarkets} 
+              disabled={isBatchTranslating}
+            >
+              {isBatchTranslating ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Languages className="w-4 h-4 mr-2" />
+              )}
+              {isBatchTranslating ? 'Translating All...' : 'Translate All'}
+            </Button>
           </div>
           <Card className="border-primary/30 bg-card">
             <CardContent className="p-6 space-y-4">
@@ -964,25 +979,10 @@ const handleCreateMarket = async () => {
               <BarChart3 className="w-5 h-5 text-primary" />
               <h2 className="text-xl font-semibold">Market Management (Layer 2)</h2>
             </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                onClick={handleBatchTranslateMarkets} 
-                disabled={isBatchTranslating}
-              >
-                {isBatchTranslating ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Languages className="w-4 h-4 mr-2" />
-                )}
-                {isBatchTranslating ? 'Translating All...' : 'Translate All'}
-              </Button>
-              <Button variant="outline" size="sm" onClick={triggerIndexer} disabled={isLoading}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Sync from Chain
-              </Button>
-            </div>
+            <Button variant="outline" size="sm" onClick={triggerIndexer} disabled={isLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+              Sync from Chain
+            </Button>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {markets.map((market) => {
