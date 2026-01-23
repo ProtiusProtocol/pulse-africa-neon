@@ -900,6 +900,26 @@ const handleCreateMarket = async () => {
                     onChange={(e) => setNewMarket(prev => ({ ...prev, deadline: e.target.value }))}
                     className="bg-input border-border"
                   />
+                  {newMarket.deadline && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <code className="px-2 py-1 text-xs bg-muted rounded font-mono">
+                        {Math.floor(new Date(newMarket.deadline).getTime() / 1000)}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => {
+                          const ts = Math.floor(new Date(newMarket.deadline).getTime() / 1000);
+                          navigator.clipboard.writeText(ts.toString());
+                          toast({ title: "Copied", description: `Timestamp ${ts} copied to clipboard` });
+                        }}
+                      >
+                        Copy for Lora
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
