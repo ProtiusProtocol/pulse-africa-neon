@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Trade {
@@ -8,6 +8,11 @@ interface Trade {
   created_at: string;
   status: string;
   wallet_address?: string;
+  market_id?: string;
+  market?: {
+    title: string;
+    category?: string;
+  };
 }
 
 interface PredictionUniverseProps {
@@ -27,6 +32,14 @@ interface Star {
   amount: number;
   status: string;
   isUser: boolean;
+}
+
+interface MarketUniverse {
+  marketId: string;
+  marketTitle: string;
+  marketCategory?: string;
+  userTrades: Trade[];
+  globalTrades: Trade[];
 }
 
 // Deterministic pseudo-random based on string
@@ -51,15 +64,11 @@ const tradeToStar = (
   // Get all trades on the same side for relative conviction
   const sameSideTrades = allTrades.filter(t => t.side === side);
   const maxSideAmount = Math.max(...sameSideTrades.map(t => t.amount), 1);
-  const totalSideAmount = sameSideTrades.reduce((s, t) => s + t.amount, 0);
   
-  // Conviction ratio: how deep is this bet relative to the side's total
-  // Higher ratio = deeper into the territory
-  const convictionRatio = totalSideAmount > 0 
-    ? trade.amount / maxSideAmount  // relative to largest bet on this side
-    : 0.5;
+  // Conviction ratio: how deep is this bet relative to the side's max
+  const convictionRatio = trade.amount / maxSideAmount;
   
-  // Size based on amount (global comparison)
+  // Size based on amount (global comparison within this market)
   const allAmounts = allTrades.map(t => t.amount);
   const maxAmount = Math.max(...allAmounts, 1);
   const minAmount = Math.min(...allAmounts);
@@ -68,8 +77,8 @@ const tradeToStar = (
     : 0.5;
   
   // User stars are larger and brighter
-  const baseSize = isUser ? 4 : 2;
-  const sizeRange = isUser ? 10 : 5;
+  const baseSize = isUser ? 5 : 2.5;
+  const sizeRange = isUser ? 8 : 4;
   const size = baseSize + amountRatio * sizeRange;
   
   // Brightness
@@ -83,20 +92,19 @@ const tradeToStar = (
   
   // === CONVICTION DEPTH POSITIONING ===
   // X position: distance from center based on conviction
-  // Center (0.5) = low conviction, Edge (0.1 or 0.9) = high conviction
-  const baseDepth = 0.15 + convictionRatio * 0.35; // 0.15 to 0.50 from center
-  const depthJitter = ((hash % 100) / 100 - 0.5) * 0.08; // small randomness
-  const depth = Math.max(0.12, Math.min(0.48, baseDepth + depthJitter));
+  const baseDepth = 0.18 + convictionRatio * 0.30;
+  const depthJitter = ((hash % 100) / 100 - 0.5) * 0.06;
+  const depth = Math.max(0.15, Math.min(0.48, baseDepth + depthJitter));
   
   // X: YES goes left of center, NO goes right
   const x = side === "YES" 
-    ? 0.5 - depth  // deeper conviction = further left
-    : 0.5 + depth; // deeper conviction = further right
+    ? 0.5 - depth
+    : 0.5 + depth;
   
-  // Y position: spread vertically with some clustering
-  const yBase = 0.25 + ((hash2 % 1000) / 1000) * 0.5; // 0.25 to 0.75
-  const yJitter = ((hash % 50) / 50 - 0.5) * 0.15;
-  const y = Math.max(0.15, Math.min(0.85, yBase + yJitter));
+  // Y position: spread vertically
+  const yBase = 0.28 + ((hash2 % 1000) / 1000) * 0.44;
+  const yJitter = ((hash % 50) / 50 - 0.5) * 0.12;
+  const y = Math.max(0.18, Math.min(0.82, yBase + yJitter));
   
   return {
     id: trade.id,
@@ -111,102 +119,73 @@ const tradeToStar = (
   };
 };
 
-export const PredictionUniverse = ({ 
-  userTrades, 
-  globalTrades = [], 
-  userWallet,
-  className = "" 
-}: PredictionUniverseProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+// Single market universe component
+const MarketUniverseView = ({ 
+  universe, 
+  userWallet 
+}: { 
+  universe: MarketUniverse; 
+  userWallet?: string;
+}) => {
   const [hoveredStar, setHoveredStar] = useState<Star | null>(null);
-  const [dimensions, setDimensions] = useState({ width: 320, height: 320 });
   
-  // Update dimensions on resize
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const size = Math.min(rect.width, 320);
-        setDimensions({ width: size, height: size });
-      }
-    };
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, []);
+  const width = 280;
+  const height = 200;
+  const centerX = width / 2;
+  const centerY = height / 2;
   
-  // Filter out user's trades from global to avoid duplicates
+  // Filter duplicates from global trades
   const otherTrades = useMemo(() => {
-    if (!userWallet || globalTrades.length === 0) return globalTrades;
-    return globalTrades.filter(t => t.wallet_address !== userWallet);
-  }, [globalTrades, userWallet]);
+    if (!userWallet) return universe.globalTrades;
+    return universe.globalTrades.filter(t => t.wallet_address !== userWallet);
+  }, [universe.globalTrades, userWallet]);
   
-  // Calculate all stars
   const { userStars, globalStars, stats } = useMemo(() => {
-    const allTrades = [...userTrades, ...otherTrades];
+    const allTrades = [...universe.userTrades, ...otherTrades];
     
-    const uStars = userTrades.map(t => tradeToStar(t, allTrades, true));
+    const uStars = universe.userTrades.map(t => tradeToStar(t, allTrades, true));
     const gStars = otherTrades.map(t => tradeToStar(t, allTrades, false));
     
-    // Calculate stats
-    const userYes = userTrades.filter(t => t.side === 'YES');
-    const userNo = userTrades.filter(t => t.side === 'NO');
-    const globalYes = otherTrades.filter(t => t.side === 'YES');
-    const globalNo = otherTrades.filter(t => t.side === 'NO');
-    
-    const userYesAmount = userYes.reduce((s, t) => s + t.amount, 0);
-    const userNoAmount = userNo.reduce((s, t) => s + t.amount, 0);
-    const globalYesAmount = globalYes.reduce((s, t) => s + t.amount, 0);
-    const globalNoAmount = globalNo.reduce((s, t) => s + t.amount, 0);
+    const userYesAmount = universe.userTrades.filter(t => t.side === 'YES').reduce((s, t) => s + t.amount, 0);
+    const userNoAmount = universe.userTrades.filter(t => t.side === 'NO').reduce((s, t) => s + t.amount, 0);
+    const globalYesAmount = otherTrades.filter(t => t.side === 'YES').reduce((s, t) => s + t.amount, 0);
+    const globalNoAmount = otherTrades.filter(t => t.side === 'NO').reduce((s, t) => s + t.amount, 0);
     
     const totalYes = userYesAmount + globalYesAmount;
     const totalNo = userNoAmount + globalNoAmount;
     const total = totalYes + totalNo;
     
+    // User's position on the side they bet on
+    const userSide = universe.userTrades.length > 0 ? universe.userTrades[0].side : null;
+    const userTotalOnSide = userSide === 'YES' ? userYesAmount : userNoAmount;
+    const poolOnSide = userSide === 'YES' ? totalYes : totalNo;
+    const userPoolShare = poolOnSide > 0 ? (userTotalOnSide / poolOnSide) * 100 : 0;
+    
     return {
       userStars: uStars,
       globalStars: gStars,
       stats: {
-        userYesCount: userYes.length,
-        userNoCount: userNo.length,
-        globalYesCount: globalYes.length,
-        globalNoCount: globalNo.length,
-        userYesAmount,
-        userNoAmount,
-        globalYesAmount,
-        globalNoAmount,
         yesPercent: total > 0 ? Math.round((totalYes / total) * 100) : 50,
         noPercent: total > 0 ? Math.round((totalNo / total) * 100) : 50,
         totalPredictors: allTrades.length,
+        userSide,
+        userPoolShare: Math.round(userPoolShare * 10) / 10,
       }
     };
-  }, [userTrades, otherTrades]);
-  
-  const { width, height } = dimensions;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  
-  const hasAnyData = userTrades.length > 0 || otherTrades.length > 0;
-  
-  if (!hasAnyData) {
-    return (
-      <div className={`relative flex items-center justify-center ${className}`} style={{ minHeight: 200 }}>
-        <div className="text-center text-muted-foreground text-sm">
-          <div className="w-16 h-16 mx-auto mb-3 rounded-full border border-border flex items-center justify-center">
-            <span className="text-2xl">✦</span>
-          </div>
-          Your prediction universe awaits
-        </div>
-      </div>
-    );
-  }
+  }, [universe.userTrades, otherTrades]);
   
   return (
-    <div 
-      ref={containerRef} 
-      className={`relative ${className}`}
-      style={{ minHeight: height + 60 }}
-    >
+    <div className="relative bg-card/50 border border-border rounded-xl p-3">
+      {/* Market title */}
+      <div className="mb-2">
+        <h4 className="text-xs font-medium text-foreground line-clamp-2 leading-snug">
+          {universe.marketTitle}
+        </h4>
+        {universe.marketCategory && (
+          <span className="text-[10px] text-muted-foreground">{universe.marketCategory}</span>
+        )}
+      </div>
+      
       <svg 
         width={width} 
         height={height} 
@@ -214,22 +193,15 @@ export const PredictionUniverse = ({
         style={{ overflow: 'visible' }}
       >
         <defs>
-          {/* YES nebula glow */}
-          <radialGradient id="yesNebula" cx="30%" cy="50%" r="45%">
-            <stop offset="0%" stopColor="hsl(123, 100%, 50%)" stopOpacity="0.25" />
-            <stop offset="60%" stopColor="hsl(123, 100%, 50%)" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="hsl(123, 100%, 50%)" stopOpacity="0" />
+          <radialGradient id={`yes-${universe.marketId}`} cx="30%" cy="50%" r="45%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
           </radialGradient>
-          
-          {/* NO nebula glow */}
-          <radialGradient id="noNebula" cx="70%" cy="50%" r="45%">
-            <stop offset="0%" stopColor="hsl(262, 83%, 58%)" stopOpacity="0.25" />
-            <stop offset="60%" stopColor="hsl(262, 83%, 58%)" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="hsl(262, 83%, 58%)" stopOpacity="0" />
+          <radialGradient id={`no-${universe.marketId}`} cx="70%" cy="50%" r="45%">
+            <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity="0.3" />
+            <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity="0" />
           </radialGradient>
-          
-          {/* Star glow filter */}
-          <filter id="starGlowUser" x="-100%" y="-100%" width="300%" height="300%">
+          <filter id={`glow-${universe.marketId}`} x="-100%" y="-100%" width="300%" height="300%">
             <feGaussianBlur stdDeviation="2" result="glow" />
             <feMerge>
               <feMergeNode in="glow" />
@@ -238,124 +210,110 @@ export const PredictionUniverse = ({
           </filter>
         </defs>
         
-        {/* Universe background */}
-        <circle 
-          cx={centerX} 
-          cy={centerY} 
-          r={width * 0.48} 
-          fill="hsl(0, 0%, 3%)"
-          stroke="hsl(0, 0%, 12%)"
-          strokeWidth="1"
+        {/* Background */}
+        <rect
+          x={2}
+          y={2}
+          width={width - 4}
+          height={height - 4}
+          rx={8}
+          fill="hsl(0, 0%, 4%)"
         />
         
         {/* Nebulae */}
         <ellipse 
-          cx={centerX * 0.55} 
+          cx={centerX * 0.5} 
           cy={centerY} 
-          rx={width * 0.28} 
-          ry={height * 0.38}
-          fill="url(#yesNebula)"
+          rx={width * 0.25} 
+          ry={height * 0.35}
+          fill={`url(#yes-${universe.marketId})`}
         />
         <ellipse 
-          cx={centerX * 1.45} 
+          cx={centerX * 1.5} 
           cy={centerY} 
-          rx={width * 0.28} 
-          ry={height * 0.38}
-          fill="url(#noNebula)"
+          rx={width * 0.25} 
+          ry={height * 0.35}
+          fill={`url(#no-${universe.marketId})`}
         />
         
         {/* Center divider */}
         <line 
           x1={centerX} 
-          y1={centerY - width * 0.4}
+          y1={20}
           x2={centerX}
-          y2={centerY + width * 0.4}
+          y2={height - 20}
           stroke="hsl(0, 0%, 18%)"
           strokeWidth="1"
-          strokeDasharray="3,5"
-          opacity="0.6"
+          strokeDasharray="2,4"
+          opacity="0.5"
         />
         
-        {/* Percentage arc indicators */}
+        {/* Side labels with percentages */}
         <text 
-          x={centerX * 0.45} 
-          y={height * 0.1}
-          fill="hsl(123, 100%, 50%)"
-          fontSize="18"
-          fontWeight="700"
+          x={centerX * 0.5} 
+          y={18}
+          fill="hsl(var(--primary))"
+          fontSize="14"
+          fontWeight="600"
           textAnchor="middle"
-          style={{ textShadow: '0 0 12px hsl(123 100% 50% / 0.7)' }}
         >
-          {stats.yesPercent}%
+          YES {stats.yesPercent}%
         </text>
         <text 
-          x={centerX * 0.45} 
-          y={height * 0.1 + 16}
-          fill="hsl(123, 100%, 60%)"
-          fontSize="10"
+          x={centerX * 1.5} 
+          y={18}
+          fill="hsl(var(--secondary))"
+          fontSize="14"
+          fontWeight="600"
           textAnchor="middle"
-          opacity="0.8"
         >
-          YES
-        </text>
-        
-        <text 
-          x={centerX * 1.55} 
-          y={height * 0.1}
-          fill="hsl(262, 83%, 58%)"
-          fontSize="18"
-          fontWeight="700"
-          textAnchor="middle"
-          style={{ textShadow: '0 0 12px hsl(262 83% 58% / 0.7)' }}
-        >
-          {stats.noPercent}%
-        </text>
-        <text 
-          x={centerX * 1.55} 
-          y={height * 0.1 + 16}
-          fill="hsl(262, 83%, 70%)"
-          fontSize="10"
-          textAnchor="middle"
-          opacity="0.8"
-        >
-          NO
+          NO {stats.noPercent}%
         </text>
         
-        {/* Global stars (background dust) */}
+        {/* Conviction depth labels */}
+        <text x={8} y={centerY} fill="hsl(0,0%,30%)" fontSize="7" textAnchor="start" dominantBaseline="middle">
+          Deep
+        </text>
+        <text x={width - 8} y={centerY} fill="hsl(0,0%,30%)" fontSize="7" textAnchor="end" dominantBaseline="middle">
+          Deep
+        </text>
+        <text x={centerX} y={centerY} fill="hsl(0,0%,25%)" fontSize="7" textAnchor="middle" dominantBaseline="middle">
+          ·
+        </text>
+        
+        {/* Global stars (crowd) */}
         {globalStars.map((star) => {
           const starX = star.x * width;
           const starY = star.y * height;
           const isYes = star.side === "YES";
-          const baseColor = isYes ? "hsl(123, 70%, 45%)" : "hsl(262, 60%, 50%)";
+          const baseColor = isYes ? "hsl(var(--primary))" : "hsl(var(--secondary))";
           
           return (
             <g key={star.id}>
-              {/* Subtle glow */}
               <circle
                 cx={starX}
                 cy={starY}
-                r={star.size * 1.5}
+                r={star.size * 1.3}
                 fill={baseColor}
                 opacity={star.brightness * 0.15}
               />
-              {/* Star core */}
               <circle
                 cx={starX}
                 cy={starY}
                 r={star.size}
                 fill={baseColor}
-                opacity={star.brightness * 0.5}
+                opacity={star.brightness * 0.45}
               />
             </g>
           );
         })}
         
-        {/* User stars (prominent foreground) */}
+        {/* User stars */}
         {userStars.map((star) => {
           const starX = star.x * width;
           const starY = star.y * height;
           const isYes = star.side === "YES";
-          const baseColor = isYes ? "hsl(123, 100%, 50%)" : "hsl(262, 83%, 58%)";
+          const baseColor = isYes ? "hsl(var(--primary))" : "hsl(var(--secondary))";
           const isHovered = hoveredStar?.id === star.id;
           
           return (
@@ -365,72 +323,52 @@ export const PredictionUniverse = ({
               onMouseLeave={() => setHoveredStar(null)}
               style={{ cursor: 'pointer' }}
             >
-              {/* Outer glow */}
-              <circle
-                cx={starX}
-                cy={starY}
-                r={star.size * 2.5}
-                fill={baseColor}
-                opacity={star.brightness * 0.25}
-              />
+              {/* Glow layers */}
+              <circle cx={starX} cy={starY} r={star.size * 2.5} fill={baseColor} opacity={star.brightness * 0.2} />
+              <circle cx={starX} cy={starY} r={star.size * 1.5} fill={baseColor} opacity={star.brightness * 0.4} />
               
-              {/* Inner glow */}
-              <circle
-                cx={starX}
-                cy={starY}
-                r={star.size * 1.5}
-                fill={baseColor}
-                opacity={star.brightness * 0.5}
-              />
-              
-              {/* Star core */}
+              {/* Core */}
               <circle
                 cx={starX}
                 cy={starY}
                 r={star.size}
                 fill={baseColor}
                 opacity={star.brightness}
-                filter="url(#starGlowUser)"
+                filter={`url(#glow-${universe.marketId})`}
                 style={{
-                  transform: isHovered ? 'scale(1.4)' : 'scale(1)',
+                  transform: isHovered ? 'scale(1.3)' : 'scale(1)',
                   transformOrigin: `${starX}px ${starY}px`,
-                  transition: 'transform 0.2s ease-out',
+                  transition: 'transform 0.15s',
                 }}
               />
               
               {/* Bright center */}
-              <circle
-                cx={starX}
-                cy={starY}
-                r={star.size * 0.35}
-                fill="white"
-                opacity={star.brightness * 0.9}
-              />
+              <circle cx={starX} cy={starY} r={star.size * 0.3} fill="white" opacity={star.brightness * 0.85} />
               
-              {/* "You" indicator ring */}
+              {/* User indicator */}
               <circle
                 cx={starX}
                 cy={starY}
                 r={star.size + 3}
                 fill="none"
                 stroke="white"
-                strokeWidth="1"
-                opacity={isHovered ? 0.8 : 0.3}
+                strokeWidth="0.75"
+                opacity={isHovered ? 0.7 : 0.25}
                 strokeDasharray="2,2"
               />
             </g>
           );
         })}
         
-        {/* Predictor count at bottom */}
+        {/* Bottom stats */}
         <text 
           x={centerX} 
-          y={height * 0.92}
-          fill="hsl(0, 0%, 50%)"
-          fontSize="9"
+          y={height - 8}
+          fill="hsl(0, 0%, 45%)"
+          fontSize="8"
           textAnchor="middle"
         >
-          {stats.totalPredictors} predictions · You: {userTrades.length}
+          {stats.totalPredictors} total · You: {stats.userPoolShare}% of {stats.userSide} pool
         </text>
       </svg>
       
@@ -438,45 +376,98 @@ export const PredictionUniverse = ({
       <AnimatePresence>
         {hoveredStar && (
           <motion.div
-            initial={{ opacity: 0, y: 5 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 5 }}
-            className="absolute z-20 px-3 py-2 text-xs bg-card border border-border rounded-lg shadow-xl pointer-events-none"
+            exit={{ opacity: 0 }}
+            className="absolute z-20 px-2.5 py-1.5 text-[10px] bg-card border border-border rounded-md shadow-lg pointer-events-none"
             style={{
-              left: Math.min(hoveredStar.x * width + 15, width - 100),
-              top: hoveredStar.y * height - 15,
+              left: Math.min(hoveredStar.x * width + 20, width - 80),
+              top: hoveredStar.y * height + 30,
             }}
           >
-            <div className="flex items-center gap-2 font-semibold">
-              <span 
-                className={`w-2.5 h-2.5 rounded-full ${
-                  hoveredStar.side === 'YES' ? 'bg-primary' : 'bg-secondary'
-                }`}
-              />
-              <span>Your {hoveredStar.side} position</span>
-            </div>
-            <div className="mt-1 text-foreground">
-              {hoveredStar.amount} ALGO
-            </div>
-            <div className="text-muted-foreground capitalize">
-              Status: {hoveredStar.status}
-            </div>
+            <div className="font-semibold">{hoveredStar.side} · {hoveredStar.amount} ALGO</div>
+            <div className="text-muted-foreground capitalize">{hoveredStar.status}</div>
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+};
+
+export const PredictionUniverse = ({ 
+  userTrades, 
+  globalTrades = [], 
+  userWallet,
+  className = "" 
+}: PredictionUniverseProps) => {
+  
+  // Group trades by market
+  const universes = useMemo((): MarketUniverse[] => {
+    // Get unique markets from user trades
+    const marketMap = new Map<string, MarketUniverse>();
+    
+    userTrades.forEach(trade => {
+      const marketId = trade.market_id || trade.id;
+      if (!marketMap.has(marketId)) {
+        marketMap.set(marketId, {
+          marketId,
+          marketTitle: trade.market?.title || 'Unknown Market',
+          marketCategory: trade.market?.category,
+          userTrades: [],
+          globalTrades: [],
+        });
+      }
+      marketMap.get(marketId)!.userTrades.push(trade);
+    });
+    
+    // Add global trades to matching markets
+    globalTrades.forEach(trade => {
+      const marketId = trade.market_id || trade.id;
+      if (marketMap.has(marketId)) {
+        marketMap.get(marketId)!.globalTrades.push(trade);
+      }
+    });
+    
+    return Array.from(marketMap.values());
+  }, [userTrades, globalTrades]);
+  
+  if (universes.length === 0) {
+    return (
+      <div className={`flex items-center justify-center ${className}`} style={{ minHeight: 180 }}>
+        <div className="text-center text-muted-foreground text-sm">
+          <div className="w-14 h-14 mx-auto mb-3 rounded-full border border-border flex items-center justify-center">
+            <span className="text-xl">✦</span>
+          </div>
+          Your prediction universes await
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className={className}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {universes.map((universe) => (
+          <MarketUniverseView 
+            key={universe.marketId} 
+            universe={universe} 
+            userWallet={userWallet}
+          />
+        ))}
+      </div>
       
       {/* Legend */}
       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-4 text-[10px] text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-full bg-primary opacity-90 ring-1 ring-white/30" />
-          <span>Your predictions</span>
+          <span>Your position</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-muted-foreground opacity-40" />
-          <span>Other predictors</span>
+          <span>Crowd</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span>Larger = bigger bet</span>
+          <span>←Deep conviction | Tentative→</span>
         </div>
       </div>
     </div>
