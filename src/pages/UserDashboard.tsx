@@ -54,16 +54,19 @@ const formatCountdown = (deadline: string): string => {
 export default function UserDashboard() {
   const { walletAddress, isConnected, connect } = useWallet();
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [globalTrades, setGlobalTrades] = useState<{ id: string; side: string; amount: number; created_at: string; status: string; wallet_address: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchTrades = async () => {
     if (!walletAddress) {
       setTrades([]);
+      setGlobalTrades([]);
       setLoading(false);
       return;
     }
 
+    // Fetch user's trades
     const { data, error } = await supabase
       .from('user_trades')
       .select(`
@@ -77,6 +80,18 @@ export default function UserDashboard() {
       console.error('Error fetching trades:', error);
     } else {
       setTrades(data || []);
+      
+      // Fetch global trades for markets user has positions in
+      if (data && data.length > 0) {
+        const marketIds = [...new Set(data.map(t => t.market_id))];
+        const { data: globalData } = await supabase
+          .from('user_trades')
+          .select('id, side, amount, created_at, status, wallet_address')
+          .in('market_id', marketIds)
+          .neq('wallet_address', walletAddress);
+        
+        setGlobalTrades(globalData || []);
+      }
     }
     setLoading(false);
     setRefreshing(false);
@@ -235,7 +250,12 @@ export default function UserDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <PredictionUniverse trades={trades} className="py-4" />
+            <PredictionUniverse 
+              userTrades={trades} 
+              globalTrades={globalTrades}
+              userWallet={walletAddress || undefined}
+              className="py-4" 
+            />
           </CardContent>
         </Card>
 
