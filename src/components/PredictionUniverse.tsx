@@ -40,7 +40,7 @@ const hashCode = (str: string): number => {
   return Math.abs(hash);
 };
 
-// Convert trade to star with position
+// Convert trade to star with position based on conviction depth
 const tradeToStar = (
   trade: Trade,
   allTrades: Trade[],
@@ -48,11 +48,21 @@ const tradeToStar = (
 ): Star => {
   const side = trade.side as "YES" | "NO";
   
-  // Calculate max amount for size normalization across ALL trades
-  const maxAmount = Math.max(...allTrades.map(t => t.amount), 1);
-  const minAmount = Math.min(...allTrades.map(t => t.amount));
+  // Get all trades on the same side for relative conviction
+  const sameSideTrades = allTrades.filter(t => t.side === side);
+  const maxSideAmount = Math.max(...sameSideTrades.map(t => t.amount), 1);
+  const totalSideAmount = sameSideTrades.reduce((s, t) => s + t.amount, 0);
   
-  // Size based on amount
+  // Conviction ratio: how deep is this bet relative to the side's total
+  // Higher ratio = deeper into the territory
+  const convictionRatio = totalSideAmount > 0 
+    ? trade.amount / maxSideAmount  // relative to largest bet on this side
+    : 0.5;
+  
+  // Size based on amount (global comparison)
+  const allAmounts = allTrades.map(t => t.amount);
+  const maxAmount = Math.max(...allAmounts, 1);
+  const minAmount = Math.min(...allAmounts);
   const amountRatio = maxAmount > minAmount 
     ? (trade.amount - minAmount) / (maxAmount - minAmount) 
     : 0.5;
@@ -67,25 +77,26 @@ const tradeToStar = (
   const userBoost = isUser ? 0.3 : 0;
   const brightness = 0.3 + amountRatio * 0.5 + statusBoost + userBoost;
   
-  // Use hash for consistent but scattered positioning
+  // Use hash for consistent scatter
   const hash = hashCode(trade.id);
-  const hash2 = hashCode(trade.id + 'offset');
+  const hash2 = hashCode(trade.id + 'y');
   
-  // Distance from center (user trades closer to center for prominence)
-  const baseDistance = isUser ? 0.2 : 0.15;
-  const distanceRange = isUser ? 0.6 : 0.75;
-  const distanceRatio = baseDistance + ((hash % 1000) / 1000) * distanceRange;
+  // === CONVICTION DEPTH POSITIONING ===
+  // X position: distance from center based on conviction
+  // Center (0.5) = low conviction, Edge (0.1 or 0.9) = high conviction
+  const baseDepth = 0.15 + convictionRatio * 0.35; // 0.15 to 0.50 from center
+  const depthJitter = ((hash % 100) / 100 - 0.5) * 0.08; // small randomness
+  const depth = Math.max(0.12, Math.min(0.48, baseDepth + depthJitter));
   
-  // Angle within hemisphere
-  // YES = left half (100° to 260°), NO = right half (-80° to 80°)
-  const hemisphereSpread = 160;
-  const angleVariation = ((hash2 % 1000) / 1000) * hemisphereSpread - hemisphereSpread / 2;
-  const baseAngle = side === "YES" ? 180 : 0;
-  const angle = (baseAngle + angleVariation) * (Math.PI / 180);
+  // X: YES goes left of center, NO goes right
+  const x = side === "YES" 
+    ? 0.5 - depth  // deeper conviction = further left
+    : 0.5 + depth; // deeper conviction = further right
   
-  // Convert polar to cartesian (center at 0.5, 0.5)
-  const x = 0.5 + Math.cos(angle) * distanceRatio * 0.45;
-  const y = 0.5 + Math.sin(angle) * distanceRatio * 0.45;
+  // Y position: spread vertically with some clustering
+  const yBase = 0.25 + ((hash2 % 1000) / 1000) * 0.5; // 0.25 to 0.75
+  const yJitter = ((hash % 50) / 50 - 0.5) * 0.15;
+  const y = Math.max(0.15, Math.min(0.85, yBase + yJitter));
   
   return {
     id: trade.id,
