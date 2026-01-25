@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWallet } from "@/contexts/WalletContext";
 import { supabase } from "@/integrations/supabase/client";
+import { PredictionUniverse } from "@/components/PredictionUniverse";
 import { 
   Wallet, 
   TrendingUp, 
@@ -224,6 +225,19 @@ export default function UserDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Prediction Universe Visualization */}
+        <Card className="border-border bg-card">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span className="text-xl">✦</span>
+              Your Prediction Universe
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PredictionUniverse trades={trades} className="py-4" />
+          </CardContent>
+        </Card>
 
         {/* Trades List */}
         <section>
