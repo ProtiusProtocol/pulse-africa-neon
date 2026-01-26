@@ -517,21 +517,6 @@ export const PredictionUniverse = ({
           />
         ))}
       </div>
-      
-      {/* Legend */}
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-4 text-[10px] text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-full bg-primary opacity-90 ring-1 ring-white/30" />
-          <span>Your position</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-muted-foreground opacity-40" />
-          <span>Crowd</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span>←Deep conviction | Tentative→</span>
-        </div>
-      </div>
     </div>
   );
 };
