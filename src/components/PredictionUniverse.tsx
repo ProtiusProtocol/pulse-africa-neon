@@ -456,16 +456,151 @@ const MarketUniverseView = ({
   );
 };
 
+// Compact card view for grid
+const MarketUniverseCard = ({ 
+  universe, 
+  userWallet,
+  onClick
+}: { 
+  universe: MarketUniverse; 
+  userWallet?: string;
+  onClick: () => void;
+}) => {
+  const width = 200;
+  const height = 120;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  
+  const otherTrades = useMemo(() => {
+    if (!userWallet) return universe.globalTrades;
+    return universe.globalTrades.filter(t => t.wallet_address !== userWallet);
+  }, [universe.globalTrades, userWallet]);
+  
+  const { userStars, globalStars, stats } = useMemo(() => {
+    const allTrades = [...universe.userTrades, ...otherTrades];
+    
+    const uStars = universe.userTrades.map(t => tradeToStar(t, allTrades, true));
+    const gStars = otherTrades.map(t => tradeToStar(t, allTrades, false));
+    
+    const userYesAmount = universe.userTrades.filter(t => t.side === 'YES').reduce((s, t) => s + t.amount, 0);
+    const userNoAmount = universe.userTrades.filter(t => t.side === 'NO').reduce((s, t) => s + t.amount, 0);
+    const globalYesAmount = otherTrades.filter(t => t.side === 'YES').reduce((s, t) => s + t.amount, 0);
+    const globalNoAmount = otherTrades.filter(t => t.side === 'NO').reduce((s, t) => s + t.amount, 0);
+    
+    const totalYes = userYesAmount + globalYesAmount;
+    const totalNo = userNoAmount + globalNoAmount;
+    const total = totalYes + totalNo;
+    
+    return {
+      userStars: uStars,
+      globalStars: gStars,
+      stats: {
+        yesPercent: total > 0 ? Math.round((totalYes / total) * 100) : 50,
+        noPercent: total > 0 ? Math.round((totalNo / total) * 100) : 50,
+      },
+    };
+  }, [universe.userTrades, otherTrades]);
+  
+  return (
+    <motion.div 
+      className="relative bg-card/50 border border-border rounded-xl p-3 cursor-pointer hover:border-primary/50 hover:bg-card/70 transition-all"
+      onClick={onClick}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {/* Market title */}
+      <h4 className="text-xs font-medium text-foreground line-clamp-1 leading-snug mb-2">
+        {universe.marketTitle}
+      </h4>
+      
+      <svg 
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full h-auto"
+        style={{ overflow: 'visible' }}
+      >
+        <defs>
+          <radialGradient id={`yes-card-${universe.marketId}`} cx="30%" cy="50%" r="45%">
+            <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id={`no-card-${universe.marketId}`} cx="70%" cy="50%" r="45%">
+            <stop offset="0%" stopColor="hsl(var(--secondary))" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="hsl(var(--secondary))" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        
+        {/* Background */}
+        <rect x={0} y={0} width={width} height={height} rx={6} fill="hsl(0, 0%, 4%)" />
+        
+        {/* Nebulae */}
+        <ellipse cx={centerX * 0.5} cy={centerY} rx={width * 0.22} ry={height * 0.35} fill={`url(#yes-card-${universe.marketId})`} />
+        <ellipse cx={centerX * 1.5} cy={centerY} rx={width * 0.22} ry={height * 0.35} fill={`url(#no-card-${universe.marketId})`} />
+        
+        {/* Center divider */}
+        <line x1={centerX} y1={10} x2={centerX} y2={height - 10} stroke="hsl(0, 0%, 18%)" strokeWidth="1" strokeDasharray="2,4" opacity="0.4" />
+        
+        {/* Side labels */}
+        <text x={centerX * 0.5} y={14} fill="hsl(var(--primary))" fontSize="10" fontWeight="600" textAnchor="middle">
+          {stats.yesPercent}%
+        </text>
+        <text x={centerX * 1.5} y={14} fill="hsl(var(--secondary))" fontSize="10" fontWeight="600" textAnchor="middle">
+          {stats.noPercent}%
+        </text>
+        
+        {/* Global stars (smaller) */}
+        {globalStars.slice(0, 15).map((star) => {
+          const starX = star.x * width;
+          const starY = star.y * height;
+          const isYes = star.side === "YES";
+          const baseColor = isYes ? "hsl(var(--primary))" : "hsl(var(--secondary))";
+          
+          return (
+            <circle
+              key={star.id}
+              cx={starX}
+              cy={starY}
+              r={star.size * 0.6}
+              fill={baseColor}
+              opacity={star.brightness * 0.35}
+            />
+          );
+        })}
+        
+        {/* User stars */}
+        {userStars.map((star) => {
+          const starX = star.x * width;
+          const starY = star.y * height;
+          const isYes = star.side === "YES";
+          const baseColor = isYes ? "hsl(var(--primary))" : "hsl(var(--secondary))";
+          
+          return (
+            <g key={star.id}>
+              <circle cx={starX} cy={starY} r={star.size * 1.2} fill={baseColor} opacity={star.brightness * 0.3} />
+              <circle cx={starX} cy={starY} r={star.size * 0.8} fill={baseColor} opacity={star.brightness * 0.9} />
+              <circle cx={starX} cy={starY} r={star.size * 0.2} fill="white" opacity={0.7} />
+            </g>
+          );
+        })}
+      </svg>
+      
+      {/* Tap hint */}
+      <div className="absolute bottom-1.5 right-2 text-[9px] text-muted-foreground/60">
+        Tap to expand →
+      </div>
+    </motion.div>
+  );
+};
+
 export const PredictionUniverse = ({
   userTrades, 
   globalTrades = [], 
   userWallet,
   className = "" 
 }: PredictionUniverseProps) => {
+  const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
   
   // Group trades by market
   const universes = useMemo((): MarketUniverse[] => {
-    // Get unique markets from user trades
     const marketMap = new Map<string, MarketUniverse>();
     
     userTrades.forEach(trade => {
@@ -482,7 +617,6 @@ export const PredictionUniverse = ({
       marketMap.get(marketId)!.userTrades.push(trade);
     });
     
-    // Add global trades to matching markets
     globalTrades.forEach(trade => {
       const marketId = trade.market_id || trade.id;
       if (marketMap.has(marketId)) {
@@ -492,6 +626,10 @@ export const PredictionUniverse = ({
     
     return Array.from(marketMap.values());
   }, [userTrades, globalTrades]);
+  
+  const selectedUniverse = useMemo(() => {
+    return universes.find(u => u.marketId === selectedMarketId) || null;
+  }, [universes, selectedMarketId]);
   
   if (universes.length === 0) {
     return (
@@ -508,15 +646,67 @@ export const PredictionUniverse = ({
   
   return (
     <div className={className}>
-      <div className="flex flex-col gap-6">
-        {universes.map((universe) => (
-          <MarketUniverseView 
-            key={universe.marketId} 
-            universe={universe} 
-            userWallet={userWallet}
-          />
-        ))}
-      </div>
+      <AnimatePresence mode="wait">
+        {selectedUniverse ? (
+          /* Expanded single market view */
+          <motion.div
+            key="expanded"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Back button */}
+            <button
+              onClick={() => setSelectedMarketId(null)}
+              className="flex items-center gap-2 mb-4 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+            >
+              <motion.span 
+                className="inline-block"
+                initial={{ x: 0 }}
+                whileHover={{ x: -3 }}
+              >
+                ←
+              </motion.span>
+              <span className="group-hover:underline">Back to all markets</span>
+            </button>
+            
+            <MarketUniverseView 
+              universe={selectedUniverse} 
+              userWallet={userWallet}
+            />
+          </motion.div>
+        ) : (
+          /* Grid of compact cards */
+          <motion.div
+            key="grid"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {universes.length === 1 ? (
+              /* Single market - show full view directly */
+              <MarketUniverseView 
+                universe={universes[0]} 
+                userWallet={userWallet}
+              />
+            ) : (
+              /* Multiple markets - show grid */
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {universes.map((universe) => (
+                  <MarketUniverseCard 
+                    key={universe.marketId} 
+                    universe={universe} 
+                    userWallet={userWallet}
+                    onClick={() => setSelectedMarketId(universe.marketId)}
+                  />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
