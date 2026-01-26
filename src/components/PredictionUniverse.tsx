@@ -129,8 +129,8 @@ const MarketUniverseView = ({
 }) => {
   const [hoveredStar, setHoveredStar] = useState<Star | null>(null);
   
-  const width = 280;
-  const height = 200;
+  const width = 500;
+  const height = 300;
   const centerX = width / 2;
   const centerY = height / 2;
   
@@ -187,9 +187,8 @@ const MarketUniverseView = ({
       </div>
       
       <svg 
-        width={width} 
-        height={height} 
-        className="mx-auto"
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full max-w-[500px] h-auto mx-auto"
         style={{ overflow: 'visible' }}
       >
         <defs>
@@ -446,7 +445,7 @@ export const PredictionUniverse = ({
   
   return (
     <div className={className}>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="flex flex-col gap-6">
         {universes.map((universe) => (
           <MarketUniverseView 
             key={universe.marketId} 
