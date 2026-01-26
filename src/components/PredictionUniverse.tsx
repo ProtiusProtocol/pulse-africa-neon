@@ -335,28 +335,36 @@ const MarketUniverseView = ({
           ·
         </text>
         
-        {/* Global stars (crowd) */}
+        {/* Global stars (crowd) - light star-like dust */}
         {globalStars.map((star) => {
           const starX = star.x * width;
           const starY = star.y * height;
-          const isYes = star.side === "YES";
-          const baseColor = isYes ? "hsl(var(--primary))" : "hsl(var(--secondary))";
           
           return (
             <g key={star.id}>
+              {/* Soft glow */}
               <circle
                 cx={starX}
                 cy={starY}
-                r={star.size * 1.3}
-                fill={baseColor}
-                opacity={star.brightness * 0.15}
+                r={star.size * 1.5}
+                fill="hsl(0, 0%, 90%)"
+                opacity={star.brightness * 0.12}
               />
+              {/* Star core */}
               <circle
                 cx={starX}
                 cy={starY}
-                r={star.size}
-                fill={baseColor}
-                opacity={star.brightness * 0.45}
+                r={star.size * 0.8}
+                fill="hsl(0, 0%, 95%)"
+                opacity={star.brightness * 0.5}
+              />
+              {/* Bright center point */}
+              <circle
+                cx={starX}
+                cy={starY}
+                r={star.size * 0.3}
+                fill="hsl(0, 0%, 100%)"
+                opacity={star.brightness * 0.7}
               />
             </g>
           );
@@ -547,22 +555,28 @@ const MarketUniverseCard = ({
           {stats.noPercent}%
         </text>
         
-        {/* Global stars (smaller) */}
+        {/* Global stars (light star dust) */}
         {globalStars.slice(0, 15).map((star) => {
           const starX = star.x * width;
           const starY = star.y * height;
-          const isYes = star.side === "YES";
-          const baseColor = isYes ? "hsl(var(--primary))" : "hsl(var(--secondary))";
           
           return (
-            <circle
-              key={star.id}
-              cx={starX}
-              cy={starY}
-              r={star.size * 0.6}
-              fill={baseColor}
-              opacity={star.brightness * 0.35}
-            />
+            <g key={star.id}>
+              <circle
+                cx={starX}
+                cy={starY}
+                r={star.size * 0.6}
+                fill="hsl(0, 0%, 90%)"
+                opacity={star.brightness * 0.4}
+              />
+              <circle
+                cx={starX}
+                cy={starY}
+                r={star.size * 0.25}
+                fill="hsl(0, 0%, 100%)"
+                opacity={star.brightness * 0.6}
+              />
+            </g>
           );
         })}
         
