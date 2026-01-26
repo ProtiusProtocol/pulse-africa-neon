@@ -140,7 +140,7 @@ const MarketUniverseView = ({
     return universe.globalTrades.filter(t => t.wallet_address !== userWallet);
   }, [universe.globalTrades, userWallet]);
   
-  const { userStars, globalStars, stats } = useMemo(() => {
+  const { userStars, globalStars, stats, interpretation } = useMemo(() => {
     const allTrades = [...universe.userTrades, ...otherTrades];
     
     const uStars = universe.userTrades.map(t => tradeToStar(t, allTrades, true));
@@ -161,6 +161,60 @@ const MarketUniverseView = ({
     const poolOnSide = userSide === 'YES' ? totalYes : totalNo;
     const userPoolShare = poolOnSide > 0 ? (userTotalOnSide / poolOnSide) * 100 : 0;
     
+    // Generate interpretation
+    const userBetCount = universe.userTrades.length;
+    const totalBetCount = allTrades.length;
+    const userTotalAmount = userYesAmount + userNoAmount;
+    const avgBetSize = userBetCount > 0 ? userTotalAmount / userBetCount : 0;
+    const crowdAvgBet = otherTrades.length > 0 ? (globalYesAmount + globalNoAmount) / otherTrades.length : 0;
+    
+    // Determine conviction level
+    const sidePoolTotal = userSide === 'YES' ? totalYes : totalNo;
+    const oppositeSideTotal = userSide === 'YES' ? totalNo : totalYes;
+    const crowdFavors = totalYes > totalNo ? 'YES' : totalNo > totalYes ? 'NO' : 'split';
+    const isContrarian = crowdFavors !== 'split' && crowdFavors !== userSide;
+    
+    // Build interpretation
+    let positionDesc = '';
+    let convictionDesc = '';
+    let crowdContext = '';
+    
+    // Position size description
+    if (userPoolShare > 50) {
+      positionDesc = 'Dominant position';
+    } else if (userPoolShare > 20) {
+      positionDesc = 'Significant stake';
+    } else if (userPoolShare > 5) {
+      positionDesc = 'Moderate position';
+    } else {
+      positionDesc = 'Small position';
+    }
+    
+    // Conviction description based on bet count and relative size
+    if (userBetCount > 1 && avgBetSize > crowdAvgBet * 2) {
+      convictionDesc = 'with repeated high-conviction bets';
+    } else if (userBetCount > 1) {
+      convictionDesc = 'across multiple entries';
+    } else if (avgBetSize > crowdAvgBet * 2) {
+      convictionDesc = 'with above-average conviction';
+    } else if (crowdAvgBet > 0 && avgBetSize < crowdAvgBet * 0.5) {
+      convictionDesc = 'with cautious sizing';
+    } else {
+      convictionDesc = 'at market-typical size';
+    }
+    
+    // Crowd context
+    if (isContrarian) {
+      const crowdPercent = Math.round((oppositeSideTotal / total) * 100);
+      crowdContext = `Contrarian view against ${crowdPercent}% of pool.`;
+    } else if (crowdFavors === userSide) {
+      crowdContext = 'Aligned with crowd sentiment.';
+    } else {
+      crowdContext = 'Market evenly split.';
+    }
+    
+    const interpretationText = `${positionDesc} ${convictionDesc}. ${crowdContext}`;
+    
     return {
       userStars: uStars,
       globalStars: gStars,
@@ -170,7 +224,8 @@ const MarketUniverseView = ({
         totalPredictors: allTrades.length,
         userSide,
         userPoolShare: Math.round(userPoolShare * 10) / 10,
-      }
+      },
+      interpretation: interpretationText,
     };
   }, [universe.userTrades, otherTrades]);
   
@@ -389,11 +444,19 @@ const MarketUniverseView = ({
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Position Interpretation */}
+      <div className="mt-3 px-2 py-2 bg-muted/30 rounded-lg border border-border/50">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <span className="text-foreground/80 font-medium">Your position: </span>
+          {interpretation}
+        </p>
+      </div>
     </div>
   );
 };
 
-export const PredictionUniverse = ({ 
+export const PredictionUniverse = ({
   userTrades, 
   globalTrades = [], 
   userWallet,
