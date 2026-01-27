@@ -1096,10 +1096,12 @@ const handleCreateMarket = async () => {
                       </div>
                     )}
 
-                    {/* Market reference ID (for migration) */}
+                    {/* Stable identifier for cross-network migration */}
                     {market.outcome_ref && (
-                      <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
-                        <span className="text-xs text-muted-foreground">Ref: <code className="bg-muted px-1 rounded">{market.outcome_ref}</code></span>
+                      <div className="flex items-center gap-2 p-2 bg-card/50 rounded-lg border border-border/50">
+                        <span className="text-xs text-muted-foreground font-mono">
+                          ID: <code className="bg-muted px-1.5 py-0.5 rounded text-foreground/80">{market.outcome_ref}</code>
+                        </span>
                       </div>
                     )}
 
