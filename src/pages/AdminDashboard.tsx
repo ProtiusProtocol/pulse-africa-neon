@@ -1096,11 +1096,10 @@ const handleCreateMarket = async () => {
                       </div>
                     )}
 
-                    {/* Outcome if resolved */}
+                    {/* Market reference ID (for migration) */}
                     {market.outcome_ref && (
-                      <div className="flex items-center gap-2 p-2 bg-accent/10 rounded-lg">
-                        <AlertTriangle className="w-4 h-4 text-accent" />
-                        <span className="text-sm">Resolved: <strong>{market.outcome_ref}</strong> wins</span>
+                      <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg">
+                        <span className="text-xs text-muted-foreground">Ref: <code className="bg-muted px-1 rounded">{market.outcome_ref}</code></span>
                       </div>
                     )}
 
