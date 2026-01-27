@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { MarketCardUniverse } from "./MarketCardUniverse";
 
 interface MarketCardProps {
   id?: string; // Market ID for translations
@@ -291,30 +292,34 @@ export const MarketCard = ({
           </div>
         </div>
 
+        {/* Prediction Universe */}
+        {id && yesAmount !== undefined && noAmount !== undefined && (
+          <div className="pt-2">
+            <MarketCardUniverse 
+              marketId={id} 
+              yesTotal={yesAmount} 
+              noTotal={noAmount} 
+            />
+          </div>
+        )}
+
         {/* Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <div className={`flex items-center gap-2 text-xs ${isUrgent ? "text-accent animate-pulse" : "text-muted-foreground"}`}>
             <Clock className={`w-3 h-3 ${isUrgent ? "text-accent" : ""}`} />
             {timeLeft}
           </div>
-          <div className="flex items-center gap-3">
-            {tradeCount !== undefined && (
-              <span className="text-xs text-muted-foreground">
-                {tradeCount} trade{tradeCount !== 1 ? 's' : ''}
-              </span>
+          <div
+            className={`flex items-center gap-1 text-sm font-bold ${
+              trend === "up" ? "text-primary" : "text-accent"
+            }`}
+          >
+            {trend === "up" ? (
+              <TrendingUp className="w-4 h-4" />
+            ) : (
+              <TrendingDown className="w-4 h-4" />
             )}
-            <div
-              className={`flex items-center gap-1 text-sm font-bold ${
-                trend === "up" ? "text-primary" : "text-accent"
-              }`}
-            >
-              {trend === "up" ? (
-                <TrendingUp className="w-4 h-4" />
-              ) : (
-                <TrendingDown className="w-4 h-4" />
-              )}
-              {trendValue}%
-            </div>
+            {trendValue}%
           </div>
         </div>
 
