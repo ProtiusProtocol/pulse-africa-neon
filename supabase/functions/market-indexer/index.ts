@@ -51,10 +51,18 @@ async function fetchAppState(appId: number): Promise<{
           status = item.value.uint || 0;
           break;
         case "outcomeRef":
-          // outcomeRef is stored as bytes, decode to string
+          // outcomeRef is stored as bytes, decode to UTF-8 string
           if (item.value.bytes) {
-            const refBytes = Uint8Array.from(atob(item.value.bytes), (c) => c.charCodeAt(0));
-            outcomeRef = new TextDecoder().decode(refBytes);
+            try {
+              // Algorand stores strings as raw bytes, base64 encoded in the API response
+              const rawBytes = Uint8Array.from(atob(item.value.bytes), (c) => c.charCodeAt(0));
+              // Filter out any null bytes or control characters
+              const cleanBytes = rawBytes.filter(b => b >= 32 && b <= 126);
+              outcomeRef = String.fromCharCode(...cleanBytes);
+            } catch (e) {
+              console.log(`Failed to decode outcomeRef for app ${appId}:`, e);
+              outcomeRef = null;
+            }
           }
           break;
       }
