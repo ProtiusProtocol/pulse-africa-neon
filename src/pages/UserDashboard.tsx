@@ -3,9 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useWallet } from "@/contexts/WalletContext";
 import { supabase } from "@/integrations/supabase/client";
 import { PredictionUniverse } from "@/components/PredictionUniverse";
+import { TradeModal } from "@/components/TradeModal";
 import { 
   Wallet, 
   TrendingUp, 
@@ -16,7 +18,9 @@ import {
   Gift,
   BarChart2,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  Plus,
+  Zap
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -39,6 +43,17 @@ interface Trade {
   };
 }
 
+interface Market {
+  id: string;
+  title: string;
+  category: string;
+  app_id: string;
+  yes_total: number | null;
+  no_total: number | null;
+  linked_signals: string[] | null;
+  resolution_criteria: string | null;
+}
+
 const formatCountdown = (deadline: string): string => {
   const ms = new Date(deadline).getTime() - Date.now();
   if (ms <= 0) return "Ended";
@@ -55,8 +70,14 @@ export default function UserDashboard() {
   const { walletAddress, isConnected, connect } = useWallet();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [globalTrades, setGlobalTrades] = useState<{ id: string; side: string; amount: number; created_at: string; status: string; wallet_address: string; market_id: string }[]>([]);
+  const [allMarkets, setAllMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Trade modal state
+  const [selectedMarket, setSelectedMarket] = useState<Market | null>(null);
+  const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
+  const [quickTradeMarketId, setQuickTradeMarketId] = useState<string>("");
 
   const fetchTrades = async () => {
     if (!walletAddress) {
@@ -97,13 +118,51 @@ export default function UserDashboard() {
     setRefreshing(false);
   };
 
+  const fetchAllMarkets = async () => {
+    const { data } = await supabase
+      .from('markets')
+      .select('id, title, category, app_id, yes_total, no_total, linked_signals, resolution_criteria')
+      .eq('status', 'active')
+      .order('title', { ascending: true });
+    
+    setAllMarkets(data || []);
+  };
+
   useEffect(() => {
     fetchTrades();
+    fetchAllMarkets();
   }, [walletAddress]);
 
   const handleRefresh = () => {
     setRefreshing(true);
     fetchTrades();
+    fetchAllMarkets();
+  };
+
+  // Open trade modal for a specific market
+  const openTradeModal = (market: Market) => {
+    setSelectedMarket(market);
+    setIsTradeModalOpen(true);
+  };
+
+  // Open trade modal from trade card (existing position)
+  const openTradeFromPosition = (trade: Trade) => {
+    // Find full market data
+    const market = allMarkets.find(m => m.id === trade.market_id);
+    if (market) {
+      setSelectedMarket(market);
+      setIsTradeModalOpen(true);
+    }
+  };
+
+  // Handle quick trade selection
+  const handleQuickTrade = () => {
+    if (!quickTradeMarketId) return;
+    const market = allMarkets.find(m => m.id === quickTradeMarketId);
+    if (market) {
+      openTradeModal(market);
+      setQuickTradeMarketId("");
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -197,6 +256,41 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
+
+        {/* Quick Trade Widget */}
+        <Card className="border-accent/30 bg-accent/5">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-accent" />
+                <span className="font-semibold text-foreground">Quick Trade</span>
+              </div>
+              <div className="flex flex-1 items-center gap-3 w-full sm:w-auto">
+                <Select value={quickTradeMarketId} onValueChange={setQuickTradeMarketId}>
+                  <SelectTrigger className="flex-1 sm:w-[350px]">
+                    <SelectValue placeholder="Select a market to trade..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allMarkets.map((market) => (
+                      <SelectItem key={market.id} value={market.id}>
+                        <span className="truncate">{market.title.slice(0, 60)}{market.title.length > 60 ? '...' : ''}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button 
+                  onClick={handleQuickTrade} 
+                  disabled={!quickTradeMarketId}
+                  variant="hero"
+                  size="default"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Trade
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Portfolio Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -321,7 +415,7 @@ export default function UserDashboard() {
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                         <Badge 
                           className={trade.side === 'YES' 
                             ? 'bg-primary/20 text-primary border-primary' 
@@ -335,10 +429,25 @@ export default function UserDashboard() {
                           )}
                           {trade.side}
                         </Badge>
-                        <span className="font-semibold text-foreground min-w-[80px] text-right">
+                        <span className="font-semibold text-foreground min-w-[60px] text-right">
                           {trade.amount} ALGO
                         </span>
                         {getStatusBadge(trade.status)}
+                        
+                        {/* Add Position button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openTradeFromPosition(trade);
+                          }}
+                          className="h-7 px-2 text-xs border-primary/50 text-primary hover:bg-primary/10"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Add
+                        </Button>
+                        
                         {trade.tx_id && (
                           <a
                             href={`https://testnet.algoexplorer.io/tx/${trade.tx_id}`}
@@ -363,6 +472,20 @@ export default function UserDashboard() {
           Viewing trades on Algorand TestNet
         </p>
       </div>
+      
+      {/* Trade Modal */}
+      <TradeModal
+        market={selectedMarket}
+        isOpen={isTradeModalOpen}
+        onClose={() => {
+          setIsTradeModalOpen(false);
+          setSelectedMarket(null);
+        }}
+        onTradeComplete={() => {
+          fetchTrades();
+          fetchAllMarkets();
+        }}
+      />
     </div>
   );
 }
