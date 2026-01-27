@@ -42,11 +42,13 @@ import {
   Languages,
   Pencil,
   X,
-  Save
+  Save,
+  Sparkles
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
+import { AdminMarketUniverse } from "@/components/AdminMarketUniverse";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
@@ -55,6 +57,15 @@ type Market = Tables<'markets'>;
 type FragilitySignal = Tables<'fragility_signals'>;
 type TradeCounts = Record<string, number>;
 type RealTradeCounts = Record<string, number>; // Trades excluding SEED_DATA
+type TradeRecord = {
+  id: string;
+  market_id: string;
+  side: string;
+  amount: number;
+  wallet_address: string;
+  status: string;
+  created_at: string;
+};
 
 export default function AdminDashboard() {
   const { user, loading: authLoading, isAdmin, signOut } = useAuth();
@@ -63,6 +74,7 @@ export default function AdminDashboard() {
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
   const [tradeCounts, setTradeCounts] = useState<TradeCounts>({});
   const [realTradeCounts, setRealTradeCounts] = useState<RealTradeCounts>({}); // Excludes SEED_DATA
+  const [allTrades, setAllTrades] = useState<TradeRecord[]>([]); // All trades for universe viz
   const [isLoading, setIsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [signups, setSignups] = useState<EarlyAccessSignup[]>([]);
@@ -139,12 +151,15 @@ export default function AdminDashboard() {
   const fetchTradeCounts = async () => {
     const { data, error } = await supabase
       .from('user_trades')
-      .select('market_id, wallet_address');
+      .select('id, market_id, wallet_address, side, amount, status, created_at');
     
     if (error) {
       console.error("Failed to fetch trade counts:", error);
       return;
     }
+    
+    // Store all trades for universe visualization
+    setAllTrades(data || []);
     
     // Count all trades per market
     const counts: TradeCounts = {};
@@ -765,6 +780,22 @@ const handleCreateMarket = async () => {
               );
             })()}
           </div>
+        </section>
+
+        {/* Market Universe Visualization */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-5 h-5 text-accent" />
+            <h2 className="text-xl font-semibold">Market Universe</h2>
+          </div>
+          <Card className="border-border bg-card">
+            <CardContent className="p-4">
+              <AdminMarketUniverse 
+                markets={markets}
+                trades={allTrades}
+              />
+            </CardContent>
+          </Card>
         </section>
 
         {/* Wallet Warning */}
