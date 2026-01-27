@@ -316,6 +316,7 @@ export type Database = {
           region: string
           resolution_criteria: string | null
           resolution_criteria_full: string | null
+          resolved_outcome: string | null
           status: string
           title: string
           updated_at: string
@@ -335,6 +336,7 @@ export type Database = {
           region?: string
           resolution_criteria?: string | null
           resolution_criteria_full?: string | null
+          resolved_outcome?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -354,6 +356,7 @@ export type Database = {
           region?: string
           resolution_criteria?: string | null
           resolution_criteria_full?: string | null
+          resolved_outcome?: string | null
           status?: string
           title?: string
           updated_at?: string
