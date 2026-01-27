@@ -140,7 +140,7 @@ const MarketUniverseView = ({
     return universe.globalTrades.filter(t => t.wallet_address !== userWallet);
   }, [universe.globalTrades, userWallet]);
   
-  const { userStars, globalStars, stats, interpretation } = useMemo(() => {
+  const { userStars, globalStars, stats, interpretation, isContrarian, contrarianStrength } = useMemo(() => {
     const allTrades = [...universe.userTrades, ...otherTrades];
     
     const uStars = universe.userTrades.map(t => tradeToStar(t, allTrades, true));
@@ -163,16 +163,20 @@ const MarketUniverseView = ({
     
     // Generate interpretation
     const userBetCount = universe.userTrades.length;
-    const totalBetCount = allTrades.length;
     const userTotalAmount = userYesAmount + userNoAmount;
     const avgBetSize = userBetCount > 0 ? userTotalAmount / userBetCount : 0;
     const crowdAvgBet = otherTrades.length > 0 ? (globalYesAmount + globalNoAmount) / otherTrades.length : 0;
     
     // Determine conviction level
-    const sidePoolTotal = userSide === 'YES' ? totalYes : totalNo;
     const oppositeSideTotal = userSide === 'YES' ? totalNo : totalYes;
     const crowdFavors = totalYes > totalNo ? 'YES' : totalNo > totalYes ? 'NO' : 'split';
-    const isContrarian = crowdFavors !== 'split' && crowdFavors !== userSide;
+    const contrarian = crowdFavors !== 'split' && crowdFavors !== userSide;
+    
+    // Contrarian strength: how strongly the crowd opposes user's view (0-100%)
+    const crowdOppositionPercent = total > 0 
+      ? Math.round((oppositeSideTotal / total) * 100) 
+      : 0;
+    const strength = contrarian ? crowdOppositionPercent : 0;
     
     // Build interpretation
     let positionDesc = '';
@@ -204,9 +208,8 @@ const MarketUniverseView = ({
     }
     
     // Crowd context
-    if (isContrarian) {
-      const crowdPercent = Math.round((oppositeSideTotal / total) * 100);
-      crowdContext = `Contrarian view against ${crowdPercent}% of pool.`;
+    if (contrarian) {
+      crowdContext = `Contrarian view against ${crowdOppositionPercent}% of pool.`;
     } else if (crowdFavors === userSide) {
       crowdContext = 'Aligned with crowd sentiment.';
     } else {
@@ -226,6 +229,8 @@ const MarketUniverseView = ({
         userPoolShare: Math.round(userPoolShare * 10) / 10,
       },
       interpretation: interpretationText,
+      isContrarian: contrarian,
+      contrarianStrength: strength,
     };
   }, [universe.userTrades, otherTrades]);
   
@@ -259,6 +264,14 @@ const MarketUniverseView = ({
             <feGaussianBlur stdDeviation="2" result="glow" />
             <feMerge>
               <feMergeNode in="glow" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          {/* Contrarian pulse animation filter */}
+          <filter id={`contrarian-pulse-${universe.marketId}`} x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
@@ -385,6 +398,29 @@ const MarketUniverseView = ({
               onMouseLeave={() => setHoveredStar(null)}
               style={{ cursor: 'pointer' }}
             >
+              {/* Contrarian pulse ring (only for contrarian positions) */}
+              {isContrarian && (
+                <motion.circle
+                  cx={starX}
+                  cy={starY}
+                  r={star.size * 3.5}
+                  fill="none"
+                  stroke="hsl(var(--accent))"
+                  strokeWidth="1.5"
+                  initial={{ opacity: 0.6, scale: 0.8 }}
+                  animate={{ 
+                    opacity: [0.6, 0.2, 0.6],
+                    scale: [0.8, 1.2, 0.8],
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  style={{ transformOrigin: `${starX}px ${starY}px` }}
+                />
+              )}
+              
               {/* Glow layers */}
               <circle cx={starX} cy={starY} r={star.size * 2.5} fill={baseColor} opacity={star.brightness * 0.2} />
               <circle cx={starX} cy={starY} r={star.size * 1.5} fill={baseColor} opacity={star.brightness * 0.4} />
@@ -396,7 +432,7 @@ const MarketUniverseView = ({
                 r={star.size}
                 fill={baseColor}
                 opacity={star.brightness}
-                filter={`url(#glow-${universe.marketId})`}
+                filter={isContrarian ? `url(#contrarian-pulse-${universe.marketId})` : `url(#glow-${universe.marketId})`}
                 style={{
                   transform: isHovered ? 'scale(1.3)' : 'scale(1)',
                   transformOrigin: `${starX}px ${starY}px`,
@@ -407,16 +443,16 @@ const MarketUniverseView = ({
               {/* Bright center */}
               <circle cx={starX} cy={starY} r={star.size * 0.3} fill="white" opacity={star.brightness * 0.85} />
               
-              {/* User indicator */}
+              {/* User indicator ring - orange accent for contrarian */}
               <circle
                 cx={starX}
                 cy={starY}
                 r={star.size + 3}
                 fill="none"
-                stroke="white"
-                strokeWidth="0.75"
-                opacity={isHovered ? 0.7 : 0.25}
-                strokeDasharray="2,2"
+                stroke={isContrarian ? "hsl(var(--accent))" : "white"}
+                strokeWidth={isContrarian ? "1.25" : "0.75"}
+                opacity={isContrarian ? 0.7 : (isHovered ? 0.7 : 0.25)}
+                strokeDasharray={isContrarian ? "0" : "2,2"}
               />
             </g>
           );
@@ -454,11 +490,24 @@ const MarketUniverseView = ({
       </AnimatePresence>
       
       {/* Position Interpretation */}
-      <div className="mt-3 px-2 py-2 bg-muted/30 rounded-lg border border-border/50">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          <span className="text-foreground/80 font-medium">Your position: </span>
-          {interpretation}
-        </p>
+      <div className={`mt-3 px-2 py-2 rounded-lg border ${isContrarian ? 'bg-accent/10 border-accent/30' : 'bg-muted/30 border-border/50'}`}>
+        <div className="flex items-start gap-2">
+          {isContrarian && (
+            <motion.span 
+              className="flex-shrink-0 mt-0.5 text-accent text-xs font-bold"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              ⚡
+            </motion.span>
+          )}
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <span className={`font-medium ${isContrarian ? 'text-accent' : 'text-foreground/80'}`}>
+              {isContrarian ? `Contrarian (${contrarianStrength}% oppose): ` : 'Your position: '}
+            </span>
+            {interpretation}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -484,7 +533,7 @@ const MarketUniverseCard = ({
     return universe.globalTrades.filter(t => t.wallet_address !== userWallet);
   }, [universe.globalTrades, userWallet]);
   
-  const { userStars, globalStars, stats } = useMemo(() => {
+  const { userStars, globalStars, stats, isContrarian } = useMemo(() => {
     const allTrades = [...universe.userTrades, ...otherTrades];
     
     const uStars = universe.userTrades.map(t => tradeToStar(t, allTrades, true));
@@ -499,6 +548,11 @@ const MarketUniverseCard = ({
     const totalNo = userNoAmount + globalNoAmount;
     const total = totalYes + totalNo;
     
+    // Determine if user is contrarian
+    const userSide = universe.userTrades.length > 0 ? universe.userTrades[0].side : null;
+    const crowdFavors = totalYes > totalNo ? 'YES' : totalNo > totalYes ? 'NO' : 'split';
+    const contrarian = crowdFavors !== 'split' && crowdFavors !== userSide;
+    
     return {
       userStars: uStars,
       globalStars: gStars,
@@ -506,16 +560,33 @@ const MarketUniverseCard = ({
         yesPercent: total > 0 ? Math.round((totalYes / total) * 100) : 50,
         noPercent: total > 0 ? Math.round((totalNo / total) * 100) : 50,
       },
+      isContrarian: contrarian,
     };
   }, [universe.userTrades, otherTrades]);
   
   return (
     <motion.div 
-      className="relative bg-card/50 border border-border rounded-xl p-3 cursor-pointer hover:border-primary/50 hover:bg-card/70 transition-all"
+      className={`relative bg-card/50 border rounded-xl p-3 cursor-pointer transition-all ${
+        isContrarian 
+          ? 'border-accent/40 hover:border-accent/70 hover:bg-accent/5' 
+          : 'border-border hover:border-primary/50 hover:bg-card/70'
+      }`}
       onClick={onClick}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
+      {/* Contrarian badge */}
+      {isContrarian && (
+        <motion.div 
+          className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-lg"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <span>⚡</span>
+          <span>CONTRARIAN</span>
+        </motion.div>
+      )}
+      
       {/* Market title */}
       <h4 className="text-xs font-medium text-foreground line-clamp-1 leading-snug mb-2">
         {universe.marketTitle}
@@ -580,7 +651,7 @@ const MarketUniverseCard = ({
           );
         })}
         
-        {/* User stars */}
+        {/* User stars - with contrarian ring effect */}
         {userStars.map((star) => {
           const starX = star.x * width;
           const starY = star.y * height;
@@ -589,16 +660,50 @@ const MarketUniverseCard = ({
           
           return (
             <g key={star.id}>
+              {/* Contrarian pulse ring on card */}
+              {isContrarian && (
+                <motion.circle
+                  cx={starX}
+                  cy={starY}
+                  r={star.size * 2}
+                  fill="none"
+                  stroke="hsl(var(--accent))"
+                  strokeWidth="1"
+                  initial={{ opacity: 0.5, scale: 0.8 }}
+                  animate={{ 
+                    opacity: [0.5, 0.2, 0.5],
+                    scale: [0.8, 1.3, 0.8],
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  style={{ transformOrigin: `${starX}px ${starY}px` }}
+                />
+              )}
               <circle cx={starX} cy={starY} r={star.size * 1.2} fill={baseColor} opacity={star.brightness * 0.3} />
               <circle cx={starX} cy={starY} r={star.size * 0.8} fill={baseColor} opacity={star.brightness * 0.9} />
               <circle cx={starX} cy={starY} r={star.size * 0.2} fill="white" opacity={0.7} />
+              {/* Solid ring for contrarian */}
+              {isContrarian && (
+                <circle 
+                  cx={starX} 
+                  cy={starY} 
+                  r={star.size + 1.5} 
+                  fill="none" 
+                  stroke="hsl(var(--accent))" 
+                  strokeWidth="0.8" 
+                  opacity={0.6} 
+                />
+              )}
             </g>
           );
         })}
       </svg>
       
       {/* Tap hint */}
-      <div className="absolute bottom-1.5 right-2 text-[9px] text-muted-foreground/60">
+      <div className={`absolute bottom-1.5 right-2 text-[9px] ${isContrarian ? 'text-accent/70' : 'text-muted-foreground/60'}`}>
         Tap to expand →
       </div>
     </motion.div>
