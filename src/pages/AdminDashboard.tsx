@@ -92,6 +92,7 @@ export default function AdminDashboard() {
     deadline: '',
     resolutionCriteria: '',
     resolutionCriteriaFull: '',
+    outcomeRef: '',
   });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   
@@ -428,6 +429,7 @@ export default function AdminDashboard() {
       deadline: market.deadline ? new Date(market.deadline).toISOString().slice(0, 16) : '',
       resolutionCriteria: market.resolution_criteria || '',
       resolutionCriteriaFull: market.resolution_criteria_full || '',
+      outcomeRef: market.outcome_ref || '',
     });
   };
 
@@ -455,6 +457,7 @@ export default function AdminDashboard() {
           deadline: editForm.deadline ? new Date(editForm.deadline).toISOString() : null,
           resolution_criteria: editForm.resolutionCriteria.trim() || null,
           resolution_criteria_full: editForm.resolutionCriteriaFull.trim() || null,
+          outcome_ref: editForm.outcomeRef.trim() || null,
         })
         .eq('id', editingMarket.id);
 
@@ -1423,6 +1426,21 @@ const handleCreateMarket = async () => {
                       </Badge>
                     ))}
                   </div>
+                </div>
+
+                {/* Outcome Reference ID */}
+                <div className="space-y-2">
+                  <Label htmlFor="editOutcomeRef">Outcome Reference ID</Label>
+                  <Input
+                    id="editOutcomeRef"
+                    value={editForm.outcomeRef}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, outcomeRef: e.target.value }))}
+                    className="bg-input border-border font-mono"
+                    placeholder="e.g. FIFAWC26_Winner_France"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Stable identifier for cross-network migration (not stored on-chain)
+                  </p>
                 </div>
 
                 {/* Resolution Criteria */}
