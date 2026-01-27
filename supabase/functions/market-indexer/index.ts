@@ -16,6 +16,7 @@ async function fetchAppState(appId: number): Promise<{
   yesTotal: number;
   noTotal: number;
   status: number;
+  outcomeRef: string | null;
 } | null> {
   try {
     console.log(`Fetching state for app ${appId}...`);
@@ -32,6 +33,7 @@ async function fetchAppState(appId: number): Promise<{
     let yesTotal = 0;
     let noTotal = 0;
     let status = 0;
+    let outcomeRef: string | null = null;
 
     for (const item of globalState) {
       // Decode base64 key to string
@@ -48,11 +50,18 @@ async function fetchAppState(appId: number): Promise<{
         case "status":
           status = item.value.uint || 0;
           break;
+        case "outcomeRef":
+          // outcomeRef is stored as bytes, decode to string
+          if (item.value.bytes) {
+            const refBytes = Uint8Array.from(atob(item.value.bytes), (c) => c.charCodeAt(0));
+            outcomeRef = new TextDecoder().decode(refBytes);
+          }
+          break;
       }
     }
 
-    console.log(`App ${appId}: yesTotal=${yesTotal}, noTotal=${noTotal}, status=${status}`);
-    return { yesTotal, noTotal, status };
+    console.log(`App ${appId}: yesTotal=${yesTotal}, noTotal=${noTotal}, status=${status}, outcomeRef=${outcomeRef}`);
+    return { yesTotal, noTotal, status, outcomeRef };
   } catch (error) {
     console.error(`Error fetching app ${appId}:`, error);
     return null;
@@ -113,13 +122,21 @@ serve(async (req) => {
 
       if (state) {
         // Convert microAlgos to ALGO for display (state is in microAlgos)
+        // Also sync outcomeRef if available from chain
+        const updateData: Record<string, unknown> = {
+          yes_total: state.yesTotal,
+          no_total: state.noTotal,
+          updated_at: new Date().toISOString(),
+        };
+        
+        // Only update outcome_ref if we got one from the chain
+        if (state.outcomeRef) {
+          updateData.outcome_ref = state.outcomeRef;
+        }
+        
         const { error: updateError } = await supabase
           .from("markets")
-          .update({
-            yes_total: state.yesTotal,
-            no_total: state.noTotal,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq("id", market.id);
 
         if (updateError) {
