@@ -124,16 +124,13 @@ serve(async (req) => {
       if (state) {
         // Convert microAlgos to ALGO for display (state is in microAlgos)
         // Also sync outcomeRef if available from chain
+        // Note: outcome_ref is NOT synced from chain - it's a database-only
+        // stable identifier maintained manually for cross-network migration
         const updateData: Record<string, unknown> = {
           yes_total: state.yesTotal,
           no_total: state.noTotal,
           updated_at: new Date().toISOString(),
         };
-        
-        // Only update outcome_ref if we got one from the chain
-        if (state.outcomeRef) {
-          updateData.outcome_ref = state.outcomeRef;
-        }
         
         const { error: updateError } = await supabase
           .from("markets")
