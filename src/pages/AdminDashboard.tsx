@@ -49,6 +49,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import { AdminMarketUniverse } from "@/components/AdminMarketUniverse";
+import { BulkAppIdMigration } from "@/components/BulkAppIdMigration";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
@@ -106,6 +107,7 @@ export default function AdminDashboard() {
     deadline: '',
     resolutionCriteria: '',
     resolutionCriteriaFull: '',
+    outcomeRef: '',
     skipTranslation: false,
   });
   const [isCreatingMarket, setIsCreatingMarket] = useState(false);
@@ -486,8 +488,8 @@ export default function AdminDashboard() {
   };
 
 const handleCreateMarket = async () => {
-    if (!newMarket.appId.trim() || !newMarket.title.trim() || !newMarket.category.trim()) {
-      toast({ title: "Error", description: "App ID, Title and Category are required", variant: "destructive" });
+    if (!newMarket.appId.trim() || !newMarket.title.trim() || !newMarket.category.trim() || !newMarket.outcomeRef.trim()) {
+      toast({ title: "Error", description: "App ID, Title, Category and Outcome Reference are required", variant: "destructive" });
       return;
     }
 
@@ -504,6 +506,7 @@ const handleCreateMarket = async () => {
           deadline: newMarket.deadline ? new Date(newMarket.deadline).toISOString() : null,
           resolution_criteria: newMarket.resolutionCriteria.trim() || null,
           resolution_criteria_full: newMarket.resolutionCriteriaFull.trim() || null,
+          outcome_ref: newMarket.outcomeRef.trim(),
           status: 'active',
         })
         .select()
@@ -528,6 +531,7 @@ const handleCreateMarket = async () => {
         deadline: '',
         resolutionCriteria: '',
         resolutionCriteriaFull: '',
+        outcomeRef: '',
         skipTranslation: false,
       });
       
@@ -996,6 +1000,20 @@ const handleCreateMarket = async () => {
                 />
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="outcomeRef">Outcome Reference ID *</Label>
+                <Input
+                  id="outcomeRef"
+                  placeholder="e.g. FIFAWC26_Winner_France or PSL2526_Chiefs_Win"
+                  value={newMarket.outcomeRef}
+                  onChange={(e) => setNewMarket(prev => ({ ...prev, outcomeRef: e.target.value }))}
+                  className="bg-input border-border font-mono"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Unique stable identifier for cross-network migration (not stored on-chain)
+                </p>
+              </div>
+
               <div className="flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex items-center space-x-2">
                   <Checkbox
@@ -1024,6 +1042,14 @@ const handleCreateMarket = async () => {
               </div>
             </CardContent>
           </Card>
+        </section>
+
+        {/* Bulk App ID Migration */}
+        <section>
+          <BulkAppIdMigration 
+            markets={markets} 
+            onMigrationComplete={fetchMarkets} 
+          />
         </section>
 
         {/* Market Management - Layer 2 */}
