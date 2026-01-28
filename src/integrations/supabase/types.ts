@@ -312,7 +312,7 @@ export type Database = {
           linked_signals: string[] | null
           no_total: number | null
           oracle_address: string | null
-          outcome_ref: string | null
+          outcome_ref: string
           region: string
           resolution_criteria: string | null
           resolution_criteria_full: string | null
@@ -332,7 +332,7 @@ export type Database = {
           linked_signals?: string[] | null
           no_total?: number | null
           oracle_address?: string | null
-          outcome_ref?: string | null
+          outcome_ref: string
           region?: string
           resolution_criteria?: string | null
           resolution_criteria_full?: string | null
@@ -352,7 +352,7 @@ export type Database = {
           linked_signals?: string[] | null
           no_total?: number | null
           oracle_address?: string | null
-          outcome_ref?: string | null
+          outcome_ref?: string
           region?: string
           resolution_criteria?: string | null
           resolution_criteria_full?: string | null
