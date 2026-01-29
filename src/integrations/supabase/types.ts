@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_recipients: {
+        Row: {
+          alert_types: string[]
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          name: string | null
+        }
+        Insert: {
+          alert_types?: string[]
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+        }
+        Update: {
+          alert_types?: string[]
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          name?: string | null
+        }
+        Relationships: []
+      }
       attention_categories: {
         Row: {
           category_group: string
