@@ -126,8 +126,8 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
                 <p className="text-sm font-medium truncate">{market.title}</p>
                 <p className="text-xs text-muted-foreground">
                   ID: {market.outcome_ref} • Odds:{" "}
-                  <span className="text-green-500">{yesPercent}%</span> /{" "}
-                  <span className="text-red-500">{100 - yesPercent}%</span>
+                  <span className="text-primary">{yesPercent}%</span> /{" "}
+                  <span className="text-destructive">{100 - yesPercent}%</span>
                 </p>
               </div>
 
