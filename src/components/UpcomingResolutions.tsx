@@ -80,10 +80,10 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
   const approachingCount = upcomingMarkets.filter((m) => m.urgency === "approaching").length;
 
   return (
-    <Card className="border-amber-500/30 bg-card/50">
+    <Card className="border-warning/30 bg-card/50">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-lg">
-          <AlertTriangle className="h-5 w-5 text-amber-500" />
+          <AlertTriangle className="h-5 w-5 text-warning" />
           Upcoming Resolutions
           <div className="ml-auto flex gap-2">
             {urgentCount > 0 && (
@@ -92,7 +92,7 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
               </Badge>
             )}
             {approachingCount > 0 && (
-              <Badge className="bg-amber-500 text-white text-xs">
+              <Badge className="bg-warning text-warning-foreground text-xs">
                 {approachingCount} approaching
               </Badge>
             )}
