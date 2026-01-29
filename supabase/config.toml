@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.translate-all-markets]
 verify_jwt = false
+
+[functions.deadline-alerts]
+verify_jwt = false
