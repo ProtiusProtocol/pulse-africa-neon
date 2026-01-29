@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, ExternalLink, AlertTriangle } from "lucide-react";
+import { Clock, ExternalLink, AlertTriangle, Mail } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Market = Tables<"markets">;
@@ -13,19 +13,19 @@ interface UpcomingResolutionsProps {
 
 interface MarketWithUrgency extends Market {
   hoursLeft: number;
-  urgency: "urgent" | "approaching" | "safe";
+  urgency: "urgent" | "approaching" | "soon";
 }
 
 export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
   const upcomingMarkets = useMemo(() => {
     const now = new Date();
-    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     return markets
       .filter((m) => {
         if (m.status !== "active" || !m.deadline) return false;
         const deadline = new Date(m.deadline);
-        return deadline > now && deadline <= threeDaysFromNow;
+        return deadline > now && deadline <= sevenDaysFromNow;
       })
       .map((m): MarketWithUrgency => {
         const deadline = new Date(m.deadline!);
@@ -33,8 +33,9 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
           0,
           Math.floor((deadline.getTime() - now.getTime()) / (1000 * 60 * 60))
         );
-        const urgency: "urgent" | "approaching" | "safe" =
-          hoursLeft <= 24 ? "urgent" : hoursLeft <= 72 ? "approaching" : "safe";
+        // urgent: <24h, approaching: 1-3 days, soon: 3-7 days
+        const urgency: "urgent" | "approaching" | "soon" =
+          hoursLeft <= 24 ? "urgent" : hoursLeft <= 72 ? "approaching" : "soon";
         return { ...m, hoursLeft, urgency };
       })
       .sort((a, b) => a.hoursLeft - b.hoursLeft);
@@ -49,7 +50,7 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
     return `${days}d ${remainingHours}h`;
   };
 
-  const getUrgencyStyles = (urgency: "urgent" | "approaching" | "safe") => {
+  const getUrgencyStyles = (urgency: "urgent" | "approaching" | "soon") => {
     switch (urgency) {
       case "urgent":
         return {
@@ -59,11 +60,11 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
         };
       case "approaching":
         return {
-          badge: "bg-amber-500 text-white",
-          border: "border-amber-500/50",
-          icon: "text-amber-500",
+          badge: "bg-warning text-warning-foreground",
+          border: "border-warning/50",
+          icon: "text-warning",
         };
-      default:
+      case "soon":
         return {
           badge: "bg-muted text-muted-foreground",
           border: "border-border",
@@ -78,6 +79,7 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
 
   const urgentCount = upcomingMarkets.filter((m) => m.urgency === "urgent").length;
   const approachingCount = upcomingMarkets.filter((m) => m.urgency === "approaching").length;
+  const soonCount = upcomingMarkets.filter((m) => m.urgency === "soon").length;
 
   return (
     <Card className="border-warning/30 bg-card/50">
@@ -85,7 +87,7 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
         <CardTitle className="flex items-center gap-2 text-lg">
           <AlertTriangle className="h-5 w-5 text-warning" />
           Upcoming Resolutions
-          <div className="ml-auto flex gap-2">
+          <div className="ml-auto flex gap-2 flex-wrap">
             {urgentCount > 0 && (
               <Badge variant="destructive" className="text-xs">
                 {urgentCount} urgent
@@ -94,6 +96,11 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
             {approachingCount > 0 && (
               <Badge className="bg-warning text-warning-foreground text-xs">
                 {approachingCount} approaching
+              </Badge>
+            )}
+            {soonCount > 0 && (
+              <Badge variant="secondary" className="text-xs">
+                {soonCount} soon
               </Badge>
             )}
           </div>
@@ -106,6 +113,7 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
           const noTotal = market.no_total || 0;
           const total = yesTotal + noTotal;
           const yesPercent = total > 0 ? Math.round((yesTotal / total) * 100) : 50;
+          const triggersEmail = market.urgency !== "soon";
 
           return (
             <div
@@ -121,6 +129,11 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
                   <Badge className={`${styles.badge} text-xs`}>
                     {formatTimeLeft(market.hoursLeft)}
                   </Badge>
+                  {triggersEmail && (
+                    <span title="Email alert enabled">
+                      <Mail className="h-3 w-3 text-muted-foreground" />
+                    </span>
+                  )}
                   <span className="text-xs text-muted-foreground">{market.category}</span>
                 </div>
                 <p className="text-sm font-medium truncate">{market.title}</p>
@@ -150,7 +163,7 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
         })}
 
         <p className="text-xs text-muted-foreground pt-2 border-t border-border">
-          Resolve markets in Lora before deadline, then update status in database.
+          <Mail className="inline h-3 w-3 mr-1" /> = email alerts enabled (≤3 days). Resolve markets in Lora before deadline.
         </p>
       </CardContent>
     </Card>
