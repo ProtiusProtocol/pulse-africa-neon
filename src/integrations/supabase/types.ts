@@ -295,6 +295,71 @@ export type Database = {
         }
         Relationships: []
       }
+      market_suggestions: {
+        Row: {
+          ai_reasoning: string | null
+          created_at: string
+          created_market_id: string | null
+          id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          signal_code: string
+          source_signal_direction: string | null
+          status: string
+          suggested_category: string
+          suggested_deadline: string | null
+          suggested_outcome_ref: string
+          suggested_region: string
+          suggested_resolution_criteria: string | null
+          suggested_title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_reasoning?: string | null
+          created_at?: string
+          created_market_id?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signal_code: string
+          source_signal_direction?: string | null
+          status?: string
+          suggested_category?: string
+          suggested_deadline?: string | null
+          suggested_outcome_ref: string
+          suggested_region?: string
+          suggested_resolution_criteria?: string | null
+          suggested_title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_reasoning?: string | null
+          created_at?: string
+          created_market_id?: string | null
+          id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          signal_code?: string
+          source_signal_direction?: string | null
+          status?: string
+          suggested_category?: string
+          suggested_deadline?: string | null
+          suggested_outcome_ref?: string
+          suggested_region?: string
+          suggested_resolution_criteria?: string | null
+          suggested_title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_suggestions_created_market_id_fkey"
+            columns: ["created_market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_translations: {
         Row: {
           created_at: string

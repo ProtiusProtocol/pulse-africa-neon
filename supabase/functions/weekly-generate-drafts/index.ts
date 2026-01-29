@@ -380,6 +380,27 @@ Write 10-15 bullet points summarizing key news. Include source citations (domain
     
     console.log(`Successfully generated drafts for week ${weekId}`);
     
+    // 10. Trigger fragility market suggestions for elevated signals
+    let suggestionsCreated = 0;
+    try {
+      const suggestionsResponse = await fetch(`${supabaseUrl}/functions/v1/fragility-market-suggestions`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (suggestionsResponse.ok) {
+        const suggestionsResult = await suggestionsResponse.json();
+        suggestionsCreated = suggestionsResult.suggestionsCreated || 0;
+        console.log(`Generated ${suggestionsCreated} market suggestions from elevated fragility signals`);
+      }
+    } catch (suggestionsError) {
+      console.error("Error generating market suggestions:", suggestionsError);
+      // Don't fail the whole process if suggestions fail
+    }
+    
     return new Response(JSON.stringify({ 
       success: true, 
       weekId,
@@ -387,6 +408,7 @@ Write 10-15 bullet points summarizing key news. Include source citations (domain
       stats: {
         markets: marketSnapshot.length,
         newsItems: allItems.length,
+        marketSuggestions: suggestionsCreated,
       }
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
