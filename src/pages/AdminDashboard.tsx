@@ -50,6 +50,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import { AdminMarketUniverse } from "@/components/AdminMarketUniverse";
 import { BulkAppIdMigration } from "@/components/BulkAppIdMigration";
+import { UpcomingResolutions } from "@/components/UpcomingResolutions";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
@@ -788,6 +789,9 @@ const handleCreateMarket = async () => {
             })()}
           </div>
         </section>
+
+        {/* Upcoming Resolutions Alert */}
+        <UpcomingResolutions markets={markets} />
 
         {/* Market Universe Visualization */}
         <section>

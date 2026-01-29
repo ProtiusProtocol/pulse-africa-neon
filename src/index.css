@@ -40,6 +40,10 @@ All colors MUST be HSL.
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
+    /* Warning - Amber */
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 4%;
+
     --border: 0 0% 15%;
     --input: 0 0% 12%;
     --ring: 123 100% 50%;
