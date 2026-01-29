@@ -51,6 +51,7 @@ import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import { AdminMarketUniverse } from "@/components/AdminMarketUniverse";
 import { BulkAppIdMigration } from "@/components/BulkAppIdMigration";
 import { UpcomingResolutions } from "@/components/UpcomingResolutions";
+import { MarketSuggestionsReview } from "@/components/MarketSuggestionsReview";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
@@ -841,8 +842,33 @@ const handleCreateMarket = async () => {
           </div>
         </section>
 
+        {/* AI Market Suggestions Review */}
+        <MarketSuggestionsReview 
+          onCreateMarket={(suggestion) => {
+            // Pre-fill the new market form with AI suggestion
+            setNewMarket({
+              appId: '',
+              title: suggestion.suggested_title,
+              category: suggestion.suggested_category,
+              region: suggestion.suggested_region,
+              linkedSignals: [suggestion.signal_code],
+              deadline: suggestion.suggested_deadline ? suggestion.suggested_deadline.split('T')[0] : '',
+              resolutionCriteria: suggestion.suggested_resolution_criteria || '',
+              resolutionCriteriaFull: suggestion.suggested_resolution_criteria || '',
+              outcomeRef: suggestion.suggested_outcome_ref,
+              skipTranslation: false,
+            });
+            toast({ 
+              title: "Suggestion Loaded", 
+              description: "Fill in the Algorand App ID from Lora to complete registration" 
+            });
+            // Scroll to the register form
+            document.getElementById('register-market-section')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        />
+
         {/* Register New Market */}
-        <section>
+        <section id="register-market-section">
           <div className="flex items-center gap-2 mb-4">
             <Plus className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Register Market from Lora</h2>

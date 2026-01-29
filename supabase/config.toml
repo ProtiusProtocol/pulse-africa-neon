@@ -38,3 +38,9 @@ verify_jwt = false
 
 [functions.deadline-alerts]
 verify_jwt = false
+
+[functions.trader-deadline-alerts]
+verify_jwt = false
+
+[functions.fragility-market-suggestions]
+verify_jwt = false
