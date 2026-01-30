@@ -16,7 +16,6 @@ import {
   RefreshCw
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-
 interface MarketSuggestion {
   id: string;
   signal_code: string;
@@ -30,8 +29,8 @@ interface MarketSuggestion {
   source_signal_direction: string | null;
   status: string;
   created_at: string;
+  created_market_id: string | null;
 }
-
 interface MarketSuggestionsReviewProps {
   onCreateMarket?: (suggestion: MarketSuggestion) => void;
 }
@@ -89,19 +88,67 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
   const updateStatus = async (id: string, status: 'approved' | 'rejected' | 'pending') => {
     setActionLoading(id);
     
-    const { error } = await supabase
-      .from('market_suggestions')
-      .update({ 
-        status, 
-        reviewed_at: new Date().toISOString() 
-      })
-      .eq('id', id);
+    const suggestion = suggestions.find(s => s.id === id);
+    
+    // If approving, create a market record with PENDING app_id
+    if (status === 'approved' && suggestion) {
+      const { data: newMarket, error: marketError } = await supabase
+        .from('markets')
+        .insert({
+          app_id: 'PENDING',
+          title: suggestion.suggested_title,
+          outcome_ref: suggestion.suggested_outcome_ref,
+          category: suggestion.suggested_category,
+          region: suggestion.suggested_region,
+          deadline: suggestion.suggested_deadline,
+          resolution_criteria: suggestion.suggested_resolution_criteria,
+          status: 'draft',
+          linked_signals: [suggestion.signal_code]
+        })
+        .select('id')
+        .single();
 
-    if (error) {
-      toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
+      if (marketError) {
+        toast({ title: "Error", description: "Failed to create market record", variant: "destructive" });
+        setActionLoading(null);
+        return;
+      }
+
+      // Update suggestion with created_market_id and status
+      const { error: updateError } = await supabase
+        .from('market_suggestions')
+        .update({ 
+          status: 'approved', 
+          reviewed_at: new Date().toISOString(),
+          created_market_id: newMarket.id
+        })
+        .eq('id', id);
+
+      if (updateError) {
+        toast({ title: "Error", description: "Failed to update suggestion", variant: "destructive" });
+      } else {
+        toast({ 
+          title: "Market Created", 
+          description: `Created market with outcome_ref: ${suggestion.suggested_outcome_ref}. Ready for Algorand deployment.` 
+        });
+        setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'approved', created_market_id: newMarket.id } : s));
+      }
     } else {
-      toast({ title: "Updated", description: `Suggestion ${status}` });
-      setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+      // For reject/pending, just update the suggestion status
+      const { error } = await supabase
+        .from('market_suggestions')
+        .update({ 
+          status, 
+          reviewed_at: new Date().toISOString() 
+        })
+        .eq('id', id);
+
+      if (error) {
+        toast({ title: "Error", description: "Failed to update status", variant: "destructive" });
+      } else {
+        toast({ title: "Updated", description: `Suggestion ${status}` });
+        setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status } : s));
+      }
     }
     setActionLoading(null);
   };
@@ -230,7 +277,7 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
                           </Button>
                         </div>
                       </div>
-                      <CollapsibleContent className="mt-4 pt-4 border-t border-border">
+                        <CollapsibleContent className="mt-4 pt-4 border-t border-border">
                         <div className="space-y-3 text-sm">
                           {suggestion.suggested_resolution_criteria && (
                             <div>
@@ -244,19 +291,9 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
                               <p className="text-muted-foreground">{suggestion.ai_reasoning}</p>
                             </div>
                           )}
-                          {onCreateMarket && (
-                            <Button 
-                              variant="default" 
-                              size="sm"
-                              className="mt-2"
-                              onClick={() => {
-                                updateStatus(suggestion.id, 'approved');
-                                onCreateMarket(suggestion);
-                              }}
-                            >
-                              Approve & Create Market
-                            </Button>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Approving will create a market with <span className="font-mono">app_id=PENDING</span> ready for Algorand deployment.
+                          </p>
                         </div>
                       </CollapsibleContent>
                     </Collapsible>
