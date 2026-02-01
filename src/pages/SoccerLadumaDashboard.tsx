@@ -17,26 +17,46 @@ import {
   Star
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { usePaperPredictions, useLeaderboardEntry, useLeaderboard } from "@/hooks/usePaperTrading";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
-
-// Demo predictions for pitch (in real app, these come from database)
-const DEMO_PREDICTIONS = [
-  { id: "1", marketTitle: "Mamelodi Sundowns to win DStv Premiership 2024/25", side: "yes", points: 50, status: "pending", potentialWin: 85 },
-  { id: "2", marketTitle: "Bafana Bafana to qualify for AFCON 2025 knockout stage", side: "yes", points: 50, status: "won", wonPoints: 92 },
-  { id: "3", marketTitle: "Orlando Pirates to finish top 3 in PSL", side: "no", points: 50, status: "pending", potentialWin: 120 },
-  { id: "4", marketTitle: "Kaizer Chiefs to win any trophy this season", side: "no", points: 50, status: "lost", wonPoints: 0 },
-];
 
 const SoccerLadumaDashboard = () => {
-  const [predictions] = useState(DEMO_PREDICTIONS);
+  const { data: predictions = [], isLoading: predictionsLoading } = usePaperPredictions();
+  const { data: leaderboardEntry } = useLeaderboardEntry();
+  const { data: leaderboard = [] } = useLeaderboard(50);
   const [animatedPoints, setAnimatedPoints] = useState(0);
+
+  // Fetch market titles for predictions
+  const marketIds = predictions.map(p => p.market_id);
+  const { data: markets = [] } = useQuery({
+    queryKey: ["markets-for-predictions", marketIds],
+    queryFn: async () => {
+      if (marketIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("markets")
+        .select("id, title")
+        .in("id", marketIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: marketIds.length > 0,
+  });
+
+  // Create a map of market_id -> title
+  const marketTitleMap = markets.reduce((acc, m) => {
+    acc[m.id] = m.title;
+    return acc;
+  }, {} as Record<string, string>);
   
-  const totalPoints = 1142;
-  const weeklyRank = 23;
-  const accuracy = 67;
-  const weeklyChange = 142;
+  // Pull real data from leaderboard entry
+  const totalPoints = leaderboardEntry?.total_points ?? 1000;
+  const weeklyRank = leaderboardEntry?.weekly_rank;
+  const allTimeRank = leaderboardEntry?.all_time_rank;
+  const accuracy = leaderboardEntry?.accuracy_pct;
+  const weeklyChange = leaderboardEntry?.weekly_points ?? 0;
+  const predictionsWon = leaderboardEntry?.predictions_won ?? 0;
+  const predictionsLost = leaderboardEntry?.predictions_lost ?? 0;
 
   // Animate points on load
   useEffect(() => {
@@ -54,12 +74,13 @@ const SoccerLadumaDashboard = () => {
       return () => clearInterval(interval);
     }, 300);
     return () => clearTimeout(timer);
-  }, []);
+  }, [totalPoints]);
 
   const pendingPredictions = predictions.filter(p => p.status === "pending");
   const resolvedPredictions = predictions.filter(p => p.status !== "pending");
-  const wonCount = predictions.filter(p => p.status === "won").length;
-  const lostCount = predictions.filter(p => p.status === "lost").length;
+  const wonCount = predictionsWon;
+  const lostCount = predictionsLost;
+  const accuracyDisplay = accuracy != null ? Math.round(accuracy) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,11 +120,15 @@ const SoccerLadumaDashboard = () => {
           {/* Stats Row */}
           <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
             <div className="bg-white/10 rounded-lg p-4">
-              <div className="text-2xl font-bold text-white">#{weeklyRank}</div>
-              <div className="text-xs text-white/60">Weekly Rank</div>
+              <div className="text-2xl font-bold text-white">
+                {allTimeRank ? `#${allTimeRank}` : "#--"}
+              </div>
+              <div className="text-xs text-white/60">Rank</div>
             </div>
             <div className="bg-white/10 rounded-lg p-4">
-              <div className="text-2xl font-bold text-[hsl(45,100%,50%)]">{accuracy}%</div>
+              <div className="text-2xl font-bold text-[hsl(45,100%,50%)]">
+                {accuracyDisplay != null ? `${accuracyDisplay}%` : "--%"}
+              </div>
               <div className="text-xs text-white/60">Accuracy</div>
             </div>
             <div className="bg-white/10 rounded-lg p-4">
@@ -144,7 +169,7 @@ const SoccerLadumaDashboard = () => {
                   stroke="url(#gradient)"
                   strokeWidth="12"
                   fill="none"
-                  strokeDasharray={`${accuracy * 3.52} 352`}
+                  strokeDasharray={`${(accuracyDisplay ?? 0) * 3.52} 352`}
                   strokeLinecap="round"
                   className="transition-all duration-1000"
                 />
@@ -156,7 +181,9 @@ const SoccerLadumaDashboard = () => {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-2xl font-bold">{accuracy}%</span>
+                <span className="text-2xl font-bold">
+                  {accuracyDisplay != null ? `${accuracyDisplay}%` : "--%"}
+                </span>
               </div>
             </div>
             
@@ -195,30 +222,43 @@ const SoccerLadumaDashboard = () => {
           </h2>
           
           <div className="space-y-3">
-            {pendingPredictions.map((prediction) => (
-              <Card key={prediction.id} className="p-4 border-l-4 border-l-[hsl(45,100%,50%)]">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="font-medium line-clamp-1">{prediction.marketTitle}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <Badge variant={prediction.side === "yes" ? "default" : "secondary"} 
-                             className={prediction.side === "yes" ? "bg-green-500" : "bg-red-500"}>
-                        {prediction.side.toUpperCase()}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {prediction.points} pts staked
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-muted-foreground">Potential</div>
-                    <div className="text-lg font-bold text-[hsl(45,100%,40%)]">
-                      +{prediction.potentialWin} pts
-                    </div>
-                  </div>
-                </div>
+            {pendingPredictions.length === 0 ? (
+              <Card className="p-6 text-center">
+                <p className="text-muted-foreground">No active predictions yet</p>
+                <Link to="/soccer-laduma/markets">
+                  <Button className="mt-4 bg-[hsl(0,84%,50%)] hover:bg-[hsl(0,84%,45%)]">
+                    Make a Prediction
+                  </Button>
+                </Link>
               </Card>
-            ))}
+            ) : (
+              pendingPredictions.map((prediction) => (
+                <Card key={prediction.id} className="p-4 border-l-4 border-l-[hsl(45,100%,50%)]">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-medium line-clamp-1">
+                        {marketTitleMap[prediction.market_id] || "Loading..."}
+                      </p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <Badge variant={prediction.side === "yes" ? "default" : "secondary"} 
+                               className={prediction.side === "yes" ? "bg-green-500" : "bg-red-500"}>
+                          {prediction.side.toUpperCase()}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {prediction.points_staked} pts staked
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-muted-foreground">Staked</div>
+                      <div className="text-lg font-bold text-[hsl(45,100%,40%)]">
+                        {prediction.points_staked} pts
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </div>
 
@@ -230,54 +270,62 @@ const SoccerLadumaDashboard = () => {
           </h2>
           
           <div className="space-y-3">
-            {resolvedPredictions.map((prediction) => (
-              <Card 
-                key={prediction.id} 
-                className={`p-4 border-l-4 ${
-                  prediction.status === "won" 
-                    ? "border-l-green-500 bg-green-500/5" 
-                    : "border-l-red-500 bg-red-500/5"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      {prediction.status === "won" ? (
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-red-500" />
-                      )}
-                      <p className="font-medium line-clamp-1">{prediction.marketTitle}</p>
-                    </div>
-                    <div className="flex items-center gap-3 mt-2">
-                      <Badge variant="outline" className="text-xs">
-                        {prediction.side.toUpperCase()}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        {prediction.points} pts staked
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {prediction.status === "won" ? (
-                      <>
-                        <div className="text-sm text-green-600">Won</div>
-                        <div className="text-lg font-bold text-green-600">
-                          +{prediction.wonPoints} pts
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-sm text-red-600">Lost</div>
-                        <div className="text-lg font-bold text-red-600">
-                          -{prediction.points} pts
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+            {resolvedPredictions.length === 0 ? (
+              <Card className="p-6 text-center">
+                <p className="text-muted-foreground">No resolved predictions yet</p>
               </Card>
-            ))}
+            ) : (
+              resolvedPredictions.map((prediction) => (
+                <Card 
+                  key={prediction.id} 
+                  className={`p-4 border-l-4 ${
+                    prediction.status === "won" 
+                      ? "border-l-green-500 bg-green-500/5" 
+                      : "border-l-red-500 bg-red-500/5"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        {prediction.status === "won" ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <p className="font-medium line-clamp-1">
+                          {marketTitleMap[prediction.market_id] || "Loading..."}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 mt-2">
+                        <Badge variant="outline" className="text-xs">
+                          {prediction.side.toUpperCase()}
+                        </Badge>
+                        <span className="text-sm text-muted-foreground">
+                          {prediction.points_staked} pts staked
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {prediction.status === "won" ? (
+                        <>
+                          <div className="text-sm text-green-600">Won</div>
+                          <div className="text-lg font-bold text-green-600">
+                            +{prediction.points_won ?? 0} pts
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-sm text-red-600">Lost</div>
+                          <div className="text-lg font-bold text-red-600">
+                            -{prediction.points_staked} pts
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </div>
 
