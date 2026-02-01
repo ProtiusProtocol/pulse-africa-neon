@@ -107,6 +107,12 @@ const SoccerLadumaDashboard = () => {
               <p className="text-white/70 text-sm">Track your predictions</p>
             </div>
           </div>
+          <Link to="/soccer-laduma/leaderboard">
+            <Button className="bg-[hsl(45,100%,50%)] text-black hover:bg-[hsl(45,100%,45%)] gap-2">
+              <Trophy className="h-4 w-4" />
+              Leaderboard
+            </Button>
+          </Link>
         </div>
       </header>
 
