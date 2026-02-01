@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+          xp_reward: number
+        }
+        Insert: {
+          category?: string
+          code: string
+          created_at?: string
+          description: string
+          icon?: string
+          id?: string
+          name: string
+          requirement_type: string
+          requirement_value?: number
+          xp_reward?: number
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       alert_recipients: {
         Row: {
           alert_types: string[]
@@ -561,15 +600,19 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          level: number
           predictions_lost: number
           predictions_made: number
           predictions_won: number
           session_id: string
+          streak_best: number
+          streak_current: number
           tenant_id: string
           total_points: number
           updated_at: string
           weekly_points: number
           weekly_rank: number | null
+          xp_total: number
         }
         Insert: {
           accuracy_pct?: number | null
@@ -577,15 +620,19 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          level?: number
           predictions_lost?: number
           predictions_made?: number
           predictions_won?: number
           session_id: string
+          streak_best?: number
+          streak_current?: number
           tenant_id?: string
           total_points?: number
           updated_at?: string
           weekly_points?: number
           weekly_rank?: number | null
+          xp_total?: number
         }
         Update: {
           accuracy_pct?: number | null
@@ -593,15 +640,19 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          level?: number
           predictions_lost?: number
           predictions_made?: number
           predictions_won?: number
           session_id?: string
+          streak_best?: number
+          streak_current?: number
           tenant_id?: string
           total_points?: number
           updated_at?: string
           weekly_points?: number
           weekly_rank?: number | null
+          xp_total?: number
         }
         Relationships: []
       }
@@ -648,6 +699,38 @@ export type Database = {
             columns: ["market_id"]
             isOneToOne: false
             referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          session_id: string
+          tenant_id: string
+          unlocked_at: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          session_id: string
+          tenant_id?: string
+          unlocked_at?: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          session_id?: string
+          tenant_id?: string
+          unlocked_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
             referencedColumns: ["id"]
           },
         ]

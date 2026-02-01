@@ -28,6 +28,10 @@ export interface LeaderboardEntry {
   weekly_points: number;
   weekly_rank: number | null;
   all_time_rank: number | null;
+  streak_current: number;
+  streak_best: number;
+  xp_total: number;
+  level: number;
 }
 
 const TENANT_ID = "soccer-laduma";
