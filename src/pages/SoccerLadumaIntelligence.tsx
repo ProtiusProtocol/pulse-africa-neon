@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import SignalUniverse from "@/components/SignalUniverse";
+import { PaperMarketUniverse } from "@/components/PaperMarketUniverse";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 
 interface FragilitySignal {
@@ -226,17 +226,6 @@ const SoccerLadumaIntelligence = () => {
 
       {/* Main Content */}
       <main className="container mx-auto py-8 px-4 space-y-8">
-        {/* Signal Universe */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-[hsl(45,100%,50%)]" />
-            <h3 className="text-xl font-bold">Prediction Universe</h3>
-            <Badge variant="secondary" className="text-xs">LIVE</Badge>
-          </div>
-          <Card className="overflow-hidden">
-            <SignalUniverse tenantId="soccer-laduma" className="h-48" />
-          </Card>
-        </section>
 
         {/* FS-SPORT Signal Card */}
         {signal && (
@@ -355,18 +344,9 @@ const SoccerLadumaIntelligence = () => {
                           </div>
                         </div>
 
-                        {/* Probability bar */}
+                        {/* Per-market Prediction Universe */}
                         <div className="mb-3">
-                          <div className="h-2 bg-muted rounded-full overflow-hidden flex">
-                            <div
-                              className="bg-green-500 transition-all"
-                              style={{ width: `${odds.yes}%` }}
-                            />
-                            <div
-                              className="bg-red-500 transition-all"
-                              style={{ width: `${odds.no}%` }}
-                            />
-                          </div>
+                          <PaperMarketUniverse marketId={market.id} />
                         </div>
 
                         {/* Signal link & resolution */}
