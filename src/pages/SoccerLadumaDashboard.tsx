@@ -175,11 +175,11 @@ const SoccerLadumaDashboard = () => {
         </div>
       </section>
 
+      {/* Live Activity Ticker - Full Width */}
+      <LiveActivityFeed />
+
       {/* Main Content */}
       <main className="container mx-auto py-8 px-4 space-y-8">
-        
-        {/* Live Activity Feed */}
-        <LiveActivityFeed />
         
         {/* Prediction Accuracy Ring */}
         <Card className="p-6">
