@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Trophy, TrendingUp, Users, Target } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const SoccerLadumaHome = () => {
+  const navigate = useNavigate();
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-[hsl(0,84%,15%)] via-[hsl(0,84%,10%)] to-background">
       {/* Hero Section */}
@@ -35,6 +37,7 @@ const SoccerLadumaHome = () => {
             <Button 
               size="lg" 
               className="bg-[hsl(0,84%,50%)] hover:bg-[hsl(0,84%,45%)] text-white text-lg px-8 py-6"
+              onClick={() => navigate("/soccer-laduma/markets")}
             >
               Start Predicting Free
             </Button>
