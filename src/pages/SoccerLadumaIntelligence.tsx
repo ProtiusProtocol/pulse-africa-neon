@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { 
   TrendingUp, TrendingDown, Minus, Activity, Target, Clock, 
   ChevronRight, Globe, Link2, ArrowRight, Trophy, Sparkles,
-  ArrowLeft, LayoutDashboard, Calendar, Users
+  ArrowLeft, LayoutDashboard, Calendar, Users, Check
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -271,9 +271,15 @@ const SoccerLadumaIntelligence = () => {
                 {/* Weekly Update */}
                 {signal.weekly_update_md && (
                   <div className="p-4 bg-muted/50 rounded-lg border border-border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Clock className="w-4 h-4 text-[hsl(45,100%,50%)]" />
-                      <span className="text-sm font-semibold">Weekly Intelligence Update</span>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[hsl(45,100%,50%)]" />
+                        <span className="text-sm font-semibold">Weekly Intelligence Update</span>
+                      </div>
+                      <Badge className="bg-[hsl(0,84%,50%)] text-white border-0 gap-1">
+                        <Check className="w-3 h-3" />
+                        Approved by Soccer Laduma
+                      </Badge>
                     </div>
                     <div className="prose prose-sm dark:prose-invert max-w-none">
                       <MarkdownRenderer content={signal.weekly_update_md} />
