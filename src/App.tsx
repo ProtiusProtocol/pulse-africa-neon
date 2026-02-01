@@ -29,6 +29,7 @@ import Unsubscribe from "./pages/Unsubscribe";
 import NotFound from "./pages/NotFound";
 import SoccerLadumaHome from "./pages/SoccerLadumaHome";
 import SoccerLadumaMarkets from "./pages/SoccerLadumaMarkets";
+import SoccerLadumaDashboard from "./pages/SoccerLadumaDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +85,7 @@ const AppRoutes = () => (
         {/* Soccer Laduma tenant routes */}
         <Route path="/soccer-laduma" element={<SoccerLadumaHome />} />
         <Route path="/soccer-laduma/markets" element={<SoccerLadumaMarkets />} />
+        <Route path="/soccer-laduma/dashboard" element={<SoccerLadumaDashboard />} />
         <Route path="/soccer-laduma/*" element={<SoccerLadumaHome />} />
         
         <Route path="*" element={<NotFound />} />
