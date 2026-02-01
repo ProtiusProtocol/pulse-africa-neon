@@ -340,29 +340,38 @@ const SoccerLadumaDashboard = () => {
           </div>
           
           <div className="space-y-2">
-            {[
-              { rank: 1, name: "SundownsFan92", points: 2450, badge: "🥇" },
-              { rank: 2, name: "ChiefKaizer", points: 2180, badge: "🥈" },
-              { rank: 3, name: "PiratesForever", points: 1890, badge: "🥉" },
-              { rank: 23, name: "You", points: 1142, highlight: true },
-            ].map((player) => (
+            {/* Show top 3 from real leaderboard */}
+            {leaderboard.slice(0, 3).map((entry, index) => {
+              const rank = index + 1;
+              const badges = ["🥇", "🥈", "🥉"];
+              return (
+                <div 
+                  key={entry.id}
+                  className="flex items-center justify-between p-3 rounded-lg bg-background/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="w-8 text-center font-bold">{badges[index]}</span>
+                    <span>{entry.display_name}</span>
+                  </div>
+                  <span className="font-bold">{entry.total_points.toLocaleString()} pts</span>
+                </div>
+              );
+            })}
+            
+            {/* Show current user's position */}
+            {leaderboardEntry && (
               <div 
-                key={player.rank}
-                className={`flex items-center justify-between p-3 rounded-lg ${
-                  player.highlight 
-                    ? "bg-[hsl(45,100%,50%)]/20 border border-[hsl(45,100%,50%)]/50" 
-                    : "bg-background/50"
-                }`}
+                className="flex items-center justify-between p-3 rounded-lg bg-[hsl(45,100%,50%)]/20 border border-[hsl(45,100%,50%)]/50"
               >
                 <div className="flex items-center gap-3">
                   <span className="w-8 text-center font-bold">
-                    {player.badge || `#${player.rank}`}
+                    #{leaderboardEntry.all_time_rank || "--"}
                   </span>
-                  <span className={player.highlight ? "font-bold" : ""}>{player.name}</span>
+                  <span className="font-bold">You</span>
                 </div>
-                <span className="font-bold">{player.points.toLocaleString()} pts</span>
+                <span className="font-bold">{leaderboardEntry.total_points.toLocaleString()} pts</span>
               </div>
-            ))}
+            )}
           </div>
           
           <Link to="/soccer-laduma/leaderboard">
