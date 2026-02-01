@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, TrendingUp, Trophy, Users, LayoutDashboard, Sparkles, Eye } from "lucide-react";
+import { ArrowLeft, Clock, TrendingUp, Trophy, Users, LayoutDashboard, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import SignalUniverse from "@/components/SignalUniverse";
 import { usePaperPredictions, useLeaderboardEntry, useMakePrediction } from "@/hooks/usePaperTrading";
 
 const SoccerLadumaMarkets = () => {
@@ -137,20 +136,6 @@ const SoccerLadumaMarkets = () => {
 
       {/* Main Content */}
       <main className="container mx-auto py-8 px-4">
-        {/* Signal Universe Section */}
-        <section className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="h-5 w-5 text-[hsl(45,100%,50%)]" />
-            <h2 className="text-xl font-bold">Signal Universe</h2>
-            <Badge variant="secondary" className="text-xs">LIVE</Badge>
-          </div>
-          <Card className="overflow-hidden">
-            <SignalUniverse tenantId="soccer-laduma" className="h-64" />
-          </Card>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Each star represents a prediction. Left = YES, Right = NO. Brighter = more recent.
-          </p>
-        </section>
 
         {/* Markets Section */}
         <div className="flex items-center justify-between mb-6">
