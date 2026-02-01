@@ -23,6 +23,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StreakBadge, XPProgressBar, LevelBadge } from "@/components/gamification";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { ReferralCard } from "@/components/ReferralCard";
+import { MatchDayChallenges } from "@/components/MatchDayChallenges";
 import { motion } from "framer-motion";
 
 const SoccerLadumaDashboard = () => {
@@ -180,6 +181,9 @@ const SoccerLadumaDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto py-8 px-4 space-y-8">
+        
+        {/* Match Day Challenges */}
+        <MatchDayChallenges />
         
         {/* Prediction Accuracy Ring */}
         <Card className="p-6">
