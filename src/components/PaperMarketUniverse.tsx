@@ -114,7 +114,7 @@ export const PaperMarketUniverse = ({ marketId, className }: PaperMarketUniverse
     fetchPredictions();
   }, [marketId]);
   
-  const { userStars, globalStars, stats, isContrarian } = useMemo(() => {
+  const { userStars, globalStars, stats, isContrarian, interpretation } = useMemo(() => {
     const userPredictions = sessionId 
       ? predictions.filter(p => p.session_id === sessionId)
       : [];
@@ -127,22 +127,67 @@ export const PaperMarketUniverse = ({ marketId, className }: PaperMarketUniverse
     const uStars = userPredictions.map(p => predictionToStar(p, allPredictions, true));
     const gStars = otherPredictions.map(p => predictionToStar(p, allPredictions, false));
     
-    const yesTotal = predictions.filter(p => p.side === 'yes').reduce((sum, p) => sum + p.points_staked, 0);
-    const noTotal = predictions.filter(p => p.side === 'no').reduce((sum, p) => sum + p.points_staked, 0);
+    const yesPredictions = predictions.filter(p => p.side === 'yes');
+    const noPredictions = predictions.filter(p => p.side === 'no');
+    const yesTotal = yesPredictions.reduce((sum, p) => sum + p.points_staked, 0);
+    const noTotal = noPredictions.reduce((sum, p) => sum + p.points_staked, 0);
     const total = yesTotal + noTotal;
     const yesPercent = total > 0 ? Math.round((yesTotal / total) * 100) : 50;
     const noPercent = total > 0 ? Math.round((noTotal / total) * 100) : 50;
     
-    // Determine if user is contrarian
+    // Calculate conviction metrics
+    const yesAvg = yesPredictions.length > 0 ? yesTotal / yesPredictions.length : 0;
+    const noAvg = noPredictions.length > 0 ? noTotal / noPredictions.length : 0;
+    const maxStake = Math.max(...predictions.map(p => p.points_staked), 0);
+    const hasWhale = maxStake >= 150;
+    
+    // Generate interpretation
+    let interp = "";
+    const dominantSide = yesPercent > noPercent ? "YES" : "NO";
+    const margin = Math.abs(yesPercent - noPercent);
+    
+    if (margin >= 40) {
+      interp = `Strong ${dominantSide} consensus (${Math.max(yesPercent, noPercent)}%). `;
+      interp += hasWhale 
+        ? "Heavy conviction from key predictors drives the crowd." 
+        : "Broad agreement across the crowd.";
+    } else if (margin >= 20) {
+      interp = `${dominantSide} leads with ${Math.max(yesPercent, noPercent)}% of stakes. `;
+      interp += `${yesPredictions.length} believers vs ${noPredictions.length} skeptics. `;
+      interp += yesAvg > noAvg * 1.3 
+        ? "YES backers show stronger individual conviction." 
+        : noAvg > yesAvg * 1.3 
+          ? "NO backers show stronger individual conviction."
+          : "Similar conviction levels on both sides.";
+    } else {
+      interp = `Crowd is split (${yesPercent}% YES / ${noPercent}% NO). `;
+      interp += "Contested outcome — contrarian opportunity exists.";
+    }
+    
+    // Add user context
     const userSide = userPredictions.length > 0 ? userPredictions[0].side : null;
     const crowdFavors = yesTotal > noTotal ? 'yes' : noTotal > yesTotal ? 'no' : 'split';
     const contrarian = userSide && crowdFavors !== 'split' && crowdFavors !== userSide;
     
+    if (userSide) {
+      const userTotal = userPredictions.reduce((sum, p) => sum + p.points_staked, 0);
+      const userPoolShare = userSide === 'yes' 
+        ? (yesTotal > 0 ? Math.round((userTotal / yesTotal) * 100) : 0)
+        : (noTotal > 0 ? Math.round((userTotal / noTotal) * 100) : 0);
+      
+      if (contrarian) {
+        interp += ` ⚡ You're contrarian — ${100 - (userSide === 'yes' ? yesPercent : noPercent)}% oppose you.`;
+      } else if (userPoolShare >= 20) {
+        interp += ` Your stake represents ${userPoolShare}% of the ${userSide.toUpperCase()} pool.`;
+      }
+    }
+    
     return {
       userStars: uStars,
       globalStars: gStars,
-      stats: { yesPercent, noPercent, totalPredictors: predictions.length },
+      stats: { yesPercent, noPercent, totalPredictors: predictions.length, yesCount: yesPredictions.length, noCount: noPredictions.length },
       isContrarian: contrarian,
+      interpretation: interp,
     };
   }, [predictions, sessionId]);
   
@@ -287,9 +332,14 @@ export const PaperMarketUniverse = ({ marketId, className }: PaperMarketUniverse
         
         {/* Bottom stats */}
         <text x={centerX} y={height - 6} fill="hsl(0, 0%, 50%)" fontSize="9" textAnchor="middle">
-          {stats.totalPredictors} prediction{stats.totalPredictors !== 1 ? 's' : ''}
+          {stats.totalPredictors} prediction{stats.totalPredictors !== 1 ? 's' : ''} • {stats.yesCount} YES / {stats.noCount} NO
         </text>
       </svg>
+      
+      {/* Interpretation */}
+      <div className="mt-2 px-2 py-1.5 bg-muted/30 rounded text-xs text-muted-foreground leading-relaxed">
+        {interpretation}
+      </div>
     </div>
   );
 };
