@@ -21,6 +21,7 @@ import { useAchievementProgress } from "@/hooks/useAchievements";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StreakBadge, XPProgressBar, LevelBadge } from "@/components/gamification";
+import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { motion } from "framer-motion";
 
 const SoccerLadumaDashboard = () => {
@@ -175,6 +176,9 @@ const SoccerLadumaDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto py-8 px-4 space-y-8">
+        
+        {/* Live Activity Feed */}
+        <LiveActivityFeed />
         
         {/* Prediction Accuracy Ring */}
         <Card className="p-6">
