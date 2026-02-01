@@ -43,7 +43,7 @@ const SoccerLadumaHome = () => {
                 className="w-full sm:w-auto bg-[hsl(0,84%,50%)] hover:bg-[hsl(0,84%,45%)] text-white text-lg px-8 py-6"
                 onClick={() => navigate("/soccer-laduma/markets")}
               >
-                Start Predicting Free
+                Start Predicting Now
               </Button>
               <Link to="/soccer-laduma/intelligence">
                 <Button 
@@ -185,7 +185,7 @@ const SoccerLadumaHome = () => {
                 </div>
 
                 <div className="inline-block px-3 py-1 bg-[hsl(45,100%,50%)]/20 text-[hsl(45,100%,40%)] text-xs sm:text-sm font-bold rounded-full">
-                  Free to Play
+                  Use Your Knowledge
                 </div>
 
                 <div className="space-y-3 sm:space-y-4">
@@ -309,8 +309,8 @@ const SoccerLadumaHome = () => {
                 <div className="text-sm text-muted-foreground">Monthly Prizes</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl sm:text-4xl font-black text-[hsl(45,100%,50%)]">FREE</div>
-                <div className="text-sm text-muted-foreground">To Play</div>
+                <div className="text-3xl sm:text-4xl font-black text-[hsl(45,100%,50%)]">SKILL</div>
+                <div className="text-sm text-muted-foreground">Based Play</div>
               </div>
             </div>
           </div>
