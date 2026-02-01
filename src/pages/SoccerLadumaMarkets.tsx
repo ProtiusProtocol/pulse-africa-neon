@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, TrendingUp, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Clock, TrendingUp, Trophy, Users, LayoutDashboard } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,7 +74,13 @@ const SoccerLadumaMarkets = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Link to="/soccer-laduma/dashboard">
+              <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 gap-2">
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Button>
+            </Link>
             <div className="bg-white/10 rounded-lg px-4 py-2 flex items-center gap-2">
               <Trophy className="h-4 w-4 text-[hsl(45,100%,50%)]" />
               <span className="text-white font-bold">{points}</span>
