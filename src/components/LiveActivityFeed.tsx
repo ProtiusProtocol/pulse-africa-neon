@@ -1,11 +1,9 @@
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { useState, useEffect, useRef } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Activity, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
-import { formatDistanceToNow } from "date-fns";
 
 interface ActivityItem {
   id: string;
@@ -14,8 +12,6 @@ interface ActivityItem {
   side: string;
   points_staked: number;
   created_at: string;
-  display_name?: string;
-  market_title?: string;
 }
 
 const FAN_NAMES = [
@@ -25,7 +21,6 @@ const FAN_NAMES = [
 ];
 
 const getRandomFanName = (sessionId: string) => {
-  // Use session_id to generate consistent name for same user
   const hash = sessionId.split('').reduce((a, b) => {
     a = ((a << 5) - a) + b.charCodeAt(0);
     return a & a;
@@ -35,6 +30,8 @@ const getRandomFanName = (sessionId: string) => {
 
 export const LiveActivityFeed = () => {
   const [liveItems, setLiveItems] = useState<ActivityItem[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
+  const tickerRef = useRef<HTMLDivElement>(null);
 
   // Fetch recent predictions
   const { data: recentPredictions = [] } = useQuery({
@@ -45,7 +42,7 @@ export const LiveActivityFeed = () => {
         .select("id, session_id, market_id, side, points_staked, created_at")
         .eq("tenant_id", "soccer-laduma")
         .order("created_at", { ascending: false })
-        .limit(10);
+        .limit(15);
       if (error) throw error;
       return data || [];
     },
@@ -75,7 +72,7 @@ export const LiveActivityFeed = () => {
   // Subscribe to realtime updates
   useEffect(() => {
     const channel = supabase
-      .channel('live-predictions')
+      .channel('live-predictions-ticker')
       .on(
         'postgres_changes',
         {
@@ -86,7 +83,7 @@ export const LiveActivityFeed = () => {
         },
         (payload) => {
           const newItem = payload.new as ActivityItem;
-          setLiveItems(prev => [newItem, ...prev.slice(0, 4)]);
+          setLiveItems(prev => [newItem, ...prev.slice(0, 14)]);
         }
       )
       .subscribe();
@@ -100,66 +97,80 @@ export const LiveActivityFeed = () => {
   const allItems = [...liveItems, ...recentPredictions];
   const uniqueItems = allItems.filter((item, index, self) =>
     index === self.findIndex(t => t.id === item.id)
-  ).slice(0, 5);
+  ).slice(0, 15);
 
   if (uniqueItems.length === 0) {
     return null;
   }
 
+  // Duplicate items for seamless loop
+  const tickerItems = [...uniqueItems, ...uniqueItems];
+
   return (
-    <Card className="p-4 border-[hsl(45,100%,50%)]/30 bg-gradient-to-br from-[hsl(45,100%,50%)]/5 to-transparent">
-      <div className="flex items-center gap-2 mb-3">
+    <div className="relative overflow-hidden bg-gradient-to-r from-[hsl(0,84%,15%)] via-[hsl(0,84%,20%)] to-[hsl(0,84%,15%)] border-y border-[hsl(45,100%,50%)]/30">
+      {/* Live indicator */}
+      <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center gap-2 px-3 bg-gradient-to-r from-[hsl(0,84%,15%)] via-[hsl(0,84%,15%)] to-transparent pr-8">
         <Activity className="h-4 w-4 text-[hsl(45,100%,50%)]" />
-        <h3 className="font-semibold text-sm">Live Activity</h3>
-        <div className="flex-1" />
-        <div className="flex items-center gap-1">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-          </span>
-          <span className="text-xs text-green-500">Live</span>
-        </div>
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        </span>
+        <span className="text-xs font-semibold text-white uppercase tracking-wide">Live</span>
       </div>
 
-      <div className="space-y-2">
-        <AnimatePresence mode="popLayout">
-          {uniqueItems.map((item, index) => {
+      {/* Right fade */}
+      <div className="absolute right-0 top-0 bottom-0 z-10 w-12 bg-gradient-to-l from-[hsl(0,84%,15%)] to-transparent" />
+
+      {/* Ticker tape */}
+      <div 
+        ref={tickerRef}
+        className="flex py-2.5 pl-24"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
+        <motion.div
+          className="flex gap-8 whitespace-nowrap"
+          animate={{
+            x: isPaused ? 0 : [0, -50 * uniqueItems.length],
+          }}
+          transition={{
+            x: {
+              duration: uniqueItems.length * 4,
+              ease: "linear",
+              repeat: Infinity,
+              repeatType: "loop",
+            },
+          }}
+        >
+          {tickerItems.map((item, index) => {
             const fanName = getRandomFanName(item.session_id);
             const marketTitle = marketMap[item.market_id] || "a market";
-            const isNew = liveItems.some(li => li.id === item.id);
-            const timeAgo = formatDistanceToNow(new Date(item.created_at), { addSuffix: true });
+            const shortTitle = marketTitle.length > 25 ? marketTitle.slice(0, 25) + '...' : marketTitle;
 
             return (
-              <motion.div
-                key={item.id}
-                initial={isNew ? { opacity: 0, x: -20, scale: 0.95 } : false}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 20, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
+              <div 
+                key={`${item.id}-${index}`} 
                 className="flex items-center gap-2 text-sm"
               >
-                <Zap className={`h-3 w-3 flex-shrink-0 ${item.side === 'yes' ? 'text-green-500' : 'text-red-500'}`} />
-                <span className="font-medium text-[hsl(45,100%,50%)]">{fanName}</span>
-                <span className="text-muted-foreground">predicted</span>
+                <Zap className={`h-3 w-3 flex-shrink-0 ${item.side === 'yes' ? 'text-green-400' : 'text-red-400'}`} />
+                <span className="font-semibold text-[hsl(45,100%,50%)]">{fanName}</span>
                 <Badge 
                   variant="secondary" 
                   className={`text-xs px-1.5 py-0 ${
-                    item.side === 'yes' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'
+                    item.side === 'yes' ? 'bg-green-500/30 text-green-300 border-green-500/50' : 'bg-red-500/30 text-red-300 border-red-500/50'
                   }`}
                 >
                   {item.side.toUpperCase()}
                 </Badge>
-                <span className="text-muted-foreground truncate max-w-[120px]" title={marketTitle}>
-                  on {marketTitle.length > 20 ? marketTitle.slice(0, 20) + '...' : marketTitle}
+                <span className="text-white/70" title={marketTitle}>
+                  {shortTitle}
                 </span>
-                <span className="text-xs text-muted-foreground/60 ml-auto flex-shrink-0">
-                  {timeAgo}
-                </span>
-              </motion.div>
+                <span className="text-[hsl(45,100%,50%)]/60">•</span>
+              </div>
             );
           })}
-        </AnimatePresence>
+        </motion.div>
       </div>
-    </Card>
+    </div>
   );
 };
