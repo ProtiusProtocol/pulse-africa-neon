@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StreakBadge, XPProgressBar, LevelBadge } from "@/components/gamification";
 import { LiveActivityFeed } from "@/components/LiveActivityFeed";
+import { ReferralCard } from "@/components/ReferralCard";
 import { motion } from "framer-motion";
 
 const SoccerLadumaDashboard = () => {
@@ -305,6 +306,9 @@ const SoccerLadumaDashboard = () => {
             </p>
           )}
         </Card>
+
+        {/* Referral Program */}
+        <ReferralCard />
 
         <div>
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
