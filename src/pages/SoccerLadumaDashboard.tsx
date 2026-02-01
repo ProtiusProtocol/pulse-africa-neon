@@ -365,9 +365,11 @@ const SoccerLadumaDashboard = () => {
             ))}
           </div>
           
-          <Button className="w-full mt-4 bg-[hsl(0,84%,50%)] hover:bg-[hsl(0,84%,45%)]">
-            View Full Leaderboard
-          </Button>
+          <Link to="/soccer-laduma/leaderboard">
+            <Button className="w-full mt-4 bg-[hsl(0,84%,50%)] hover:bg-[hsl(0,84%,45%)]">
+              View Full Leaderboard
+            </Button>
+          </Link>
         </Card>
       </main>
 
