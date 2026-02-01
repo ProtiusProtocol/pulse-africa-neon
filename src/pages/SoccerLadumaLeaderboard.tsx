@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Sparkles } from "lucide-react";
+import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Sparkles, Target, Flame, Star, Zap, Shield } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLeaderboard, useLeaderboardEntry } from "@/hooks/usePaperTrading";
 import { getSessionId } from "@/lib/paperSession";
@@ -58,6 +58,27 @@ const SoccerLadumaLeaderboard = () => {
     setTimeout(() => {
       setShowAchievement(false);
     }, 5500);
+  };
+
+  // Get accuracy badge based on accuracy percentage
+  const getAccuracyBadge = (accuracy: number | null, predictionsWon: number) => {
+    if (accuracy === null || accuracy === undefined) return null;
+    
+    if (accuracy >= 75) {
+      return { icon: "🎯", label: "Sharp Shooter", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" };
+    }
+    if (accuracy >= 60) {
+      return { icon: "🔥", label: "On Fire", color: "bg-orange-500/20 text-orange-400 border-orange-500/30" };
+    }
+    if (accuracy >= 50 && predictionsWon >= 5) {
+      return { icon: "⚡", label: "Rising Star", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" };
+    }
+    return null;
+  };
+
+  // Check if user qualifies for Expert tier (top 10 with 10+ predictions and 55%+ accuracy)
+  const isExpert = (rank: number, accuracy: number | null, predictions: number) => {
+    return rank <= 10 && predictions >= 10 && accuracy !== null && accuracy >= 55;
   };
 
   const getRankBadge = (rank: number) => {
@@ -176,6 +197,8 @@ const SoccerLadumaLeaderboard = () => {
               const rank = index + 1;
               const isCurrentUser = entry.session_id === currentSessionId;
               const emoji = getRankEmoji(rank);
+              const accuracyBadge = getAccuracyBadge(entry.accuracy_pct, entry.predictions_won);
+              const expertStatus = isExpert(rank, entry.accuracy_pct, entry.predictions_made);
               
               return (
                 <Card 
@@ -183,9 +206,11 @@ const SoccerLadumaLeaderboard = () => {
                   className={`p-4 transition-all ${
                     isCurrentUser 
                       ? "border-[hsl(45,100%,50%)]/50 bg-[hsl(45,100%,50%)]/10" 
-                      : rank <= 3 
-                        ? "border-[hsl(0,84%,50%)]/30 bg-[hsl(0,84%,50%)]/5"
-                        : ""
+                      : expertStatus
+                        ? "border-purple-500/40 bg-gradient-to-r from-purple-500/10 to-transparent"
+                        : rank <= 3 
+                          ? "border-[hsl(0,84%,50%)]/30 bg-[hsl(0,84%,50%)]/5"
+                          : ""
                   }`}
                 >
                   <div className="flex items-center gap-4">
@@ -203,19 +228,38 @@ const SoccerLadumaLeaderboard = () => {
                     </div>
                     
                     {/* Name & Stats */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className={`font-medium ${isCurrentUser ? "font-bold" : ""}`}>
                           {entry.display_name}
                         </span>
                         {isCurrentUser && (
                           <Badge variant="secondary" className="text-xs">You</Badge>
                         )}
+                        {expertStatus && (
+                          <Badge className="text-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0 gap-1">
+                            <Shield className="h-3 w-3" />
+                            Expert
+                          </Badge>
+                        )}
+                        {accuracyBadge && (
+                          <Badge variant="outline" className={`text-xs ${accuracyBadge.color} gap-1`}>
+                            <span>{accuracyBadge.icon}</span>
+                            {accuracyBadge.label}
+                          </Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <span>{entry.predictions_made} predictions</span>
                         {entry.accuracy_pct != null && (
-                          <span>• {Math.round(entry.accuracy_pct)}% accuracy</span>
+                          <span className={`${entry.accuracy_pct >= 60 ? 'text-green-500 font-medium' : ''}`}>
+                            • {Math.round(entry.accuracy_pct)}% accuracy
+                          </span>
+                        )}
+                        {entry.streak_current >= 3 && (
+                          <span className="text-orange-400">
+                            🔥 {entry.streak_current} streak
+                          </span>
                         )}
                       </div>
                     </div>
