@@ -495,6 +495,59 @@ export type Database = {
         }
         Relationships: []
       }
+      match_day_challenges: {
+        Row: {
+          bonus_points: number
+          challenge_type: string
+          created_at: string
+          description: string | null
+          ends_at: string
+          id: string
+          is_active: boolean
+          market_id: string
+          starts_at: string
+          tenant_id: string
+          title: string
+          xp_multiplier: number
+        }
+        Insert: {
+          bonus_points?: number
+          challenge_type?: string
+          created_at?: string
+          description?: string | null
+          ends_at: string
+          id?: string
+          is_active?: boolean
+          market_id: string
+          starts_at?: string
+          tenant_id?: string
+          title: string
+          xp_multiplier?: number
+        }
+        Update: {
+          bonus_points?: number
+          challenge_type?: string
+          created_at?: string
+          description?: string | null
+          ends_at?: string
+          id?: string
+          is_active?: boolean
+          market_id?: string
+          starts_at?: string
+          tenant_id?: string
+          title?: string
+          xp_multiplier?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_day_challenges_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       news_sources: {
         Row: {
           category: string
