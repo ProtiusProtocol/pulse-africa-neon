@@ -604,6 +604,9 @@ export type Database = {
           predictions_lost: number
           predictions_made: number
           predictions_won: number
+          referral_code: string | null
+          referral_count: number
+          referred_by: string | null
           session_id: string
           streak_best: number
           streak_current: number
@@ -624,6 +627,9 @@ export type Database = {
           predictions_lost?: number
           predictions_made?: number
           predictions_won?: number
+          referral_code?: string | null
+          referral_count?: number
+          referred_by?: string | null
           session_id: string
           streak_best?: number
           streak_current?: number
@@ -644,6 +650,9 @@ export type Database = {
           predictions_lost?: number
           predictions_made?: number
           predictions_won?: number
+          referral_code?: string | null
+          referral_count?: number
+          referred_by?: string | null
           session_id?: string
           streak_best?: number
           streak_current?: number
@@ -702,6 +711,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      referrals: {
+        Row: {
+          bonus_awarded: boolean
+          created_at: string
+          id: string
+          referee_session_id: string
+          referral_code: string
+          referrer_session_id: string
+          tenant_id: string
+        }
+        Insert: {
+          bonus_awarded?: boolean
+          created_at?: string
+          id?: string
+          referee_session_id: string
+          referral_code: string
+          referrer_session_id: string
+          tenant_id?: string
+        }
+        Update: {
+          bonus_awarded?: boolean
+          created_at?: string
+          id?: string
+          referee_session_id?: string
+          referral_code?: string
+          referrer_session_id?: string
+          tenant_id?: string
+        }
+        Relationships: []
       }
       user_achievements: {
         Row: {
