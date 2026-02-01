@@ -1,15 +1,64 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trophy, Medal, Crown, TrendingUp } from "lucide-react";
+import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLeaderboard, useLeaderboardEntry } from "@/hooks/usePaperTrading";
 import { getSessionId } from "@/lib/paperSession";
+import { Confetti, FlyingPoints, AchievementToast } from "@/components/gamification";
+
+const DEMO_ACHIEVEMENTS = [
+  { id: "1", name: "First Prediction", description: "Make your first prediction", icon: "🎯", xp_reward: 50 },
+  { id: "2", name: "Hot Streak", description: "Win 3 predictions in a row", icon: "🔥", xp_reward: 150 },
+  { id: "3", name: "Sharp Shooter", description: "Reach 60% accuracy", icon: "🎯", xp_reward: 200 },
+  { id: "4", name: "Pro Predictor", description: "Reach level 10", icon: "🌟", xp_reward: 500 },
+];
 
 const SoccerLadumaLeaderboard = () => {
   const { data: leaderboard = [], isLoading } = useLeaderboard(50);
   const { data: userEntry } = useLeaderboardEntry();
   const currentSessionId = getSessionId();
+
+  // Demo state
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [flyingPointsKey, setFlyingPointsKey] = useState(0);
+  const [flyingPointsValue, setFlyingPointsValue] = useState(0);
+  const [currentAchievement, setCurrentAchievement] = useState<typeof DEMO_ACHIEVEMENTS[0] | null>(null);
+  const [showAchievement, setShowAchievement] = useState(false);
+  const [demoStep, setDemoStep] = useState(0);
+
+  const runDemo = () => {
+    // Reset
+    setDemoStep(0);
+    
+    // Step 1: Confetti burst
+    setShowConfetti(true);
+    
+    // Step 2: Flying points (after 500ms)
+    setTimeout(() => {
+      setFlyingPointsValue(150);
+      setFlyingPointsKey(prev => prev + 1);
+    }, 500);
+
+    // Step 3: More flying points (after 1000ms)
+    setTimeout(() => {
+      setFlyingPointsValue(75);
+      setFlyingPointsKey(prev => prev + 1);
+    }, 1000);
+
+    // Step 4: Achievement unlock (after 1500ms)
+    setTimeout(() => {
+      const randomAchievement = DEMO_ACHIEVEMENTS[Math.floor(Math.random() * DEMO_ACHIEVEMENTS.length)];
+      setCurrentAchievement(randomAchievement);
+      setShowAchievement(true);
+    }, 1500);
+
+    // Auto-hide achievement after 4 seconds
+    setTimeout(() => {
+      setShowAchievement(false);
+    }, 5500);
+  };
 
   const getRankBadge = (rank: number) => {
     if (rank === 1) return <Crown className="h-5 w-5 text-[hsl(45,100%,50%)]" />;
@@ -26,6 +75,16 @@ const SoccerLadumaLeaderboard = () => {
   };
 
   return (
+    <>
+      {/* Gamification Effects */}
+      <Confetti isActive={showConfetti} onComplete={() => setShowConfetti(false)} />
+      <FlyingPoints points={flyingPointsValue} triggerKey={flyingPointsKey} />
+      <AchievementToast 
+        achievement={currentAchievement} 
+        isVisible={showAchievement} 
+        onClose={() => setShowAchievement(false)} 
+      />
+
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-gradient-to-r from-[hsl(0,84%,25%)] to-[hsl(0,84%,35%)] py-4 px-4">
@@ -81,10 +140,19 @@ const SoccerLadumaLeaderboard = () => {
       <main className="container mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Top 50 Predictors</h2>
-          <Badge variant="secondary" className="gap-1">
-            <TrendingUp className="h-3 w-3" />
-            All Time
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={runDemo}
+              className="bg-gradient-to-r from-[hsl(45,100%,50%)] to-[hsl(0,84%,50%)] text-white hover:opacity-90 gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              Test Celebrations
+            </Button>
+            <Badge variant="secondary" className="gap-1">
+              <TrendingUp className="h-3 w-3" />
+              All Time
+            </Badge>
+          </div>
         </div>
 
         {isLoading ? (
@@ -191,6 +259,7 @@ const SoccerLadumaLeaderboard = () => {
         </div>
       </footer>
     </div>
+    </>
   );
 };
 
