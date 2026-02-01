@@ -45,13 +45,25 @@ const SoccerLadumaHome = () => {
               >
                 Start Predicting Free
               </Button>
-              <Link to="/soccer-laduma/dashboard">
+              <Link to="/soccer-laduma/intelligence">
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="w-full sm:w-auto border-white/30 text-white hover:bg-white/10 text-lg px-8 py-6"
+                  className="w-full sm:w-auto border-[hsl(45,100%,50%)]/50 text-[hsl(45,100%,50%)] hover:bg-[hsl(45,100%,50%)]/10 text-lg px-8 py-6"
                 >
-                  View My Dashboard
+                  <Eye className="mr-2 h-5 w-5" />
+                  View Match Signals
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="pt-4">
+              <Link to="/soccer-laduma/dashboard">
+                <Button 
+                  variant="link" 
+                  className="text-white/60 hover:text-white"
+                >
+                  Already playing? View Dashboard →
                 </Button>
               </Link>
             </div>
