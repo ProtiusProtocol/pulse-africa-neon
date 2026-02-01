@@ -554,6 +554,104 @@ export type Database = {
           },
         ]
       }
+      paper_leaderboard: {
+        Row: {
+          accuracy_pct: number | null
+          all_time_rank: number | null
+          created_at: string
+          display_name: string
+          id: string
+          predictions_lost: number
+          predictions_made: number
+          predictions_won: number
+          session_id: string
+          tenant_id: string
+          total_points: number
+          updated_at: string
+          weekly_points: number
+          weekly_rank: number | null
+        }
+        Insert: {
+          accuracy_pct?: number | null
+          all_time_rank?: number | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          predictions_lost?: number
+          predictions_made?: number
+          predictions_won?: number
+          session_id: string
+          tenant_id?: string
+          total_points?: number
+          updated_at?: string
+          weekly_points?: number
+          weekly_rank?: number | null
+        }
+        Update: {
+          accuracy_pct?: number | null
+          all_time_rank?: number | null
+          created_at?: string
+          display_name?: string
+          id?: string
+          predictions_lost?: number
+          predictions_made?: number
+          predictions_won?: number
+          session_id?: string
+          tenant_id?: string
+          total_points?: number
+          updated_at?: string
+          weekly_points?: number
+          weekly_rank?: number | null
+        }
+        Relationships: []
+      }
+      paper_predictions: {
+        Row: {
+          created_at: string
+          id: string
+          market_id: string
+          points_staked: number
+          points_won: number | null
+          resolved_at: string | null
+          session_id: string
+          side: string
+          status: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          market_id: string
+          points_staked?: number
+          points_won?: number | null
+          resolved_at?: string | null
+          session_id: string
+          side: string
+          status?: string
+          tenant_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          market_id?: string
+          points_staked?: number
+          points_won?: number | null
+          resolved_at?: string | null
+          session_id?: string
+          side?: string
+          status?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "paper_predictions_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

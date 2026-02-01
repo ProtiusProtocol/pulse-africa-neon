@@ -1,24 +1,26 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Clock, TrendingUp, Trophy, Users, LayoutDashboard } from "lucide-react";
+import { ArrowLeft, Clock, TrendingUp, Trophy, Users, LayoutDashboard, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-
-interface PaperPrediction {
-  marketId: string;
-  side: "yes" | "no";
-}
+import { toast } from "sonner";
+import SignalUniverse from "@/components/SignalUniverse";
+import { usePaperPredictions, useLeaderboardEntry, useMakePrediction } from "@/hooks/usePaperTrading";
 
 const SoccerLadumaMarkets = () => {
-  // Local state for paper predictions (UI only for pitch)
-  const [predictions, setPredictions] = useState<PaperPrediction[]>([]);
-  const [points, setPoints] = useState(1000); // Starting points
+  const { data: predictions = [], isLoading: predictionsLoading } = usePaperPredictions();
+  const { data: leaderboardEntry } = useLeaderboardEntry();
+  const makePredictionMutation = useMakePrediction();
 
-  const { data: markets, isLoading } = useQuery({
+  const points = leaderboardEntry?.total_points ?? 1000;
+  const rank = leaderboardEntry?.all_time_rank;
+  const accuracy = leaderboardEntry?.accuracy_pct;
+  const weeklyPoints = leaderboardEntry?.weekly_points ?? 0;
+
+  const { data: markets, isLoading: marketsLoading } = useQuery({
     queryKey: ["soccer-laduma-markets"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -34,19 +36,26 @@ const SoccerLadumaMarkets = () => {
   });
 
   const hasPredicted = (marketId: string) => {
-    return predictions.some((p) => p.marketId === marketId);
+    return predictions.some((p) => p.market_id === marketId);
   };
 
   const getPrediction = (marketId: string) => {
-    return predictions.find((p) => p.marketId === marketId);
+    return predictions.find((p) => p.market_id === marketId);
   };
 
-  const makePrediction = (marketId: string, side: "yes" | "no") => {
+  const handleMakePrediction = async (marketId: string, side: "yes" | "no") => {
     if (hasPredicted(marketId)) return;
 
-    setPredictions([...predictions, { marketId, side }]);
-    // Deduct points for making prediction
-    setPoints((prev) => prev - 50);
+    try {
+      await makePredictionMutation.mutateAsync({ marketId, side });
+      toast.success(`Prediction recorded: ${side.toUpperCase()}`, {
+        description: "50 points staked. Good luck!",
+      });
+    } catch (error: any) {
+      toast.error("Failed to make prediction", {
+        description: error.message,
+      });
+    }
   };
 
   // Calculate implied probability from yes/no totals
@@ -56,6 +65,8 @@ const SoccerLadumaMarkets = () => {
     if (yes + no === 0) return 50;
     return Math.round((yes / (yes + no)) * 100);
   };
+
+  const isLoading = marketsLoading || predictionsLoading;
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,7 +94,7 @@ const SoccerLadumaMarkets = () => {
             </Link>
             <div className="bg-white/10 rounded-lg px-4 py-2 flex items-center gap-2">
               <Trophy className="h-4 w-4 text-[hsl(45,100%,50%)]" />
-              <span className="text-white font-bold">{points}</span>
+              <span className="text-white font-bold">{points.toLocaleString()}</span>
               <span className="text-white/70 text-sm">pts</span>
             </div>
             <Badge variant="outline" className="border-white/30 text-white">
@@ -99,21 +110,43 @@ const SoccerLadumaMarkets = () => {
         <div className="container mx-auto flex items-center justify-center gap-8 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Your Rank:</span>
-            <span className="font-bold text-[hsl(0,84%,50%)]">#--</span>
+            <span className="font-bold text-[hsl(0,84%,50%)]">
+              {rank ? `#${rank}` : "#--"}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">Accuracy:</span>
-            <span className="font-bold">--%</span>
+            <span className="font-bold">
+              {accuracy ? `${Math.round(accuracy)}%` : "--%"}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground">This Week:</span>
-            <span className="font-bold text-[hsl(45,100%,40%)]">+0 pts</span>
+            <span className="font-bold text-[hsl(45,100%,40%)]">
+              {weeklyPoints >= 0 ? `+${weeklyPoints}` : weeklyPoints} pts
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Markets Grid */}
+      {/* Main Content */}
       <main className="container mx-auto py-8 px-4">
+        {/* Signal Universe Section */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="h-5 w-5 text-[hsl(45,100%,50%)]" />
+            <h2 className="text-xl font-bold">Signal Universe</h2>
+            <Badge variant="secondary" className="text-xs">LIVE</Badge>
+          </div>
+          <Card className="overflow-hidden">
+            <SignalUniverse tenantId="soccer-laduma" className="h-64" />
+          </Card>
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            Each star represents a prediction. Left = YES, Right = NO. Brighter = more recent.
+          </p>
+        </section>
+
+        {/* Markets Section */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Active Predictions</h2>
           <Badge variant="secondary" className="gap-1">
@@ -142,6 +175,7 @@ const SoccerLadumaMarkets = () => {
               const noPct = 100 - yesPct;
               const predicted = hasPredicted(market.id);
               const userPrediction = getPrediction(market.id);
+              const isPending = makePredictionMutation.isPending;
 
               return (
                 <Card 
@@ -197,14 +231,16 @@ const SoccerLadumaMarkets = () => {
                       <Button
                         variant="outline"
                         className="flex-1 border-green-500/50 text-green-600 hover:bg-green-500 hover:text-white hover:border-green-500"
-                        onClick={() => makePrediction(market.id, "yes")}
+                        onClick={() => handleMakePrediction(market.id, "yes")}
+                        disabled={isPending}
                       >
                         Yes ({yesPct}%)
                       </Button>
                       <Button
                         variant="outline"
                         className="flex-1 border-red-500/50 text-red-600 hover:bg-red-500 hover:text-white hover:border-red-500"
-                        onClick={() => makePrediction(market.id, "no")}
+                        onClick={() => handleMakePrediction(market.id, "no")}
+                        disabled={isPending}
                       >
                         No ({noPct}%)
                       </Button>
