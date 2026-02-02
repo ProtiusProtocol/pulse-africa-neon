@@ -236,6 +236,11 @@ export class AugurionMarketV4Client {
   ): Promise<{ success: boolean; txId?: string; result?: string; error?: string }> {
     try {
       const suggestedParams = await algodClient.getTransactionParams().do();
+      // Ensure minimum fee is set (1000 microAlgos = 0.001 ALGO)
+      const minFee = suggestedParams.minFee ?? BigInt(1000);
+      suggestedParams.fee = minFee > BigInt(1000) ? minFee : BigInt(1000);
+      suggestedParams.flatFee = true;
+      
       const atc = new AtomicTransactionComposer();
       const publicKey = algosdk.decodeAddress(sender).publicKey;
 
@@ -278,6 +283,11 @@ export class AugurionMarketV4Client {
   ): Promise<{ success: boolean; txId?: string; result?: string; error?: string }> {
     try {
       const suggestedParams = await algodClient.getTransactionParams().do();
+      // Ensure minimum fee is set (1000 microAlgos = 0.001 ALGO)
+      const minFee = suggestedParams.minFee ?? BigInt(1000);
+      suggestedParams.fee = minFee > BigInt(1000) ? minFee : BigInt(1000);
+      suggestedParams.flatFee = true;
+      
       const atc = new AtomicTransactionComposer();
       const publicKey = algosdk.decodeAddress(sender).publicKey;
 
@@ -360,6 +370,11 @@ export class AugurionMarketV4Client {
   ): Promise<{ success: boolean; txId?: string; result?: string; error?: string }> {
     try {
       const suggestedParams = await algodClient.getTransactionParams().do();
+      // Ensure minimum fee is set (1000 microAlgos = 0.001 ALGO)
+      const minFee = suggestedParams.minFee ?? BigInt(1000);
+      suggestedParams.fee = minFee > BigInt(1000) ? minFee : BigInt(1000);
+      suggestedParams.flatFee = true;
+      
       const atc = new AtomicTransactionComposer();
 
       atc.addMethodCall({
