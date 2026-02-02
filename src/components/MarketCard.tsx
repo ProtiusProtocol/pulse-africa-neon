@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useLanguage, LANGUAGES, Language } from "@/contexts/LanguageContext";
 import {
@@ -29,6 +30,8 @@ interface MarketCardProps {
   linkedSignals?: { code: string; name: string }[];
   resolutionCriteria?: string;
   onTrade?: () => void;
+  isPastDeadline?: boolean;
+  resolvedOutcome?: string | null;
 }
 
 const formatAmount = (amount: number): string => {
@@ -83,6 +86,8 @@ export const MarketCard = ({
   linkedSignals,
   resolutionCriteria,
   onTrade,
+  isPastDeadline = false,
+  resolvedOutcome,
 }: MarketCardProps) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
   const { language: globalLanguage } = useLanguage();
@@ -144,8 +149,29 @@ export const MarketCard = ({
   const noMultiplier = noPool > 0 ? totalPool / noPool : 0;
 
   return (
-    <Card className="group p-6 bg-card border-border hover:border-primary/50 transition-all duration-300 hover:glow-primary cursor-pointer">
+    <Card className={`group p-6 bg-card border-border transition-all duration-300 cursor-pointer ${
+      isPastDeadline 
+        ? 'border-amber-500/50 bg-amber-500/5' 
+        : 'hover:border-primary/50 hover:glow-primary'
+    }`}>
       <div className="space-y-4">
+        {/* Past Deadline / Resolved Badge */}
+        {isPastDeadline && (
+          <div className="flex items-center gap-2 mb-2">
+            {resolvedOutcome ? (
+              <Badge className="bg-primary/20 text-primary border-primary/30 gap-1">
+                <CheckCircle2 className="w-3 h-3" />
+                Resolved: {resolvedOutcome}
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30 gap-1">
+                <AlertCircle className="w-3 h-3" />
+                Awaiting Resolution
+              </Badge>
+            )}
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1 flex-1">
@@ -324,9 +350,15 @@ export const MarketCard = ({
         </div>
 
         {/* CTA */}
-        <Button variant="hero" size="sm" className="w-full" onClick={onTrade}>
-          Trade Now
-        </Button>
+        {isPastDeadline ? (
+          <Button variant="secondary" size="sm" className="w-full" disabled>
+            {resolvedOutcome ? 'Market Resolved' : 'Trading Closed'}
+          </Button>
+        ) : (
+          <Button variant="hero" size="sm" className="w-full" onClick={onTrade}>
+            Trade Now
+          </Button>
+        )}
       </div>
     </Card>
   );
