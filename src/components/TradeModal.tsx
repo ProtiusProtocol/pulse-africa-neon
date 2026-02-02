@@ -19,6 +19,9 @@ interface Market {
   no_total: number | null;
   linked_signals: string[] | null;
   resolution_criteria: string | null;
+  deadline?: string | null;
+  status?: string;
+  resolved_outcome?: string | null;
 }
 
 interface TradeModalProps {
@@ -36,6 +39,14 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
 
   if (!market) return null;
 
+  // Check if market is past deadline or resolved
+  const isMarketClosed = (): boolean => {
+    if (market.status === 'resolved' || market.resolved_outcome) return true;
+    if (market.deadline && new Date(market.deadline) < new Date()) return true;
+    return false;
+  };
+  const marketClosed = isMarketClosed();
+
   // Calculate implied odds
   const yesTotal = market.yes_total || 0;
   const noTotal = market.no_total || 0;
@@ -49,6 +60,11 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
   const potentialPayout = selectedOdds > 0 ? (amountNum * 100 / selectedOdds).toFixed(2) : '0.00';
 
   const handleTrade = async () => {
+    if (marketClosed) {
+      toast.error('This market is closed for trading');
+      return;
+    }
+
     if (!isConnected || !walletAddress) {
       toast.error('Please connect your wallet first');
       return;
@@ -138,6 +154,18 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Market Closed Banner */}
+          {marketClosed && (
+            <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg text-center">
+              <p className="text-destructive font-semibold">This market is closed for trading</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {market.resolved_outcome 
+                  ? `Resolved: ${market.resolved_outcome}`
+                  : 'The deadline has passed'}
+              </p>
+            </div>
+          )}
+
           {/* Linked Signals */}
           {market.linked_signals && market.linked_signals.length > 0 && (
             <div className="flex gap-2">
@@ -152,8 +180,10 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
           {/* Side Selection */}
           <div className="grid grid-cols-2 gap-3">
             <button
-              onClick={() => setSide('YES')}
+              onClick={() => !marketClosed && setSide('YES')}
+              disabled={marketClosed}
               className={`p-4 rounded-lg border-2 transition-all ${
+                marketClosed ? 'opacity-50 cursor-not-allowed' :
                 side === 'YES'
                   ? 'border-primary bg-primary/10'
                   : 'border-border hover:border-primary/50'
@@ -169,8 +199,10 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
             </button>
 
             <button
-              onClick={() => setSide('NO')}
+              onClick={() => !marketClosed && setSide('NO')}
+              disabled={marketClosed}
               className={`p-4 rounded-lg border-2 transition-all ${
+                marketClosed ? 'opacity-50 cursor-not-allowed' :
                 side === 'NO'
                   ? 'border-secondary bg-secondary/10'
                   : 'border-border hover:border-secondary/50'
@@ -198,11 +230,12 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
               min="0"
               step="0.1"
               className="text-lg"
+              disabled={marketClosed}
             />
           </div>
 
           {/* Potential Payout */}
-          {amountNum > 0 && (
+          {amountNum > 0 && !marketClosed && (
             <div className="p-3 bg-muted rounded-lg">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Potential payout</span>
@@ -223,7 +256,11 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
           )}
 
           {/* Action Button */}
-          {isConnected ? (
+          {marketClosed ? (
+            <Button disabled className="w-full" variant="secondary">
+              Trading Closed
+            </Button>
+          ) : isConnected ? (
             <Button
               onClick={handleTrade}
               disabled={isSubmitting || !amount || parseFloat(amount) <= 0}

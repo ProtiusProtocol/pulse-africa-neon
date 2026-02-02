@@ -4,9 +4,11 @@ import { TradeModal } from "@/components/TradeModal";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronRight, Activity, RefreshCw, LayoutGrid, TableProperties } from "lucide-react";
+import { ChevronRight, Activity, RefreshCw, LayoutGrid, TableProperties, Clock, CheckCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface Market {
   id: string;
@@ -22,6 +24,7 @@ interface Market {
   yes_total: number | null;
   no_total: number | null;
   updated_at: string;
+  resolved_outcome: string | null;
 }
 
 interface FragilitySignal {
@@ -32,9 +35,10 @@ interface FragilitySignal {
 
 type TradeCounts = Record<string, number>;
 type ViewMode = "grid" | "matrix";
+type MarketTab = "active" | "past-deadline";
 
 const Markets = () => {
-  const [markets, setMarkets] = useState<Market[]>([]);
+  const [allMarkets, setAllMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
   const [tradeCounts, setTradeCounts] = useState<TradeCounts>({});
   const [loading, setLoading] = useState(true);
@@ -42,16 +46,17 @@ const Markets = () => {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [activeTab, setActiveTab] = useState<MarketTab>("active");
 
   const fetchData = async () => {
     const [marketsRes, signalsRes, tradesRes] = await Promise.all([
-      supabase.from("markets").select("*").eq("status", "active").order("created_at"),
+      supabase.from("markets").select("*").order("created_at"),
       supabase.from("fragility_signals").select("id, signal_code, name").order("signal_code"),
       supabase.from("user_trades").select("market_id"),
     ]);
 
     if (marketsRes.data) {
-      setMarkets(marketsRes.data);
+      setAllMarkets(marketsRes.data);
       // Find the most recent updated_at timestamp
       const mostRecent = marketsRes.data.reduce((latest, market) => {
         const marketDate = new Date(market.updated_at);
@@ -99,6 +104,22 @@ const Markets = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Helper to check if market is past deadline
+  const isMarketPastDeadline = (market: Market): boolean => {
+    if (!market.deadline) return false;
+    return new Date(market.deadline) < new Date();
+  };
+
+  // Filter markets by tab
+  const activeMarkets = allMarkets.filter(m => 
+    m.status === 'active' && !isMarketPastDeadline(m)
+  );
+  const pastDeadlineMarkets = allMarkets.filter(m => 
+    m.status === 'resolved' || isMarketPastDeadline(m)
+  );
+
+  const markets = activeTab === 'active' ? activeMarkets : pastDeadlineMarkets;
 
   const handleTrade = (market: Market) => {
     setSelectedMarket(market);
@@ -163,12 +184,37 @@ const Markets = () => {
           </a>
         </div>
 
+        {/* Tabs for Active vs Past Deadline */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MarketTab)} className="mb-6">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2">
+            <TabsTrigger value="active" className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Active
+              <Badge variant="secondary" className="ml-1">{activeMarkets.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="past-deadline" className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Past Deadline
+              <Badge variant="outline" className="ml-1">{pastDeadlineMarkets.length}</Badge>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {/* Info Banner with View Toggle */}
         <div className="mb-8 p-4 bg-card/50 border border-border rounded-lg">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground text-center sm:text-left">
-              <span className="text-primary font-semibold">{markets.length} Active Markets</span> — 
-              Each market is linked to underlying fragility signals that inform probability drift
+              {activeTab === 'active' ? (
+                <>
+                  <span className="text-primary font-semibold">{activeMarkets.length} Active Markets</span> — 
+                  Each market is linked to underlying fragility signals that inform probability drift
+                </>
+              ) : (
+                <>
+                  <span className="text-amber-500 font-semibold">{pastDeadlineMarkets.length} Past Deadline</span> — 
+                  Markets awaiting resolution or already resolved
+                </>
+              )}
             </p>
             <div className="flex items-center gap-4">
               {/* View Toggle */}
@@ -202,7 +248,15 @@ const Markets = () => {
         </div>
 
         {/* Markets Display */}
-        {viewMode === "matrix" ? (
+        {markets.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              {activeTab === 'active' 
+                ? 'No active markets at the moment.' 
+                : 'No markets have passed their deadline yet.'}
+            </p>
+          </div>
+        ) : viewMode === "matrix" ? (
           <MarketMatrixView 
             markets={markets} 
             onTrade={handleTrade} 
@@ -213,6 +267,7 @@ const Markets = () => {
             {markets.map((market, index) => {
               const odds = getOdds(market);
               const linkedSignals = getLinkedSignalNames(market.linked_signals);
+              const isPastDeadline = isMarketPastDeadline(market);
               return (
                 <div
                   key={market.id}
@@ -235,6 +290,8 @@ const Markets = () => {
                     linkedSignals={linkedSignals}
                     resolutionCriteria={market.resolution_criteria || undefined}
                     onTrade={() => handleTrade(market)}
+                    isPastDeadline={isPastDeadline}
+                    resolvedOutcome={market.resolved_outcome}
                   />
                 </div>
               );
