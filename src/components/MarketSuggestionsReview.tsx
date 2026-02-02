@@ -102,7 +102,7 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
           region: suggestion.suggested_region,
           deadline: suggestion.suggested_deadline,
           resolution_criteria: suggestion.suggested_resolution_criteria,
-          status: 'draft',
+          status: 'pending',
           linked_signals: [suggestion.signal_code]
         })
         .select('id')
