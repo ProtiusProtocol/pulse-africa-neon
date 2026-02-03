@@ -49,11 +49,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
-import { AdminMarketUniverse } from "@/components/AdminMarketUniverse";
 import { BulkAppIdMigration } from "@/components/BulkAppIdMigration";
 import { UpcomingResolutions } from "@/components/UpcomingResolutions";
 import { MarketSuggestionsReview } from "@/components/MarketSuggestionsReview";
 import { DeployContractDialog } from "@/components/DeployContractDialog";
+import { MarketStatsSummary } from "@/components/admin/MarketStatsSummary";
+import { MarketListSection } from "@/components/admin/MarketListSection";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
@@ -809,20 +810,13 @@ const handleCreateMarket = async () => {
         {/* Upcoming Resolutions Alert */}
         <UpcomingResolutions markets={markets} />
 
-        {/* Market Universe Visualization */}
+        {/* Market Stats Summary */}
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Sparkles className="w-5 h-5 text-accent" />
-            <h2 className="text-xl font-semibold">Market Universe</h2>
+            <BarChart3 className="w-5 h-5 text-primary" />
+            <h2 className="text-xl font-semibold">Market Overview</h2>
           </div>
-          <Card className="border-border bg-card">
-            <CardContent className="p-4">
-              <AdminMarketUniverse 
-                markets={markets}
-                trades={allTrades}
-              />
-            </CardContent>
-          </Card>
+          <MarketStatsSummary markets={markets} />
         </section>
 
         {/* Wallet Warning */}
@@ -1097,156 +1091,35 @@ const handleCreateMarket = async () => {
           />
         </section>
 
-        {/* Market Management - Layer 2 */}
+        {/* Market Management - Expandable List & Universe */}
         <section>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-primary" />
-              <h2 className="text-xl font-semibold">Market Management (Layer 2)</h2>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleBatchTranslateMarkets}
-                disabled={isBatchTranslating}
-              >
-                {isBatchTranslating ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Languages className="w-4 h-4 mr-2" />
-                )}
-                {isBatchTranslating ? "Translating All..." : "Translate All"}
-              </Button>
-
-              <Button variant="outline" size="sm" onClick={triggerIndexer} disabled={isLoading}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Sync from Chain
-              </Button>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {markets.map((market) => {
-              const hasContract = !!getNumericAppId(market.app_id);
-              const isActionLoading = actionLoading === market.id;
-              
-              return (
-                <Card key={market.id} className="border-border bg-card">
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="text-base line-clamp-2">{market.title}</CardTitle>
-                        <CardDescription className="text-xs mt-1">
-                          App ID: {market.app_id}
-                          {!hasContract && <span className="text-secondary ml-2">(placeholder)</span>}
-                        </CardDescription>
-                      </div>
-                      {getStatusBadge(market.status)}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-3 text-sm">
-                      <div className="bg-muted/50 rounded-lg p-2 text-center">
-                        <p className="text-xs text-muted-foreground">YES</p>
-                        <p className="font-semibold text-primary">{(market.yes_total || 0).toLocaleString()}</p>
-                      </div>
-                      <div className="bg-muted/50 rounded-lg p-2 text-center">
-                        <p className="text-xs text-muted-foreground">NO</p>
-                        <p className="font-semibold text-accent">{(market.no_total || 0).toLocaleString()}</p>
-                      </div>
-                      <div className="bg-muted/50 rounded-lg p-2 text-center">
-                        <p className="text-xs text-muted-foreground">Trades</p>
-                        <p className="font-semibold text-foreground">{tradeCounts[market.id] || 0}</p>
-                      </div>
-                    </div>
-
-                    {/* Linked Signals */}
-                    {market.linked_signals && market.linked_signals.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {market.linked_signals.map(code => (
-                          <Badge key={code} variant="secondary" className="text-xs">{code}</Badge>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Stable identifier for cross-network migration */}
-                    {market.outcome_ref && (
-                      <div className="flex items-center gap-2 p-2 bg-card/50 rounded-lg border border-border/50">
-                        <span className="text-xs text-muted-foreground font-mono">
-                          ID: <code className="bg-muted px-1.5 py-0.5 rounded text-foreground/80">{market.outcome_ref}</code>
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex flex-wrap gap-2">
-                      {/* Deploy button for PENDING app_id */}
-                      {market.app_id === 'PENDING' && (
-                        <Button 
-                          onClick={() => handleOpenDeployDialog(market)}
-                          disabled={!isConnected}
-                          variant="outline"
-                          size="sm"
-                          className="border-accent text-accent hover:bg-accent/20"
-                          title={!isConnected ? 'Connect wallet to deploy' : 'Deploy contract to Algorand TestNet'}
-                        >
-                          <Rocket className="w-3 h-3 mr-1" />
-                          Deploy
-                        </Button>
-                      )}
-                      {market.status === 'pending' && hasContract && (
-                        <Button 
-                          onClick={() => handleOpenMarket(market)}
-                          disabled={isActionLoading || !isConnected}
-                          variant="outline"
-                          size="sm"
-                          className="border-primary text-primary hover:bg-primary/20"
-                        >
-                          <Play className="w-3 h-3 mr-1" />
-                          {isActionLoading ? 'Opening...' : 'Open'}
-                        </Button>
-                      )}
-                      <Button 
-                        onClick={() => handleTranslateMarket(market)}
-                        disabled={translatingMarketId === market.id || isTranslating}
-                        variant="secondary"
-                        size="sm"
-                      >
-                        {translatingMarketId === market.id ? (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        ) : (
-                          <Languages className="w-3 h-3 mr-1" />
-                        )}
-                        {translatingMarketId === market.id ? 'Translating...' : 'Translate'}
-                      </Button>
-                      <Button 
-                        onClick={() => handleStartEdit(market)}
-                        disabled={(realTradeCounts[market.id] || 0) > 0}
-                        variant="outline"
-                        size="sm"
-                        className="border-secondary text-secondary hover:bg-secondary/10"
-                        title={(realTradeCounts[market.id] || 0) > 0 ? 'Cannot edit: market has user trades' : 'Edit market details'}
-                      >
-                        <Pencil className="w-3 h-3 mr-1" />
-                        Edit
-                      </Button>
-                      <Button 
-                        onClick={() => handleDeleteMarket(market)}
-                        disabled={isActionLoading}
-                        variant="ghost"
-                        size="sm"
-                        className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="w-3 h-3 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+          <MarketListSection
+            markets={markets}
+            signals={signals}
+            tradeCounts={tradeCounts}
+            realTradeCounts={realTradeCounts}
+            allTrades={allTrades}
+            isLoading={isLoading}
+            actionLoading={actionLoading}
+            isConnected={isConnected}
+            isBatchTranslating={isBatchTranslating}
+            translatingMarketId={translatingMarketId}
+            isTranslating={isTranslating}
+            editingMarket={editingMarket}
+            editForm={editForm}
+            isSavingEdit={isSavingEdit}
+            onTriggerIndexer={triggerIndexer}
+            onBatchTranslate={handleBatchTranslateMarkets}
+            onOpenMarket={handleOpenMarket}
+            onTranslateMarket={handleTranslateMarket}
+            onStartEdit={handleStartEdit}
+            onCancelEdit={handleCancelEdit}
+            onSaveEdit={handleSaveEdit}
+            onDeleteMarket={handleDeleteMarket}
+            onOpenDeployDialog={handleOpenDeployDialog}
+            onEditFormChange={(field, value) => setEditForm(prev => ({ ...prev, [field]: value }))}
+            onToggleEditSignal={toggleEditSignal}
+          />
         </section>
 
         {/* Early Access Signups */}
