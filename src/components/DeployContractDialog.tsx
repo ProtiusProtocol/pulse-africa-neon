@@ -50,6 +50,8 @@ export function DeployContractDialog({
     setIsSaving(false);
   };
 
+  const loraUrl = "https://lora.algokit.io/testnet/applications";
+
   const handleClose = () => {
     resetState();
     onOpenChange(false);
@@ -60,6 +62,24 @@ export function DeployContractDialog({
     toast({
       title: "Copied!",
       description: `${label} copied to clipboard`,
+    });
+  };
+
+  const copyAllParams = () => {
+    if (!market) return;
+    
+    const params = `AugurionMarketV4 Deployment Parameters
+────────────────────────────────
+outcome_ref: ${market.outcome_ref}
+fee_bps: ${market.fee_bps || 100}
+deadline: ${market.deadline ? new Date(market.deadline).toISOString().split('T')[0] : 'Not set'}
+────────────────────────────────
+Deploy at: ${loraUrl}`;
+
+    navigator.clipboard.writeText(params);
+    toast({
+      title: "All Parameters Copied!",
+      description: "Paste in Lora's Create form",
     });
   };
 
@@ -122,7 +142,7 @@ export function DeployContractDialog({
 
   if (!market) return null;
 
-  const loraUrl = "https://lora.algokit.io/testnet/applications";
+  // Define loraUrl here so it's accessible to both copyAllParams and the JSX
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -141,7 +161,7 @@ export function DeployContractDialog({
           <>
             <div className="space-y-4 py-4">
               {/* Market summary */}
-              <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+              <div className="bg-muted/50 rounded-lg p-3 space-y-3">
                 <p className="text-sm font-semibold line-clamp-2">{market.title}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Outcome ID:</span>
@@ -157,6 +177,17 @@ export function DeployContractDialog({
                     <Copy className="w-3 h-3" />
                   </Button>
                 </div>
+                
+                {/* Copy All Parameters Button */}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="w-full"
+                  onClick={copyAllParams}
+                >
+                  <Copy className="w-3 h-3 mr-2" />
+                  Copy All Parameters
+                </Button>
               </div>
 
               {/* Step by step instructions */}
