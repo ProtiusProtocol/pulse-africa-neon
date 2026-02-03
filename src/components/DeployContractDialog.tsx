@@ -71,7 +71,7 @@ export function DeployContractDialog({
     const params = `AugurionMarketV4 Deployment Parameters
 ────────────────────────────────
 outcome_ref: ${market.outcome_ref}
-fee_bps: ${market.fee_bps || 100}
+fee_bps: ${market.fee_bps || 200}
 deadline: ${market.deadline ? new Date(market.deadline).toISOString().split('T')[0] : 'Not set'}
 ────────────────────────────────
 Deploy at: ${loraUrl}`;
