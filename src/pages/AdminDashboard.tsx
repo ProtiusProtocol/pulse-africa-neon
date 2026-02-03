@@ -43,7 +43,8 @@ import {
   Pencil,
   X,
   Save,
-  Sparkles
+  Sparkles,
+  Rocket
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,6 +53,7 @@ import { AdminMarketUniverse } from "@/components/AdminMarketUniverse";
 import { BulkAppIdMigration } from "@/components/BulkAppIdMigration";
 import { UpcomingResolutions } from "@/components/UpcomingResolutions";
 import { MarketSuggestionsReview } from "@/components/MarketSuggestionsReview";
+import { DeployContractDialog } from "@/components/DeployContractDialog";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
@@ -117,6 +119,10 @@ export default function AdminDashboard() {
   const [isSendingEmails, setIsSendingEmails] = useState(false);
   const [translatingMarketId, setTranslatingMarketId] = useState<string | null>(null);
   const [isBatchTranslating, setIsBatchTranslating] = useState(false);
+  
+  // Deploy contract dialog state
+  const [deployDialogOpen, setDeployDialogOpen] = useState(false);
+  const [marketToDeploy, setMarketToDeploy] = useState<Market | null>(null);
   
   const { toast } = useToast();
   const { translateMarket, isTranslating } = useAutoTranslate();
@@ -552,6 +558,15 @@ const handleCreateMarket = async () => {
     setTranslatingMarketId(market.id);
     await translateMarket(market.id, market.title, market.resolution_criteria || undefined);
     setTranslatingMarketId(null);
+  };
+
+  const handleOpenDeployDialog = (market: Market) => {
+    setMarketToDeploy(market);
+    setDeployDialogOpen(true);
+  };
+
+  const handleDeploySuccess = async () => {
+    await fetchMarkets();
   };
 
   const toggleSignal = (signalCode: string) => {
@@ -1166,10 +1181,24 @@ const handleCreateMarket = async () => {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-2">
-                      {market.status === 'pending' && (
+                      {/* Deploy button for PENDING app_id */}
+                      {market.app_id === 'PENDING' && (
+                        <Button 
+                          onClick={() => handleOpenDeployDialog(market)}
+                          disabled={!isConnected}
+                          variant="outline"
+                          size="sm"
+                          className="border-accent text-accent hover:bg-accent/20"
+                          title={!isConnected ? 'Connect wallet to deploy' : 'Deploy contract to Algorand TestNet'}
+                        >
+                          <Rocket className="w-3 h-3 mr-1" />
+                          Deploy
+                        </Button>
+                      )}
+                      {market.status === 'pending' && hasContract && (
                         <Button 
                           onClick={() => handleOpenMarket(market)}
-                          disabled={isActionLoading || !isConnected || !hasContract}
+                          disabled={isActionLoading || !isConnected}
                           variant="outline"
                           size="sm"
                           className="border-primary text-primary hover:bg-primary/20"
@@ -1544,6 +1573,14 @@ const handleCreateMarket = async () => {
             </Card>
           </div>
         )}
+
+        {/* Deploy Contract Dialog */}
+        <DeployContractDialog
+          market={marketToDeploy}
+          open={deployDialogOpen}
+          onOpenChange={setDeployDialogOpen}
+          onDeploySuccess={handleDeploySuccess}
+        />
 
       </div>
     </div>
