@@ -247,12 +247,12 @@ Deploy at: ${loraUrl}`;
                           </div>
                           {market.deadline && (
                             <div className="flex items-center justify-between bg-muted/50 rounded px-2 py-1.5">
-                              <span>deadline: <code className="bg-muted px-1 rounded font-mono">{new Date(market.deadline).toISOString().split('T')[0]}</code></span>
+                              <span>deadline: <code className="bg-muted px-1 rounded font-mono">{Math.floor(new Date(market.deadline).getTime() / 1000)}</code></span>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0"
-                                onClick={() => copyToClipboard(new Date(market.deadline!).toISOString().split('T')[0], "deadline")}
+                                onClick={() => copyToClipboard(String(Math.floor(new Date(market.deadline!).getTime() / 1000)), "deadline")}
                               >
                                 <Copy className="w-3 h-3" />
                               </Button>
