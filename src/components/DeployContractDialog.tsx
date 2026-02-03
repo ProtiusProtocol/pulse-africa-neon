@@ -218,19 +218,49 @@ Deploy at: ${loraUrl}`;
                     </div>
                   </div>
                   
-                  <div className="flex gap-2">
-                    <Badge variant="outline" className="w-6 h-6 rounded-full p-0 flex items-center justify-center text-xs">3</Badge>
-                    <div className="flex-1">
-                      <p>Configure the market with:</p>
-                      <ul className="text-xs text-muted-foreground mt-1 space-y-1">
-                        <li>• outcome_ref: <code className="bg-muted px-1 rounded">{market.outcome_ref}</code></li>
-                        <li>• fee_bps: <code className="bg-muted px-1 rounded">{market.fee_bps || 200}</code></li>
-                        {market.deadline && (
-                          <li>• deadline: {new Date(market.deadline).toLocaleDateString()}</li>
-                        )}
-                      </ul>
+                    <div className="flex gap-2">
+                      <Badge variant="outline" className="w-6 h-6 rounded-full p-0 flex items-center justify-center text-xs">3</Badge>
+                      <div className="flex-1">
+                        <p>Configure the market with:</p>
+                        <div className="text-xs text-muted-foreground mt-2 space-y-2">
+                          <div className="flex items-center justify-between bg-muted/50 rounded px-2 py-1.5">
+                            <span>outcome_ref: <code className="bg-muted px-1 rounded font-mono">{market.outcome_ref}</code></span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => copyToClipboard(market.outcome_ref, "outcome_ref")}
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center justify-between bg-muted/50 rounded px-2 py-1.5">
+                            <span>fee_bps: <code className="bg-muted px-1 rounded font-mono">{market.fee_bps || 200}</code></span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => copyToClipboard(String(market.fee_bps || 200), "fee_bps")}
+                            >
+                              <Copy className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          {market.deadline && (
+                            <div className="flex items-center justify-between bg-muted/50 rounded px-2 py-1.5">
+                              <span>deadline: <code className="bg-muted px-1 rounded font-mono">{new Date(market.deadline).toISOString().split('T')[0]}</code></span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => copyToClipboard(new Date(market.deadline!).toISOString().split('T')[0], "deadline")}
+                              >
+                                <Copy className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
                   
                   <div className="flex gap-2">
                     <Badge variant="outline" className="w-6 h-6 rounded-full p-0 flex items-center justify-center text-xs">4</Badge>
