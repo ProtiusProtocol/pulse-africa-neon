@@ -2,11 +2,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
- import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Sparkles, Target, Flame, Star, Zap, Shield, Coins } from "lucide-react";
+import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Sparkles, Target, Flame, Star, Zap, Shield, Coins } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLeaderboard, useLeaderboardEntry } from "@/hooks/usePaperTrading";
 import { getSessionId } from "@/lib/paperSession";
-import { Confetti, FlyingPoints, AchievementToast } from "@/components/gamification";
+import { 
+  Confetti, 
+  FlyingPoints, 
+  AchievementToast,
+  SoccerBallBurst,
+  RankUpCelebration,
+  CoinShower,
+  PredictionPlaced
+} from "@/components/gamification";
 
 const DEMO_ACHIEVEMENTS = [
   { id: "1", name: "First Prediction", description: "Make your first prediction", icon: "🎯", xp_reward: 50 },
@@ -26,38 +34,80 @@ const SoccerLadumaLeaderboard = () => {
   const [flyingPointsValue, setFlyingPointsValue] = useState(0);
   const [currentAchievement, setCurrentAchievement] = useState<typeof DEMO_ACHIEVEMENTS[0] | null>(null);
   const [showAchievement, setShowAchievement] = useState(false);
-  const [demoStep, setDemoStep] = useState(0);
+  
+  // New celebration states
+  const [showSoccerBalls, setShowSoccerBalls] = useState(false);
+  const [showRankUp, setShowRankUp] = useState(false);
+  const [showCoinShower, setShowCoinShower] = useState(false);
+  const [showPrediction, setShowPrediction] = useState(false);
+  const [predictionSide, setPredictionSide] = useState<"yes" | "no">("yes");
+  const [cpAmount, setCpAmount] = useState(50);
+  const [newRank, setNewRank] = useState(5);
 
-  const runDemo = () => {
-    // Reset
-    setDemoStep(0);
+  const runPredictionDemo = () => {
+    setPredictionSide(Math.random() > 0.5 ? "yes" : "no");
+    setShowPrediction(true);
     
-    // Step 1: Confetti burst
+    // After prediction animation, show soccer balls for win
+    setTimeout(() => {
+      setShowSoccerBalls(true);
+      setFlyingPointsValue(100);
+      setFlyingPointsKey(prev => prev + 1);
+    }, 1500);
+  };
+
+  const runRankUpDemo = () => {
+    setNewRank(Math.floor(Math.random() * 10) + 1);
+    setShowRankUp(true);
     setShowConfetti(true);
     
-    // Step 2: Flying points (after 500ms)
-    setTimeout(() => {
-      setFlyingPointsValue(150);
-      setFlyingPointsKey(prev => prev + 1);
-    }, 500);
-
-    // Step 3: More flying points (after 1000ms)
-    setTimeout(() => {
-      setFlyingPointsValue(75);
-      setFlyingPointsKey(prev => prev + 1);
-    }, 1000);
-
-    // Step 4: Achievement unlock (after 1500ms)
     setTimeout(() => {
       const randomAchievement = DEMO_ACHIEVEMENTS[Math.floor(Math.random() * DEMO_ACHIEVEMENTS.length)];
       setCurrentAchievement(randomAchievement);
       setShowAchievement(true);
     }, 1500);
 
-    // Auto-hide achievement after 4 seconds
     setTimeout(() => {
       setShowAchievement(false);
     }, 5500);
+  };
+
+  const runCPDemo = () => {
+    setCpAmount(Math.floor(Math.random() * 100) + 25);
+    setShowCoinShower(true);
+  };
+
+  const runAllDemo = () => {
+    setShowConfetti(true);
+    
+    setTimeout(() => {
+      setFlyingPointsValue(150);
+      setFlyingPointsKey(prev => prev + 1);
+    }, 500);
+
+    setTimeout(() => {
+      setShowSoccerBalls(true);
+    }, 1000);
+
+    setTimeout(() => {
+      setNewRank(3);
+      setShowRankUp(true);
+    }, 2500);
+
+    setTimeout(() => {
+      setCpAmount(75);
+      setShowCoinShower(true);
+    }, 4500);
+
+    setTimeout(() => {
+      const randomAchievement = DEMO_ACHIEVEMENTS[Math.floor(Math.random() * DEMO_ACHIEVEMENTS.length)];
+      setCurrentAchievement(randomAchievement);
+      setShowAchievement(true);
+    }, 6000);
+
+    setTimeout(() => {
+      setShowAchievement(false);
+    }, 10000);
   };
 
   // Get accuracy badge based on accuracy percentage
@@ -105,6 +155,10 @@ const SoccerLadumaLeaderboard = () => {
         isVisible={showAchievement} 
         onClose={() => setShowAchievement(false)} 
       />
+      <SoccerBallBurst isActive={showSoccerBalls} onComplete={() => setShowSoccerBalls(false)} />
+      <RankUpCelebration isActive={showRankUp} newRank={newRank} onComplete={() => setShowRankUp(false)} />
+      <CoinShower isActive={showCoinShower} amount={cpAmount} onComplete={() => setShowCoinShower(false)} />
+      <PredictionPlaced isActive={showPrediction} side={predictionSide} onComplete={() => setShowPrediction(false)} />
 
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -178,13 +232,41 @@ const SoccerLadumaLeaderboard = () => {
       <main className="container mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold">Top 50 Predictors</h2>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             <Button 
-              onClick={runDemo}
-              className="bg-gradient-to-r from-[hsl(45,100%,50%)] to-[hsl(0,84%,50%)] text-white hover:opacity-90 gap-2"
+              onClick={runPredictionDemo}
+              size="sm"
+              variant="outline"
+              className="gap-1 text-xs"
             >
-              <Sparkles className="h-4 w-4" />
-              Test Celebrations
+              <Target className="h-3 w-3" />
+              Prediction
+            </Button>
+            <Button 
+              onClick={runRankUpDemo}
+              size="sm"
+              variant="outline"
+              className="gap-1 text-xs"
+            >
+              <Trophy className="h-3 w-3" />
+              Rank Up
+            </Button>
+            <Button 
+              onClick={runCPDemo}
+              size="sm"
+              variant="outline"
+              className="gap-1 text-xs"
+            >
+              <Coins className="h-3 w-3" />
+              CP Earned
+            </Button>
+            <Button 
+              onClick={runAllDemo}
+              size="sm"
+              className="bg-gradient-to-r from-[hsl(45,100%,50%)] to-[hsl(0,84%,50%)] text-white hover:opacity-90 gap-1 text-xs"
+            >
+              <Sparkles className="h-3 w-3" />
+              All Effects
             </Button>
             <Badge variant="secondary" className="gap-1">
               <TrendingUp className="h-3 w-3" />
