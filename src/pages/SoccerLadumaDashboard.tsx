@@ -13,7 +13,8 @@ import {
   Zap,
   Medal,
   Star,
-  Award
+   Award,
+   Coins
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { usePaperPredictions, useLeaderboardEntry, useLeaderboard } from "@/hooks/usePaperTrading";
@@ -25,6 +26,7 @@ import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { ReferralCard } from "@/components/ReferralCard";
 import { MatchDayChallenges } from "@/components/MatchDayChallenges";
 import { motion } from "framer-motion";
+ import { CardHuntModal, CardPointsDisplay } from "@/components/cards";
 
 const SoccerLadumaDashboard = () => {
   const { data: predictions = [], isLoading: predictionsLoading } = usePaperPredictions();
@@ -32,6 +34,7 @@ const SoccerLadumaDashboard = () => {
   const { data: leaderboard = [] } = useLeaderboard(50);
   const { achievements, unlockedCount, totalCount, progressPercent } = useAchievementProgress();
   const [animatedPoints, setAnimatedPoints] = useState(0);
+   const [cardHuntOpen, setCardHuntOpen] = useState(false);
 
   // Fetch market titles for predictions
   const marketIds = predictions.map(p => p.market_id);
@@ -69,6 +72,7 @@ const SoccerLadumaDashboard = () => {
   const streakBest = leaderboardEntry?.streak_best ?? 0;
   const xpTotal = leaderboardEntry?.xp_total ?? 0;
   const level = leaderboardEntry?.level ?? 1;
+   const cardPoints = leaderboardEntry?.card_points ?? 0;
 
   // Animate points on load
   useEffect(() => {
@@ -96,6 +100,9 @@ const SoccerLadumaDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+       {/* Card Hunt Modal */}
+       <CardHuntModal open={cardHuntOpen} onOpenChange={setCardHuntOpen} />
+ 
       {/* Header */}
       <header className="bg-gradient-to-r from-[hsl(0,84%,25%)] to-[hsl(0,84%,35%)] py-4 px-4">
         <div className="container mx-auto flex items-center justify-between">
@@ -110,12 +117,15 @@ const SoccerLadumaDashboard = () => {
               <p className="text-white/70 text-sm">Track your predictions</p>
             </div>
           </div>
-          <Link to="/soccer-laduma/leaderboard">
-            <Button className="bg-[hsl(45,100%,50%)] text-black hover:bg-[hsl(45,100%,45%)] gap-2">
-              <Trophy className="h-4 w-4" />
-              Leaderboard
-            </Button>
-          </Link>
+           <div className="flex items-center gap-2">
+             <CardPointsDisplay onCardHuntClick={() => setCardHuntOpen(true)} size="sm" />
+             <Link to="/soccer-laduma/leaderboard">
+               <Button className="bg-[hsl(45,100%,50%)] text-black hover:bg-[hsl(45,100%,45%)] gap-2">
+                 <Trophy className="h-4 w-4" />
+                 Leaderboard
+               </Button>
+             </Link>
+           </div>
         </div>
       </header>
 
@@ -151,7 +161,7 @@ const SoccerLadumaDashboard = () => {
           </div>
 
           {/* Stats Row */}
-          <div className="grid grid-cols-4 gap-3 max-w-lg mx-auto">
+           <div className="grid grid-cols-5 gap-2 max-w-xl mx-auto">
             <div className="bg-white/10 rounded-lg p-3">
               <div className="text-xl font-bold text-white">
                 {allTimeRank ? `#${allTimeRank}` : "#--"}
@@ -172,6 +182,13 @@ const SoccerLadumaDashboard = () => {
               <div className="text-xl font-bold text-orange-400">🔥 {streakBest}</div>
               <div className="text-xs text-white/60">Best Streak</div>
             </div>
+             <div className="bg-white/10 rounded-lg p-3 border border-[hsl(45,100%,50%)]/30">
+               <div className="text-xl font-bold text-[hsl(45,100%,50%)] flex items-center justify-center gap-1">
+                 <Coins className="h-4 w-4" />
+                 {cardPoints}
+               </div>
+               <div className="text-xs text-white/60">Card Pts</div>
+             </div>
           </div>
         </div>
       </section>

@@ -196,6 +196,42 @@ export type Database = {
         }
         Relationships: []
       }
+      card_sets: {
+        Row: {
+          badge_icon: string | null
+          bonus_cp: number
+          card_codes: string[]
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+        }
+        Insert: {
+          badge_icon?: string | null
+          bonus_cp?: number
+          card_codes?: string[]
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+        }
+        Update: {
+          badge_icon?: string | null
+          bonus_cp?: number
+          card_codes?: string[]
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
       community_responses: {
         Row: {
           created_at: string
@@ -283,6 +319,48 @@ export type Database = {
           name?: string | null
           subscribed_to?: string[]
           unsubscribed_at?: string | null
+        }
+        Relationships: []
+      }
+      fan_cards: {
+        Row: {
+          category: string
+          code: string
+          cp_value: number
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          rarity: string
+          team: string | null
+        }
+        Insert: {
+          category?: string
+          code: string
+          cp_value?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          rarity?: string
+          team?: string | null
+        }
+        Update: {
+          category?: string
+          code?: string
+          cp_value?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          rarity?: string
+          team?: string | null
         }
         Relationships: []
       }
@@ -650,9 +728,13 @@ export type Database = {
         Row: {
           accuracy_pct: number | null
           all_time_rank: number | null
+          card_points: number
+          card_streak_best: number
+          card_streak_current: number
           created_at: string
           display_name: string
           id: string
+          last_card_claim: string | null
           level: number
           predictions_lost: number
           predictions_made: number
@@ -673,9 +755,13 @@ export type Database = {
         Insert: {
           accuracy_pct?: number | null
           all_time_rank?: number | null
+          card_points?: number
+          card_streak_best?: number
+          card_streak_current?: number
           created_at?: string
           display_name?: string
           id?: string
+          last_card_claim?: string | null
           level?: number
           predictions_lost?: number
           predictions_made?: number
@@ -696,9 +782,13 @@ export type Database = {
         Update: {
           accuracy_pct?: number | null
           all_time_rank?: number | null
+          card_points?: number
+          card_streak_best?: number
+          card_streak_current?: number
           created_at?: string
           display_name?: string
           id?: string
+          last_card_claim?: string | null
           level?: number
           predictions_lost?: number
           predictions_made?: number
@@ -823,6 +913,76 @@ export type Database = {
             columns: ["achievement_id"]
             isOneToOne: false
             referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_card_sets: {
+        Row: {
+          bonus_claimed: boolean
+          completed_at: string
+          id: string
+          session_id: string
+          set_id: string
+          tenant_id: string
+        }
+        Insert: {
+          bonus_claimed?: boolean
+          completed_at?: string
+          id?: string
+          session_id: string
+          set_id: string
+          tenant_id?: string
+        }
+        Update: {
+          bonus_claimed?: boolean
+          completed_at?: string
+          id?: string
+          session_id?: string
+          set_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_card_sets_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "card_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_cards: {
+        Row: {
+          acquired_at: string
+          card_id: string
+          id: string
+          is_new: boolean
+          session_id: string
+          tenant_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          card_id: string
+          id?: string
+          is_new?: boolean
+          session_id: string
+          tenant_id?: string
+        }
+        Update: {
+          acquired_at?: string
+          card_id?: string
+          id?: string
+          is_new?: boolean
+          session_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_cards_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "fan_cards"
             referencedColumns: ["id"]
           },
         ]

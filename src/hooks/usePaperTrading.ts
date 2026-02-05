@@ -32,6 +32,10 @@ export interface LeaderboardEntry {
   streak_best: number;
   xp_total: number;
   level: number;
+   card_points: number;
+   card_streak_current: number;
+   card_streak_best: number;
+   last_card_claim: string | null;
 }
 
 const TENANT_ID = "soccer-laduma";
