@@ -383,13 +383,31 @@ export function DemoCardCalendar() {
                     initial={{ scale: 0, rotateY: -90 }}
                     animate={{ scale: 1, rotateY: 0 }}
                     transition={{ type: "spring", damping: 15 }}
-                    className={`absolute inset-0 rounded-xl bg-gradient-to-br ${RARITY_COLORS[revealedCard.rarity]} border-4 border-white/30 shadow-2xl ${RARITY_GLOW[revealedCard.rarity]} flex flex-col items-center justify-center p-4`}
+                    className={`absolute inset-0 rounded-xl overflow-hidden bg-gradient-to-br ${RARITY_COLORS[revealedCard.rarity]} border-4 border-white/30 shadow-2xl ${RARITY_GLOW[revealedCard.rarity]}`}
                   >
-                    <span className="text-4xl mb-2">{getRarityIcon(revealedCard.rarity)}</span>
-                    <p className="text-white font-bold text-center text-sm">{revealedCard.name}</p>
-                    <p className="text-white/70 text-xs mt-1">{revealedCard.team || revealedCard.category}</p>
-                    <div className="mt-3 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-medium">
-                      {getRarityLabel(revealedCard.rarity)}
+                    {/* Card Image */}
+                    {revealedCard.image_url ? (
+                      <img 
+                        src={revealedCard.image_url} 
+                        alt={revealedCard.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-6xl">{getRarityIcon(revealedCard.rarity)}</span>
+                      </div>
+                    )}
+                    
+                    {/* Gradient Overlay for text legibility */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                    
+                    {/* Card Info */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 text-center">
+                      <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium mb-1">
+                        {getRarityIcon(revealedCard.rarity)} {getRarityLabel(revealedCard.rarity)}
+                      </div>
+                      <p className="text-white font-bold text-sm drop-shadow-lg">{revealedCard.name}</p>
+                      <p className="text-white/80 text-xs">{revealedCard.team || revealedCard.category}</p>
                     </div>
                   </motion.div>
                 )}
