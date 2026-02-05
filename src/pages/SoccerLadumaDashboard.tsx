@@ -28,6 +28,7 @@ import { MatchDayChallenges } from "@/components/MatchDayChallenges";
 import { motion } from "framer-motion";
 import { CardHuntModal, CardPointsDisplay } from "@/components/cards";
 import { DemoSettingsPanel } from "@/components/DemoSettingsPanel";
+import { DemoCardCalendar } from "@/components/DemoCardCalendar";
 
 const SoccerLadumaDashboard = () => {
   const { data: predictions = [], isLoading: predictionsLoading } = usePaperPredictions();
@@ -205,6 +206,9 @@ const SoccerLadumaDashboard = () => {
           currentName={leaderboardEntry?.display_name ?? "Anonymous Fan"} 
           currentPoints={totalPoints}
         />
+
+        {/* Demo Card Calendar */}
+        <DemoCardCalendar />
         
         {/* Match Day Challenges */}
         <MatchDayChallenges />
