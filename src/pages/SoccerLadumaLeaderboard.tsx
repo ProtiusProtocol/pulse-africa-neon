@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Sparkles, Target, Flame, Star, Zap, Shield } from "lucide-react";
+ import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Sparkles, Target, Flame, Star, Zap, Shield, Coins } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLeaderboard, useLeaderboardEntry } from "@/hooks/usePaperTrading";
 import { getSessionId } from "@/lib/paperSession";
@@ -123,10 +123,17 @@ const SoccerLadumaLeaderboard = () => {
           </div>
           
           {userEntry && (
-            <div className="bg-white/10 rounded-lg px-4 py-2 flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-[hsl(45,100%,50%)]" />
-              <span className="text-white font-bold">{userEntry.total_points.toLocaleString()}</span>
-              <span className="text-white/70 text-sm">pts</span>
+             <div className="flex items-center gap-3">
+               <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center gap-2">
+                 <Trophy className="h-4 w-4 text-[hsl(45,100%,50%)]" />
+                 <span className="text-white font-bold">{userEntry.total_points.toLocaleString()}</span>
+                 <span className="text-white/70 text-xs">PP</span>
+               </div>
+               <div className="bg-white/10 rounded-lg px-3 py-2 flex items-center gap-2">
+                 <Coins className="h-4 w-4 text-[hsl(45,100%,50%)]" />
+                 <span className="text-white font-bold">{(userEntry.card_points ?? 0).toLocaleString()}</span>
+                 <span className="text-white/70 text-xs">CP</span>
+               </div>
             </div>
           )}
         </div>
@@ -146,7 +153,17 @@ const SoccerLadumaLeaderboard = () => {
               </div>
             </div>
             <div className="text-right">
-              <p className="font-bold text-lg">{userEntry.total_points.toLocaleString()} pts</p>
+               <div className="flex items-center gap-3 justify-end">
+                 <div>
+                   <p className="font-bold text-lg">{userEntry.total_points.toLocaleString()} <span className="text-sm text-muted-foreground">PP</span></p>
+                 </div>
+                 <div className="border-l pl-3">
+                   <p className="font-bold text-[hsl(45,100%,50%)] flex items-center gap-1">
+                     <Coins className="h-4 w-4" />
+                     {(userEntry.card_points ?? 0).toLocaleString()}
+                   </p>
+                 </div>
+               </div>
               <p className="text-sm text-muted-foreground">
                 {userEntry.accuracy_pct != null 
                   ? `${Math.round(userEntry.accuracy_pct)}% accuracy` 
@@ -266,12 +283,22 @@ const SoccerLadumaLeaderboard = () => {
                     
                     {/* Points */}
                     <div className="text-right">
-                      <span className={`font-bold text-lg ${
-                        rank <= 3 ? "text-[hsl(0,84%,50%)]" : ""
-                      }`}>
-                        {entry.total_points.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground ml-1">pts</span>
+                       <div className="flex items-center gap-2">
+                         <div>
+                           <span className={`font-bold text-lg ${
+                             rank <= 3 ? "text-[hsl(0,84%,50%)]" : ""
+                           }`}>
+                             {entry.total_points.toLocaleString()}
+                           </span>
+                           <span className="text-muted-foreground text-xs ml-1">pts</span>
+                         </div>
+                         {(entry.card_points ?? 0) > 0 && (
+                           <div className="flex items-center gap-1 text-[hsl(45,100%,50%)] text-sm">
+                             <Coins className="h-3 w-3" />
+                             {entry.card_points}
+                           </div>
+                         )}
+                       </div>
                     </div>
                   </div>
                 </Card>
