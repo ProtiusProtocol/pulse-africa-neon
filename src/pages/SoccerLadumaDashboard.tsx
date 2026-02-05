@@ -26,7 +26,8 @@ import { LiveActivityFeed } from "@/components/LiveActivityFeed";
 import { ReferralCard } from "@/components/ReferralCard";
 import { MatchDayChallenges } from "@/components/MatchDayChallenges";
 import { motion } from "framer-motion";
- import { CardHuntModal, CardPointsDisplay } from "@/components/cards";
+import { CardHuntModal, CardPointsDisplay } from "@/components/cards";
+import { DemoSettingsPanel } from "@/components/DemoSettingsPanel";
 
 const SoccerLadumaDashboard = () => {
   const { data: predictions = [], isLoading: predictionsLoading } = usePaperPredictions();
@@ -198,6 +199,12 @@ const SoccerLadumaDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto py-8 px-4 space-y-8">
+        
+        {/* Demo Settings Panel */}
+        <DemoSettingsPanel 
+          currentName={leaderboardEntry?.display_name ?? "Anonymous Fan"} 
+          currentPoints={totalPoints}
+        />
         
         {/* Match Day Challenges */}
         <MatchDayChallenges />
