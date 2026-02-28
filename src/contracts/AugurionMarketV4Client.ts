@@ -236,10 +236,13 @@ export class AugurionMarketV4Client {
   ): Promise<{ success: boolean; txId?: string; result?: string; error?: string }> {
     try {
       const suggestedParams = await algodClient.getTransactionParams().do();
-      // Ensure minimum fee is set (1000 microAlgos = 0.001 ALGO)
+      // Need 2x minimum fee to cover the inner payment transaction
       const minFee = suggestedParams.minFee ?? BigInt(1000);
-      suggestedParams.fee = minFee > BigInt(1000) ? minFee : BigInt(1000);
+      const singleFee = minFee > BigInt(1000) ? minFee : BigInt(1000);
+      suggestedParams.fee = singleFee * BigInt(2);
       suggestedParams.flatFee = true;
+      
+      console.log('Claiming payout for app', this.appId, 'with fee', suggestedParams.fee.toString(), 'microAlgos');
       
       const atc = new AtomicTransactionComposer();
       const publicKey = algosdk.decodeAddress(sender).publicKey;
@@ -261,12 +264,15 @@ export class AugurionMarketV4Client {
       const result = await atc.execute(algodClient, 4);
       const methodResult = result.methodResults[0];
 
+      console.log('Payout claimed successfully, txId:', result.txIDs[0], 'result:', methodResult?.returnValue?.toString());
+
       return {
         success: true,
         txId: result.txIDs[0],
         result: methodResult?.returnValue?.toString(),
       };
     } catch (error) {
+      console.error('claimPayout failed for app', this.appId, ':', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -283,10 +289,13 @@ export class AugurionMarketV4Client {
   ): Promise<{ success: boolean; txId?: string; result?: string; error?: string }> {
     try {
       const suggestedParams = await algodClient.getTransactionParams().do();
-      // Ensure minimum fee is set (1000 microAlgos = 0.001 ALGO)
+      // Need 2x minimum fee to cover the inner payment transaction
       const minFee = suggestedParams.minFee ?? BigInt(1000);
-      suggestedParams.fee = minFee > BigInt(1000) ? minFee : BigInt(1000);
+      const singleFee = minFee > BigInt(1000) ? minFee : BigInt(1000);
+      suggestedParams.fee = singleFee * BigInt(2);
       suggestedParams.flatFee = true;
+      
+      console.log('Claiming refund for app', this.appId, 'with fee', suggestedParams.fee.toString(), 'microAlgos');
       
       const atc = new AtomicTransactionComposer();
       const publicKey = algosdk.decodeAddress(sender).publicKey;
