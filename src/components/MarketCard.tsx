@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown, AlertCircle, CheckCircle2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown, AlertCircle, CheckCircle2, Loader2, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useWallet } from "@/contexts/WalletContext";
+import { getMarketClient } from "@/contracts/AugurionMarketV4Client";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -15,6 +18,7 @@ import { MarketCardUniverse } from "./MarketCardUniverse";
 
 interface MarketCardProps {
   id?: string; // Market ID for translations
+  appId?: string; // Algorand app ID for contract interactions
   title: string;
   yes: number;
   no: number;
@@ -71,6 +75,7 @@ const formatCountdown = (ms: number): string => {
 
 export const MarketCard = ({
   id,
+  appId,
   title,
   yes,
   no,
@@ -90,8 +95,10 @@ export const MarketCard = ({
   resolvedOutcome,
 }: MarketCardProps) => {
   const [timeLeft, setTimeLeft] = useState<string>("");
+  const [isClaiming, setIsClaiming] = useState(false);
   const { language: globalLanguage } = useLanguage();
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
+  const { walletAddress, isConnected, getSigner } = useWallet();
   
   // Determine which language to show as secondary (per-card selection or global)
   const secondaryLang = selectedLanguage || (globalLanguage !== 'en' ? globalLanguage : null);
@@ -351,9 +358,44 @@ export const MarketCard = ({
 
         {/* CTA */}
         {isPastDeadline ? (
-          <Button variant="secondary" size="sm" className="w-full" disabled>
-            {resolvedOutcome ? 'Market Resolved' : 'Trading Closed'}
-          </Button>
+          <div className="space-y-2">
+            {resolvedOutcome && isConnected && appId && !isNaN(Number(appId)) && (
+              <Button 
+                variant="hero" 
+                size="sm" 
+                className="w-full gap-2" 
+                disabled={isClaiming}
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!walletAddress || !appId) return;
+                  setIsClaiming(true);
+                  try {
+                    const client = getMarketClient(Number(appId));
+                    const result = await client.claimPayout(walletAddress, getSigner());
+                    if (result.success) {
+                      toast.success(`Payout claimed! TX: ${result.txId?.slice(0, 8)}...`);
+                    } else {
+                      toast.error(`Claim failed: ${result.error}`);
+                    }
+                  } catch (err) {
+                    toast.error('Failed to claim payout');
+                    console.error('Claim error:', err);
+                  } finally {
+                    setIsClaiming(false);
+                  }
+                }}
+              >
+                {isClaiming ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Claiming...</>
+                ) : (
+                  <><Gift className="w-4 h-4" /> Claim Payout</>
+                )}
+              </Button>
+            )}
+            <Button variant="secondary" size="sm" className="w-full" disabled>
+              {resolvedOutcome ? 'Market Resolved' : 'Trading Closed'}
+            </Button>
+          </div>
         ) : (
           <Button variant="hero" size="sm" className="w-full" onClick={onTrade}>
             Trade Now

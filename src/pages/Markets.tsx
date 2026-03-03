@@ -276,6 +276,7 @@ const Markets = () => {
                 >
                   <MarketCard
                     id={market.id}
+                    appId={market.app_id}
                     title={market.title}
                     yes={odds.yes}
                     no={odds.no}
