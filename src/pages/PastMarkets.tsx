@@ -76,12 +76,12 @@ const PastMarkets = () => {
         {/* Probability bar */}
         <div className="mb-3">
           <div className="flex justify-between text-xs mb-1">
-            <span className="text-green-600 font-medium">Yes {yesPct}%</span>
-            <span className="text-red-600 font-medium">No {100 - yesPct}%</span>
+            <span className="text-primary font-medium">Yes {yesPct}%</span>
+            <span className="text-destructive font-medium">No {100 - yesPct}%</span>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden flex">
-            <div className="bg-green-500 transition-all" style={{ width: `${yesPct}%` }} />
-            <div className="bg-red-500 transition-all" style={{ width: `${100 - yesPct}%` }} />
+            <div className="bg-primary/70 transition-all" style={{ width: `${yesPct}%` }} />
+            <div className="bg-destructive/70 transition-all" style={{ width: `${100 - yesPct}%` }} />
           </div>
         </div>
 
