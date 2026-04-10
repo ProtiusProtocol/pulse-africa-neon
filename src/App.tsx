@@ -26,6 +26,7 @@ import AdminReports from "./pages/AdminReports";
 import AdminReportWeek from "./pages/AdminReportWeek";
 import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
+import PastMarkets from "./pages/PastMarkets";
 import NotFound from "./pages/NotFound";
 import SoccerLadumaHome from "./pages/SoccerLadumaHome";
 import SoccerLadumaMarkets from "./pages/SoccerLadumaMarkets";
@@ -83,6 +84,7 @@ const AppRoutes = () => (
         <Route path="/admin/reports/:weekId" element={<AdminReportWeek />} />
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
+        <Route path="/past-markets" element={<PastMarkets />} />
         
         {/* Soccer Laduma tenant routes */}
         <Route path="/soccer-laduma" element={<SoccerLadumaHome />} />
