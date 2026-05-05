@@ -53,6 +53,8 @@ import { BulkAppIdMigration } from "@/components/BulkAppIdMigration";
 import { UpcomingResolutions } from "@/components/UpcomingResolutions";
 import { MarketSuggestionsReview } from "@/components/MarketSuggestionsReview";
 import { DeployContractDialog } from "@/components/DeployContractDialog";
+import { PendingDeploymentsSection } from "@/components/PendingDeploymentsSection";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketStatsSummary } from "@/components/admin/MarketStatsSummary";
 import { MarketListSection } from "@/components/admin/MarketListSection";
 import type { Tables } from "@/integrations/supabase/types";
