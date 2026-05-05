@@ -31,7 +31,7 @@ interface DeployContractDialogProps {
   onDeploySuccess: () => void;
 }
 
-type DialogStep = "instructions" | "enter-app-id" | "saving" | "success";
+type DialogStep = "instructions" | "enter-app-id" | "saving" | "deploying" | "success";
 
 export function DeployContractDialog({
   market,
@@ -132,6 +132,34 @@ Deploy at: ${loraUrl}`;
       setStep("enter-app-id");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAutoDeploy = async () => {
+    if (!market) return;
+    setStep("deploying");
+    try {
+      const { data, error } = await supabase.functions.invoke("deploy-market", {
+        body: { market_id: market.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.app_id) throw new Error("No app_id returned from deploy function");
+
+      setNewAppId(String(data.app_id));
+      setStep("success");
+      toast({
+        title: "Contract Deployed!",
+        description: `App ID ${data.app_id} created and market activated`,
+      });
+    } catch (err) {
+      console.error("Auto-deploy error:", err);
+      toast({
+        title: "Auto-deploy failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+      setStep("instructions");
     }
   };
 
@@ -286,15 +314,31 @@ Deploy at: ${loraUrl}`;
               </div>
             </div>
 
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-2 flex-col sm:flex-row">
               <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button onClick={() => setStep("enter-app-id")}>
-                I've Deployed → Enter App ID
+              <Button variant="secondary" onClick={() => setStep("enter-app-id")}>
+                Manual: Enter App ID
+              </Button>
+              <Button onClick={handleAutoDeploy}>
+                <Rocket className="w-4 h-4 mr-2" />
+                Auto-Deploy via Backend
               </Button>
             </DialogFooter>
           </>
+        )}
+
+        {step === "deploying" && (
+          <div className="py-8 text-center space-y-4">
+            <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary" />
+            <div>
+              <p className="font-medium">Deploying contract on TestNet…</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Creating app, funding escrow, configuring market, opening trading. This takes ~30s.
+              </p>
+            </div>
+          </div>
         )}
 
         {step === "enter-app-id" && (
