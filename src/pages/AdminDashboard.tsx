@@ -1142,6 +1142,7 @@ const handleCreateMarket = async () => {
             </TabsContent>
           </Tabs>
         </section>
+        )}
 
         {/* Market Management - Expandable List & Universe */}
         <section>
