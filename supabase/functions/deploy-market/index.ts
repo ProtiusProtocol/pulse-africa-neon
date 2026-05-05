@@ -15,7 +15,7 @@ import algosdk from "npm:algosdk@2.9.0";
 import contractArtifact from "./AugurionMarketV4.arc56.json" with { type: "json" };
 
 const ALGOD_SERVER = "https://testnet-api.algonode.cloud";
-const FUND_APP_MICROALGOS = 1_000_000; // 1 ALGO for contract MBR
+const FUND_APP_MICROALGOS = 600_000; // 0.6 ALGO for contract MBR (~16 markets from 10 ALGO)
 
 interface DeployRequest {
   market_id: string;
