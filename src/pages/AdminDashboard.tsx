@@ -89,6 +89,7 @@ export default function AdminDashboard() {
   const [signupsLoading, setSignupsLoading] = useState(false);
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
   const [subscribersLoading, setSubscribersLoading] = useState(false);
+  const [showManualDeploy, setShowManualDeploy] = useState(false);
   
   // Edit market state
   const [editingMarket, setEditingMarket] = useState<Market | null>(null);
@@ -884,9 +885,35 @@ const handleCreateMarket = async () => {
           onDeploySuccess={fetchMarkets}
         />
 
-        {/* Manual Market Deployment — tabbed advanced tools */}
+        {/* Manual Market Deployment — collapsed by default to keep dashboard clean */}
+        <section>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-muted-foreground" />
+              <h2 className="text-xl font-semibold text-muted-foreground">Manual Market Deployment</h2>
+              <Badge variant="outline" className="text-xs ml-1">Advanced</Badge>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowManualDeploy((v) => !v)}
+            >
+              {showManualDeploy ? "Hide" : "Show"} manual tools
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">
+            Use the Pending Deployments queue above for normal workflow. These tools are for legacy Lora-based registration and bulk migrations.
+          </p>
+        </section>
+
+        {showManualDeploy && (
         <section>
           <Tabs defaultValue="register" className="w-full">
+            <div className="flex items-center gap-2 mb-4">
+              <Plus className="w-5 h-5 text-muted-foreground" />
+              <h2 className="text-xl font-semibold">Manual Market Deployment</h2>
+              <Badge variant="outline" className="text-xs ml-2">Advanced</Badge>
+            </div>
             <div className="flex items-center gap-2 mb-4">
               <Plus className="w-5 h-5 text-muted-foreground" />
               <h2 className="text-xl font-semibold">Manual Market Deployment</h2>
@@ -1115,6 +1142,7 @@ const handleCreateMarket = async () => {
             </TabsContent>
           </Tabs>
         </section>
+        )}
 
         {/* Market Management - Expandable List & Universe */}
         <section>
