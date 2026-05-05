@@ -314,15 +314,31 @@ Deploy at: ${loraUrl}`;
               </div>
             </div>
 
-            <DialogFooter className="gap-2">
+            <DialogFooter className="gap-2 flex-col sm:flex-row">
               <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
-              <Button onClick={() => setStep("enter-app-id")}>
-                I've Deployed → Enter App ID
+              <Button variant="secondary" onClick={() => setStep("enter-app-id")}>
+                Manual: Enter App ID
+              </Button>
+              <Button onClick={handleAutoDeploy}>
+                <Rocket className="w-4 h-4 mr-2" />
+                Auto-Deploy via Backend
               </Button>
             </DialogFooter>
           </>
+        )}
+
+        {step === "deploying" && (
+          <div className="py-8 text-center space-y-4">
+            <Loader2 className="w-12 h-12 mx-auto animate-spin text-primary" />
+            <div>
+              <p className="font-medium">Deploying contract on TestNet…</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Creating app, funding escrow, configuring market, opening trading. This takes ~30s.
+              </p>
+            </div>
+          </div>
         )}
 
         {step === "enter-app-id" && (
