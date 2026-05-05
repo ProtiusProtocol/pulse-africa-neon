@@ -89,6 +89,7 @@ export default function AdminDashboard() {
   const [signupsLoading, setSignupsLoading] = useState(false);
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
   const [subscribersLoading, setSubscribersLoading] = useState(false);
+  const [showManualDeploy, setShowManualDeploy] = useState(false);
   
   // Edit market state
   const [editingMarket, setEditingMarket] = useState<Market | null>(null);
