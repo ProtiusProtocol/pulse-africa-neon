@@ -31,7 +31,7 @@ interface DeployContractDialogProps {
   onDeploySuccess: () => void;
 }
 
-type DialogStep = "instructions" | "enter-app-id" | "saving" | "success";
+type DialogStep = "instructions" | "enter-app-id" | "saving" | "deploying" | "success";
 
 export function DeployContractDialog({
   market,
@@ -132,6 +132,34 @@ Deploy at: ${loraUrl}`;
       setStep("enter-app-id");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAutoDeploy = async () => {
+    if (!market) return;
+    setStep("deploying");
+    try {
+      const { data, error } = await supabase.functions.invoke("deploy-market", {
+        body: { market_id: market.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      if (!data?.app_id) throw new Error("No app_id returned from deploy function");
+
+      setNewAppId(String(data.app_id));
+      setStep("success");
+      toast({
+        title: "Contract Deployed!",
+        description: `App ID ${data.app_id} created and market activated`,
+      });
+    } catch (err) {
+      console.error("Auto-deploy error:", err);
+      toast({
+        title: "Auto-deploy failed",
+        description: err instanceof Error ? err.message : "Unknown error",
+        variant: "destructive",
+      });
+      setStep("instructions");
     }
   };
 
