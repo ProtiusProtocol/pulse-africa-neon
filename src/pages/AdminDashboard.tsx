@@ -1103,13 +1103,17 @@ const handleCreateMarket = async () => {
             </CardContent>
           </Card>
         </section>
+            </TabsContent>
 
-        {/* Bulk App ID Migration */}
-        <section>
-          <BulkAppIdMigration 
-            markets={markets} 
-            onMigrationComplete={fetchMarkets} 
-          />
+            <TabsContent value="migrate">
+              <section>
+                <BulkAppIdMigration
+                  markets={markets}
+                  onMigrationComplete={fetchMarkets}
+                />
+              </section>
+            </TabsContent>
+          </Tabs>
         </section>
 
         {/* Market Management - Expandable List & Universe */}
