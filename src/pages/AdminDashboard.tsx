@@ -878,7 +878,26 @@ const handleCreateMarket = async () => {
           }}
         />
 
-        {/* Register New Market */}
+        {/* Pending Deployments — one-click auto-deploy for approved markets */}
+        <PendingDeploymentsSection
+          markets={markets}
+          onDeploySuccess={fetchMarkets}
+        />
+
+        {/* Manual Market Deployment — tabbed advanced tools */}
+        <section>
+          <Tabs defaultValue="register" className="w-full">
+            <div className="flex items-center gap-2 mb-4">
+              <Plus className="w-5 h-5 text-muted-foreground" />
+              <h2 className="text-xl font-semibold">Manual Market Deployment</h2>
+              <Badge variant="outline" className="text-xs ml-2">Advanced</Badge>
+            </div>
+            <TabsList className="mb-4">
+              <TabsTrigger value="register">Register from Lora</TabsTrigger>
+              <TabsTrigger value="migrate">Bulk App ID Migration</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="register">
         <section id="register-market-section">
           <div className="flex items-center gap-2 mb-4">
             <Plus className="w-5 h-5 text-primary" />
