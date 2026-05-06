@@ -8,6 +8,7 @@ type AuthContextValue = {
   loading: boolean;
   isAdmin: boolean;
   signOut: () => Promise<void>;
+  recheckAccess: () => Promise<{ isAdmin: boolean; error?: string }>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
