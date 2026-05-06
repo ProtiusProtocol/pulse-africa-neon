@@ -2,7 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { StickyBanner } from "@/components/StickyBanner";
@@ -10,6 +11,7 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TenantProvider, useTenant } from "@/contexts/TenantContext";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Home from "./pages/Home";
 import HowItWorks from "./pages/HowItWorks";
 import Markets from "./pages/Markets";
@@ -41,6 +43,31 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, isAdmin } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+          <p className="text-muted-foreground">Checking admin access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 // Tenant-aware layout wrapper
 const TenantLayout = ({ children }: { children: React.ReactNode }) => {
@@ -79,9 +106,9 @@ const AppRoutes = () => (
         <Route path="/brief" element={<Brief />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/reports" element={<AdminReports />} />
-        <Route path="/admin/reports/:weekId" element={<AdminReportWeek />} />
+        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+        <Route path="/admin/reports" element={<AdminRoute><AdminReports /></AdminRoute>} />
+        <Route path="/admin/reports/:weekId" element={<AdminRoute><AdminReportWeek /></AdminRoute>} />
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/past-markets" element={<PastMarkets />} />
@@ -108,7 +135,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <TenantProvider>
-              <AppRoutes />
+              <AuthProvider>
+                <AppRoutes />
+              </AuthProvider>
             </TenantProvider>
           </BrowserRouter>
         </TooltipProvider>
