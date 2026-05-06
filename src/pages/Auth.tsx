@@ -55,6 +55,40 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const verifyAdminAccess = async (userId: string) => {
+    const { data, error } = await supabase
+      .rpc('has_role', { _user_id: userId, _role: 'admin' });
+
+    if (!error) return Boolean(data);
+
+    const { data: ownRole } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    return ownRole?.role === 'admin';
+  };
+
+  const goToAdminIfAllowed = async (userId: string, signedInEmail?: string) => {
+    const allowed = await verifyAdminAccess(userId);
+
+    if (!allowed) {
+      toast({
+        title: "Access denied",
+        description: signedInEmail
+          ? `${signedInEmail} is signed in, but this app has not assigned it admin access.`
+          : "This signed-in account does not have admin access.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    navigate("/admin");
+    return true;
+  };
+
   useEffect(() => {
     // Check for recovery indicators using window.location directly (more reliable than React Router)
     const checkForRecovery = () => {
@@ -109,10 +143,7 @@ export default function Auth() {
         return;
       }
       
-      // Only redirect on a fresh sign-in event, not on every page load with stale session
-      if (event === 'SIGNED_IN' && session?.user && !checkForRecovery()) {
-        navigate("/admin");
-      }
+      // Login form redirects only after explicit admin verification in submit handlers.
     });
 
     // Initial session check — do NOT auto-redirect; let user re-authenticate if needed
