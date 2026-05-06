@@ -65,15 +65,22 @@ export function useAuth() {
     };
   }, []);
 
-  const checkAdminRole = async (userId: string) => {
+  const checkAdminRole = async (userId: string): Promise<boolean> => {
     const { data, error } = await supabase
       .rpc('has_role', { _user_id: userId, _role: 'admin' });
-    
-    if (!error && data) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
+
+    if (!error) {
+      return Boolean(data);
     }
+
+    const { data: ownRole } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    return ownRole?.role === 'admin';
   };
 
   const signOut = async () => {
