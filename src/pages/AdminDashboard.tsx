@@ -74,7 +74,7 @@ type TradeRecord = {
 };
 
 export default function AdminDashboard() {
-  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
@@ -129,12 +129,6 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const { translateMarket, isTranslating } = useAutoTranslate();
   const { walletAddress, isConnected, connect, getSigner } = useWallet();
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [authLoading, user, navigate]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -608,30 +602,6 @@ const handleCreateMarket = async () => {
     }
   };
 
-  // Loading state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Route guard handles redirects; keep page neutral while auth state settles.
-  if (!user || !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
-          <p className="text-muted-foreground">Checking admin access...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -660,7 +630,7 @@ const handleCreateMarket = async () => {
                 </Badge>
               )}
               <Badge variant="outline" className="px-3 py-1 text-xs text-muted-foreground">
-                {user.email}
+                {user?.email}
               </Badge>
               <Button 
                 variant="outline" 
