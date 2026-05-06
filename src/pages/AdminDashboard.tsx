@@ -673,7 +673,12 @@ const handleCreateMarket = async () => {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-glow-primary">Admin Dashboard</h1>
+              <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-3xl font-bold text-glow-primary">Admin Dashboard</h1>
+                <Badge variant="default" className="font-mono text-xs">
+                  Full Admin
+                </Badge>
+              </div>
               <p className="text-muted-foreground">Manage markets, signals, and weekly reports</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
