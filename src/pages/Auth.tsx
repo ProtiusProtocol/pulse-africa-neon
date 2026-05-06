@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [isClearingSession, setIsClearingSession] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
@@ -146,14 +148,16 @@ export default function Auth() {
       // Login form redirects only after explicit admin verification in submit handlers.
     });
 
-    // Initial session check — do NOT auto-redirect; let user re-authenticate if needed
+    // Initial session check — only auto-verify after a managed OAuth return.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (checkForRecovery()) {
         setIsRecoverySession(true);
         setMode('reset');
         return;
       }
-      // Intentionally no auto-redirect here — show login form so user can sign in fresh
+      if (urlParams.get('oauth') === 'google' && session?.user) {
+        goToAdminIfAllowed(session.user.id, session.user.email);
+      }
     });
 
     return () => subscription.unsubscribe();
