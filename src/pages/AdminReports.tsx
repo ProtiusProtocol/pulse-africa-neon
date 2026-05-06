@@ -30,7 +30,7 @@ interface WeekStatus {
 }
 
 export default function AdminReports() {
-  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [weeks, setWeeks] = useState<WeekStatus[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,11 +47,6 @@ export default function AdminReports() {
       fetchWeekStatuses();
     }
   }, [isAdmin]);
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/auth");
-  };
 
   const fetchWeekStatuses = async () => {
     setLoading(true);
