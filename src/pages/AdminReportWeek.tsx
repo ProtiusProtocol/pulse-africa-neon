@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +48,6 @@ interface Report {
 
 export default function AdminReportWeek() {
   const { weekId } = useParams<{ weekId: string }>();
-  const navigate = useNavigate();
   const { user, loading: authLoading, isAdmin } = useAuth();
   
   const [digest, setDigest] = useState<Digest | null>(null);
@@ -63,12 +62,6 @@ export default function AdminReportWeek() {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [publishing, setPublishing] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [authLoading, user, navigate]);
 
   useEffect(() => {
     if (isAdmin && weekId) {
