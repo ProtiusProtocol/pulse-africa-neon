@@ -14,8 +14,7 @@ import {
   ArrowRight,
   CheckCircle,
   Clock,
-  AlertCircle,
-  Loader2
+  AlertCircle
 } from "lucide-react";
 import { toast } from "sonner";
 
