@@ -1,9 +1,10 @@
-import { Menu, X, Wallet, LogOut, Copy, Check } from "lucide-react";
+import { Menu, X, Wallet, LogOut, Copy, Check, Shield } from "lucide-react";
 import { useState } from "react";
 import { NavLink } from "@/components/NavLink";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
