@@ -48,7 +48,7 @@ interface Report {
 
 export default function AdminReportWeek() {
   const { weekId } = useParams<{ weekId: string }>();
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   
   const [digest, setDigest] = useState<Digest | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
@@ -196,30 +196,6 @@ export default function AdminReportWeek() {
         return <p key={i} className="text-sm text-muted-foreground mb-1">{line}</p>;
       });
   };
-
-  // Loading state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Route guard handles redirects; keep page neutral while auth state settles.
-  if (!user || !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
-          <p className="text-muted-foreground">Checking admin access...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
