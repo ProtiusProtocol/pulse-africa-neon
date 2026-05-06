@@ -17,8 +17,7 @@ import {
   FileText,
   Briefcase,
   CheckCircle,
-  AlertTriangle,
-  Loader2
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -26,10 +25,22 @@ interface Digest {
   week_id: string;
   week_start: string;
   week_end: string;
-  market_snapshot: any;
+  market_snapshot: Array<{ title?: string; status?: string }>;
   market_moves_md: string | null;
   news_digest_md: string | null;
 }
+
+const normalizeMarketSnapshot = (value: unknown): Digest["market_snapshot"] => {
+  return Array.isArray(value)
+    ? value.map((item) => {
+        const market = item && typeof item === "object" ? item as { title?: unknown; status?: unknown } : {};
+        return {
+          title: typeof market.title === "string" ? market.title : "Untitled market",
+          status: typeof market.status === "string" ? market.status : "unknown",
+        };
+      })
+    : [];
+};
 
 interface AdminInputs {
   top_drivers: string[];
@@ -48,7 +59,7 @@ interface Report {
 
 export default function AdminReportWeek() {
   const { weekId } = useParams<{ weekId: string }>();
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   
   const [digest, setDigest] = useState<Digest | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
@@ -79,7 +90,14 @@ export default function AdminReportWeek() {
       .eq("week_id", weekId)
       .single();
     
-    setDigest(digestData);
+    setDigest(digestData ? {
+      week_id: digestData.week_id,
+      week_start: digestData.week_start,
+      week_end: digestData.week_end,
+      market_snapshot: normalizeMarketSnapshot(digestData.market_snapshot),
+      market_moves_md: digestData.market_moves_md,
+      news_digest_md: digestData.news_digest_md,
+    } : null);
     
     // Fetch reports
     const { data: reportsData } = await supabase
@@ -196,30 +214,6 @@ export default function AdminReportWeek() {
         return <p key={i} className="text-sm text-muted-foreground mb-1">{line}</p>;
       });
   };
-
-  // Loading state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Route guard handles redirects; keep page neutral while auth state settles.
-  if (!user || !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
-          <p className="text-muted-foreground">Checking admin access...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (loading) {
     return (
@@ -357,7 +351,7 @@ export default function AdminReportWeek() {
                 <div>
                   <h4 className="text-sm font-medium text-foreground mb-2">Markets ({digest.market_snapshot.length})</h4>
                   <div className="space-y-1">
-                    {digest.market_snapshot.map((market: any, i: number) => (
+                    {digest.market_snapshot.map((market, i: number) => (
                       <div key={i} className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
                         {market.title} ({market.status})
                       </div>
