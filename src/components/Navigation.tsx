@@ -17,6 +17,7 @@ export const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const { walletAddress, isConnecting, connect, disconnect } = useWallet();
+  const { isAdmin } = useAuth();
 
   const handleCopyAddress = () => {
     if (walletAddress) {
