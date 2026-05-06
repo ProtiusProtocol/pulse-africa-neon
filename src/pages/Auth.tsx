@@ -387,6 +387,30 @@ export default function Auth() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'login' && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading || googleLoading || isClearingSession}
+                >
+                  {googleLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4 mr-2" />
+                  )}
+                  Continue with Google
+                </Button>
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+              </>
+            )}
+
             {mode !== 'reset' && (
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -399,7 +423,7 @@ export default function Auth() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
                     className="pl-10 bg-input border-border"
-                    disabled={loading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession}
                   />
                 </div>
                 {errors.email && (
@@ -420,7 +444,7 @@ export default function Auth() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 pr-10 bg-input border-border"
-                    disabled={loading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession}
                   />
                   <button
                     type="button"
@@ -453,7 +477,7 @@ export default function Auth() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 bg-input border-border"
-                    disabled={loading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession}
                   />
                 </div>
                 {errors.confirmPassword && (
@@ -468,14 +492,14 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode('forgot')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  disabled={loading || isClearingSession}
+                  disabled={loading || googleLoading || isClearingSession}
                 >
                   Forgot password?
                 </button>
               </div>
             )}
 
-            <Button type="submit" className="w-full" variant="neon" disabled={loading || isClearingSession}>
+            <Button type="submit" className="w-full" variant="neon" disabled={loading || googleLoading || isClearingSession}>
               {loading || isClearingSession ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
