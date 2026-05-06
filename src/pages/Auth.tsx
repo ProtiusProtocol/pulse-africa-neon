@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable/index";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +44,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [isClearingSession, setIsClearingSession] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
@@ -78,8 +80,8 @@ export default function Auth() {
       toast({
         title: "Access denied",
         description: signedInEmail
-          ? `${signedInEmail} is signed in, but this app has not assigned it admin access.`
-          : "This signed-in account does not have admin access.",
+          ? `${signedInEmail} is signed in, but this app has not assigned it admin access. giorgiomauro63@gmail.com is now allowlisted as an app admin.`
+          : "This signed-in account does not have admin access. giorgiomauro63@gmail.com is now allowlisted as an app admin.",
         variant: "destructive",
       });
       return false;
@@ -146,14 +148,16 @@ export default function Auth() {
       // Login form redirects only after explicit admin verification in submit handlers.
     });
 
-    // Initial session check — do NOT auto-redirect; let user re-authenticate if needed
+    // Initial session check — only auto-verify after a managed OAuth return.
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (checkForRecovery()) {
         setIsRecoverySession(true);
         setMode('reset');
         return;
       }
-      // Intentionally no auto-redirect here — show login form so user can sign in fresh
+      if (urlParams.get('oauth') === 'google' && session?.user) {
+        goToAdminIfAllowed(session.user.id, session.user.email);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -237,6 +241,37 @@ export default function Auth() {
     setMode('login');
   };
 
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth?oauth=google`,
+        extraParams: { prompt: "select_account" },
+      });
+
+      if (result.error) {
+        toast({ title: "Google sign-in failed", description: result.error.message, variant: "destructive" });
+        return;
+      }
+
+      if (result.redirected) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await goToAdminIfAllowed(user.id, user.email);
+      }
+    } catch (error) {
+      toast({
+        title: "Google sign-in failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -288,7 +323,7 @@ export default function Auth() {
 
         toast({ 
           title: "Account created", 
-          description: "You can now log in. Note: Admin access requires role assignment." 
+          description: "Check your email to confirm the account, then log in. Admin access is active for approved admin emails."
         });
         setMode('login');
       }
@@ -352,6 +387,30 @@ export default function Auth() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === 'login' && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleGoogleSignIn}
+                  disabled={loading || googleLoading || isClearingSession}
+                >
+                  {googleLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4 mr-2" />
+                  )}
+                  Continue with Google
+                </Button>
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+              </>
+            )}
+
             {mode !== 'reset' && (
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -364,7 +423,7 @@ export default function Auth() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
                     className="pl-10 bg-input border-border"
-                    disabled={loading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession}
                   />
                 </div>
                 {errors.email && (
@@ -385,7 +444,7 @@ export default function Auth() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 pr-10 bg-input border-border"
-                    disabled={loading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession}
                   />
                   <button
                     type="button"
@@ -418,7 +477,7 @@ export default function Auth() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 bg-input border-border"
-                    disabled={loading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession}
                   />
                 </div>
                 {errors.confirmPassword && (
@@ -433,14 +492,14 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode('forgot')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  disabled={loading || isClearingSession}
+                  disabled={loading || googleLoading || isClearingSession}
                 >
                   Forgot password?
                 </button>
               </div>
             )}
 
-            <Button type="submit" className="w-full" variant="neon" disabled={loading || isClearingSession}>
+            <Button type="submit" className="w-full" variant="neon" disabled={loading || googleLoading || isClearingSession}>
               {loading || isClearingSession ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
