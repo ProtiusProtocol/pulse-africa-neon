@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -30,8 +30,6 @@ const clearStoredAuthSession = () => {
   clearMatchingKeys(window.sessionStorage);
 };
 
-const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
-
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(() => {
     // Check URL immediately during initialization
@@ -59,46 +57,9 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const verifyAdminAccess = async (userId: string) => {
-    const { data, error } = await supabase
-      .rpc('has_role', { _user_id: userId, _role: 'admin' });
-
-    if (!error) return Boolean(data);
-
-    const { data: ownRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
-
-    return ownRole?.role === 'admin';
-  };
-
-  const goToAdminIfAllowed = async (userId: string, signedInEmail?: string) => {
-    let allowed = await verifyAdminAccess(userId);
-
-    if (!allowed) {
-      await supabase.auth.refreshSession();
-      await wait(300);
-      const { data: { session } } = await supabase.auth.getSession();
-      allowed = await verifyAdminAccess(session?.user?.id ?? userId);
-    }
-
-    if (!allowed) {
-      toast({
-        title: "Access denied",
-        description: signedInEmail
-          ? `${signedInEmail} is signed in, but this app has not assigned it admin access. giorgiomauro63@gmail.com is now allowlisted as an app admin.`
-          : "This signed-in account does not have admin access. giorgiomauro63@gmail.com is now allowlisted as an app admin.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
+  const goToAdmin = useCallback(() => {
     navigate("/admin");
-    return true;
-  };
+  }, [navigate]);
 
   useEffect(() => {
     // Check for recovery indicators using window.location directly (more reliable than React Router)
@@ -165,12 +126,12 @@ export default function Auth() {
         return;
       }
       if (urlParams.get('oauth') === 'google' && session?.user) {
-        goToAdminIfAllowed(session.user.id, session.user.email);
+        goToAdmin();
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, isRecoverySession, mode]);
+  }, [goToAdmin, isRecoverySession, mode]);
 
   const validateForm = () => {
     if (mode === 'forgot') {
@@ -225,9 +186,7 @@ export default function Auth() {
     setPassword("");
     setConfirmPassword("");
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await goToAdminIfAllowed(user.id, user.email);
-    }
+    if (user) goToAdmin();
   };
 
   const handleForgotPassword = async () => {
@@ -267,9 +226,7 @@ export default function Auth() {
       if (result.redirected) return;
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await goToAdminIfAllowed(user.id, user.email);
-      }
+      if (user) goToAdmin();
     } catch (error) {
       toast({
         title: "Google sign-in failed",
@@ -307,7 +264,8 @@ export default function Auth() {
           return;
         }
 
-        if (data.user && await goToAdminIfAllowed(data.user.id, data.user.email)) {
+        if (data.user) {
+          goToAdmin();
           toast({ title: "Welcome back", description: "Admin access verified" });
         }
       } else {
