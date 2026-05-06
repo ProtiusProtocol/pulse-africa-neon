@@ -509,18 +509,18 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode('forgot')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  disabled={loading || googleLoading || isClearingSession}
+                  disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                 >
                   Forgot password?
                 </button>
               </div>
             )}
 
-            <Button type="submit" className="w-full" variant="neon" disabled={loading || googleLoading || isClearingSession}>
-              {loading || isClearingSession ? (
+            <Button type="submit" className="w-full" variant="neon" disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}>
+              {loading || isClearingSession || isCheckingAdminSession ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isClearingSession ? "Signing out..." : getButtonText()}
+                  {isCheckingAdminSession ? "Checking access..." : isClearingSession ? "Signing out..." : getButtonText()}
                 </>
               ) : (
                 <>
@@ -538,7 +538,7 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode('login')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    disabled={loading || isClearingSession}
+                    disabled={loading || isClearingSession || isCheckingAdminSession}
                 >
                   Back to login
                 </button>
@@ -547,7 +547,7 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                   disabled={loading || isClearingSession}
+                   disabled={loading || isClearingSession || isCheckingAdminSession}
                 >
                   {mode === 'login' 
                     ? "Don't have an account? Sign up" 
