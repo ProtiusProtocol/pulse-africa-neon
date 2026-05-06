@@ -360,6 +360,9 @@ export default function Auth() {
   };
 
   const getDescription = () => {
+    if (isCheckingAdminSession) return "Checking existing admin session";
+    if (isClearingSession) return "Signing out this browser before login";
+
     switch (mode) {
       case 'reset': return "Enter your new password";
       case 'forgot': return "Enter your email to receive a reset link";
@@ -389,13 +392,15 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md border-border bg-card">
         <CardHeader className="text-center">
-          <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
+          {isCheckingAdminSession ? (
+            <Loader2 className="w-12 h-12 mx-auto text-primary mb-4 animate-spin" />
+          ) : (
+            <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
+          )}
           <CardTitle className="text-2xl text-glow-primary">
             {getTitle()}
           </CardTitle>
-          <CardDescription>
-            {isClearingSession ? "Signing out this browser before login" : getDescription()}
-          </CardDescription>
+          <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
