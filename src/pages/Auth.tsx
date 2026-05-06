@@ -232,7 +232,7 @@ export default function Auth() {
     setPassword("");
     setConfirmPassword("");
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) goToAdmin();
+    if (user) await enterAdminIfAllowed(user.id, { showDenied: true });
   };
 
   const handleForgotPassword = async () => {
@@ -272,7 +272,7 @@ export default function Auth() {
       if (result.redirected) return;
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) goToAdmin();
+      if (user) await enterAdminIfAllowed(user.id, { showDenied: true });
     } catch (error) {
       toast({
         title: "Google sign-in failed",
@@ -311,8 +311,7 @@ export default function Auth() {
         }
 
         if (data.user) {
-          goToAdmin();
-          toast({ title: "Welcome back", description: "Admin access verified" });
+          await enterAdminIfAllowed(data.user.id, { showSuccess: true, showDenied: true });
         }
       } else {
         const redirectUrl = `${window.location.origin}/`;
