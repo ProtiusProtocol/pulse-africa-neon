@@ -91,7 +91,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!isAdmin) {
-    return <Navigate to="/auth?force=true" replace />;
+    return <Navigate to="/auth?denied=true" replace />;
   }
 
   return <>{children}</>;
