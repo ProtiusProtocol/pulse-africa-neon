@@ -55,6 +55,19 @@ export default function Auth() {
       return type === 'recovery' || resetParam === 'true' || hash.includes('type=recovery');
     };
 
+    // Allow forcing login form even when a (possibly stale) session exists.
+    // Visit /auth?force=true to sign out and show the login form.
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceLogin = urlParams.get('force') === 'true';
+
+    if (forceLogin) {
+      console.log('Force login requested — signing out any existing session');
+      supabase.auth.signOut().finally(() => {
+        setInitialCheckDone(true);
+      });
+      return;
+    }
+
     // If already in recovery mode (detected during init), don't redirect
     if (isRecoverySession || mode === 'reset') {
       console.log('Recovery mode active, skipping redirect logic');
@@ -87,13 +100,13 @@ export default function Auth() {
       
       setInitialCheckDone(true);
       
-      // Only redirect if logged in and not recovery
-      if (session?.user && !checkForRecovery()) {
+      // Only redirect on a fresh sign-in event, not on every page load with stale session
+      if (event === 'SIGNED_IN' && session?.user && !checkForRecovery()) {
         navigate("/admin");
       }
     });
 
-    // Initial session check
+    // Initial session check — do NOT auto-redirect; let user re-authenticate if needed
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (checkForRecovery()) {
         setIsRecoverySession(true);
@@ -101,12 +114,8 @@ export default function Auth() {
         setInitialCheckDone(true);
         return;
       }
-      
       setInitialCheckDone(true);
-      
-      if (session?.user) {
-        navigate("/admin");
-      }
+      // Intentionally no auto-redirect here — show login form so user can sign in fresh
     });
 
     return () => subscription.unsubscribe();
