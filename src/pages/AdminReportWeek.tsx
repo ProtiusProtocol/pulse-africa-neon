@@ -25,7 +25,7 @@ interface Digest {
   week_id: string;
   week_start: string;
   week_end: string;
-  market_snapshot: any;
+  market_snapshot: Array<{ title?: string; status?: string }>;
   market_moves_md: string | null;
   news_digest_md: string | null;
 }
@@ -332,7 +332,7 @@ export default function AdminReportWeek() {
                 <div>
                   <h4 className="text-sm font-medium text-foreground mb-2">Markets ({digest.market_snapshot.length})</h4>
                   <div className="space-y-1">
-                    {digest.market_snapshot.map((market: any, i: number) => (
+                    {digest.market_snapshot.map((market, i: number) => (
                       <div key={i} className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
                         {market.title} ({market.status})
                       </div>
