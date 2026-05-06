@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
-  Shield, 
   Save, 
   Sparkles, 
   Send,
@@ -19,7 +18,6 @@ import {
   Briefcase,
   CheckCircle,
   AlertTriangle,
-  LogOut,
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
@@ -50,8 +48,7 @@ interface Report {
 
 export default function AdminReportWeek() {
   const { weekId } = useParams<{ weekId: string }>();
-  const navigate = useNavigate();
-  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   
   const [digest, setDigest] = useState<Digest | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
@@ -67,21 +64,10 @@ export default function AdminReportWeek() {
   const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    }
-  }, [authLoading, user, navigate]);
-
-  useEffect(() => {
     if (isAdmin && weekId) {
       fetchData();
     }
   }, [isAdmin, weekId]);
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/auth");
-  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -223,42 +209,14 @@ export default function AdminReportWeek() {
     );
   }
 
-  // Not logged in
-  if (!user) {
+  // Route guard handles redirects; keep page neutral while auth state settles.
+  if (!user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-border bg-card">
-          <CardHeader className="text-center">
-            <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
-            <CardTitle className="text-2xl">Admin Access</CardTitle>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Logged in but not admin
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-border bg-card">
-          <CardHeader className="text-center">
-            <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
-            <CardTitle className="text-2xl">Access Denied</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              You don't have admin privileges. Logged in as: {user.email}
-            </p>
-            <Button onClick={handleLogout} variant="outline" className="w-full">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+          <p className="text-muted-foreground">Checking admin access...</p>
+        </div>
       </div>
     );
   }
