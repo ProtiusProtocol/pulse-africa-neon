@@ -49,7 +49,7 @@ interface Report {
 export default function AdminReportWeek() {
   const { weekId } = useParams<{ weekId: string }>();
   const navigate = useNavigate();
-  const { user, loading: authLoading, isAdmin, signOut } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   
   const [digest, setDigest] = useState<Digest | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
@@ -75,11 +75,6 @@ export default function AdminReportWeek() {
       fetchData();
     }
   }, [isAdmin, weekId]);
-
-  const handleLogout = async () => {
-    await signOut();
-    navigate("/auth");
-  };
 
   const fetchData = async () => {
     setLoading(true);
