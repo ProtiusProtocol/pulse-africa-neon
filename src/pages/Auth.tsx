@@ -126,7 +126,7 @@ export default function Auth() {
         return;
       }
       if (urlParams.get('oauth') === 'google' && session?.user) {
-        goToAdminIfAllowed(session.user.id, session.user.email);
+        goToAdmin();
       }
     });
 
@@ -186,9 +186,7 @@ export default function Auth() {
     setPassword("");
     setConfirmPassword("");
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await goToAdminIfAllowed(user.id, user.email);
-    }
+    if (user) goToAdmin();
   };
 
   const handleForgotPassword = async () => {
@@ -228,9 +226,7 @@ export default function Auth() {
       if (result.redirected) return;
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await goToAdminIfAllowed(user.id, user.email);
-      }
+      if (user) goToAdmin();
     } catch (error) {
       toast({
         title: "Google sign-in failed",
@@ -268,7 +264,8 @@ export default function Auth() {
           return;
         }
 
-        if (data.user && await goToAdminIfAllowed(data.user.id, data.user.email)) {
+        if (data.user) {
+          goToAdmin();
           toast({ title: "Welcome back", description: "Admin access verified" });
         }
       } else {
