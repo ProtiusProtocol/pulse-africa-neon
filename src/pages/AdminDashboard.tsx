@@ -17,12 +17,10 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, 
   TrendingDown, 
   Minus,
-  Shield,
   Activity,
   BarChart3,
   AlertTriangle,
