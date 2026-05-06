@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -7,11 +7,13 @@ export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const checkIdRef = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
 
     const verifySession = async (session: Session | null) => {
+      const checkId = ++checkIdRef.current;
       setSession(session);
       setUser(session?.user ?? null);
 
@@ -21,13 +23,18 @@ export function useAuth() {
         return;
       }
 
-      await checkAdminRole(session.user.id);
-      if (!cancelled) setLoading(false);
+      setLoading(true);
+      const admin = await checkAdminRole(session.user.id);
+      if (!cancelled && checkId === checkIdRef.current) {
+        setIsAdmin(admin);
+        setLoading(false);
+      }
     };
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        const checkId = ++checkIdRef.current;
         setLoading(true);
         setSession(session);
         setUser(session?.user ?? null);
@@ -36,8 +43,11 @@ export function useAuth() {
         if (session?.user) {
           setTimeout(async () => {
             if (cancelled) return;
-            await checkAdminRole(session.user.id);
-            if (!cancelled) setLoading(false);
+            const admin = await checkAdminRole(session.user.id);
+            if (!cancelled && checkId === checkIdRef.current) {
+              setIsAdmin(admin);
+              setLoading(false);
+            }
           }, 0);
         } else {
           setIsAdmin(false);
