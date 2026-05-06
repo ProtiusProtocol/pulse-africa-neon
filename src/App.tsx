@@ -47,8 +47,8 @@ const queryClient = new QueryClient({
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isAdmin, recheckAccess } = useAuth();
-  const [rechecking, setRechecking] = (require("react") as typeof import("react")).useState(false);
-  const [recheckMsg, setRecheckMsg] = (require("react") as typeof import("react")).useState<string | null>(null);
+  const [rechecking, setRechecking] = useState(false);
+  const [recheckMsg, setRecheckMsg] = useState<string | null>(null);
 
   if (loading || rechecking) {
     return (
