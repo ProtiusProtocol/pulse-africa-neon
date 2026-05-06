@@ -12,12 +12,9 @@ import {
   FileText, 
   Briefcase, 
   ArrowRight,
-  Shield,
   CheckCircle,
   Clock,
   AlertCircle,
-  AlertTriangle,
-  LogOut,
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
