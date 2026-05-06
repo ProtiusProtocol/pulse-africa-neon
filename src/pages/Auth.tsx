@@ -211,7 +211,10 @@ export default function Auth() {
     setMode('login');
     setPassword("");
     setConfirmPassword("");
-    navigate("/admin");
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await goToAdminIfAllowed(user.id, user.email);
+    }
   };
 
   const handleForgotPassword = async () => {
@@ -246,7 +249,7 @@ export default function Auth() {
       } else if (mode === 'forgot') {
         await handleForgotPassword();
       } else if (mode === 'login') {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -260,7 +263,9 @@ export default function Auth() {
           return;
         }
 
-        toast({ title: "Welcome back", description: "Successfully logged in" });
+        if (data.user && await goToAdminIfAllowed(data.user.id, data.user.email)) {
+          toast({ title: "Welcome back", description: "Admin access verified" });
+        }
       } else {
         const redirectUrl = `${window.location.origin}/`;
 
