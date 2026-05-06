@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,19 @@ const authSchema = z.object({
 
 type AuthMode = 'login' | 'signup' | 'forgot' | 'reset';
 
+const clearStoredAuthSession = () => {
+  const clearMatchingKeys = (storage: Storage) => {
+    Object.keys(storage).forEach((key) => {
+      if (key.startsWith('sb-') && (key.includes('auth-token') || key.includes('supabase'))) {
+        storage.removeItem(key);
+      }
+    });
+  };
+
+  clearMatchingKeys(window.localStorage);
+  clearMatchingKeys(window.sessionStorage);
+};
+
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(() => {
     // Check URL immediately during initialization
@@ -30,7 +43,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
+  const [isClearingSession, setIsClearingSession] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
   const [isRecoverySession, setIsRecoverySession] = useState(() => {
@@ -40,7 +53,6 @@ export default function Auth() {
     return urlParams.get('reset') === 'true' || hash.includes('type=recovery');
   });
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -61,9 +73,11 @@ export default function Auth() {
     const forceLogin = urlParams.get('force') === 'true';
 
     if (forceLogin) {
-      console.log('Force login requested — signing out any existing session');
-      supabase.auth.signOut().finally(() => {
-        setInitialCheckDone(true);
+      setIsClearingSession(true);
+      supabase.auth.signOut({ scope: 'global' }).finally(() => {
+        clearStoredAuthSession();
+        window.history.replaceState(null, '', '/auth');
+        setIsClearingSession(false);
       });
       return;
     }
@@ -71,7 +85,6 @@ export default function Auth() {
     // If already in recovery mode (detected during init), don't redirect
     if (isRecoverySession || mode === 'reset') {
       console.log('Recovery mode active, skipping redirect logic');
-      setInitialCheckDone(true);
       
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
         console.log('Auth event (recovery):', event);
@@ -87,18 +100,14 @@ export default function Auth() {
       if (checkForRecovery()) {
         setIsRecoverySession(true);
         setMode('reset');
-        setInitialCheckDone(true);
         return;
       }
       
       if ((event as string) === 'PASSWORD_RECOVERY') {
         setIsRecoverySession(true);
         setMode('reset');
-        setInitialCheckDone(true);
         return;
       }
-      
-      setInitialCheckDone(true);
       
       // Only redirect on a fresh sign-in event, not on every page load with stale session
       if (event === 'SIGNED_IN' && session?.user && !checkForRecovery()) {
@@ -111,10 +120,8 @@ export default function Auth() {
       if (checkForRecovery()) {
         setIsRecoverySession(true);
         setMode('reset');
-        setInitialCheckDone(true);
         return;
       }
-      setInitialCheckDone(true);
       // Intentionally no auto-redirect here — show login form so user can sign in fresh
     });
 
@@ -304,7 +311,7 @@ export default function Auth() {
             {getTitle()}
           </CardTitle>
           <CardDescription>
-            {getDescription()}
+            {isClearingSession ? "Signing out this browser before login" : getDescription()}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -321,7 +328,7 @@ export default function Auth() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
                     className="pl-10 bg-input border-border"
-                    disabled={loading}
+                    disabled={loading || isClearingSession}
                   />
                 </div>
                 {errors.email && (
@@ -342,7 +349,7 @@ export default function Auth() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 pr-10 bg-input border-border"
-                    disabled={loading}
+                    disabled={loading || isClearingSession}
                   />
                   <button
                     type="button"
@@ -375,7 +382,7 @@ export default function Auth() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 bg-input border-border"
-                    disabled={loading}
+                    disabled={loading || isClearingSession}
                   />
                 </div>
                 {errors.confirmPassword && (
@@ -390,18 +397,18 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode('forgot')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  disabled={loading}
+                  disabled={loading || isClearingSession}
                 >
                   Forgot password?
                 </button>
               </div>
             )}
 
-            <Button type="submit" className="w-full" variant="neon" disabled={loading}>
-              {loading ? (
+            <Button type="submit" className="w-full" variant="neon" disabled={loading || isClearingSession}>
+              {loading || isClearingSession ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {getButtonText()}
+                  {isClearingSession ? "Signing out..." : getButtonText()}
                 </>
               ) : (
                 <>
@@ -419,7 +426,7 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode('login')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  disabled={loading}
+                    disabled={loading || isClearingSession}
                 >
                   Back to login
                 </button>
@@ -428,7 +435,7 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  disabled={loading}
+                   disabled={loading || isClearingSession}
                 >
                   {mode === 'login' 
                     ? "Don't have an account? Sign up" 
