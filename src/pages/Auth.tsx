@@ -78,8 +78,8 @@ export default function Auth() {
       toast({
         title: "Access denied",
         description: signedInEmail
-          ? `${signedInEmail} is signed in, but this app has not assigned it admin access.`
-          : "This signed-in account does not have admin access.",
+          ? `${signedInEmail} is signed in, but this app has not assigned it admin access. giorgiomauro63@gmail.com is now allowlisted as an app admin.`
+          : "This signed-in account does not have admin access. giorgiomauro63@gmail.com is now allowlisted as an app admin.",
         variant: "destructive",
       });
       return false;
@@ -288,7 +288,7 @@ export default function Auth() {
 
         toast({ 
           title: "Account created", 
-          description: "You can now log in. Note: Admin access requires role assignment." 
+          description: "Check your email to confirm the account, then log in. Admin access is active for approved admin emails."
         });
         setMode('login');
       }
