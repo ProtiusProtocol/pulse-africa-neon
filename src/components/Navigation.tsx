@@ -74,6 +74,16 @@ export const Navigation = () => {
                 {link.label}
               </a>
             ))}
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                className="flex items-center gap-1 px-2 py-1 rounded-md border border-primary/40 text-primary hover:bg-primary/10 transition-colors font-semibold text-xs"
+                activeClassName="bg-primary/20 text-glow-primary"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                Admin
+              </NavLink>
+            )}
             <LanguageSelector />
             {walletAddress ? (
               <DropdownMenu>
