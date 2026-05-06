@@ -30,6 +30,22 @@ const clearStoredAuthSession = () => {
   clearMatchingKeys(window.sessionStorage);
 };
 
+const isAdminUser = async (userId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .rpc('has_role', { _user_id: userId, _role: 'admin' });
+
+  if (!error) return Boolean(data);
+
+  const { data: ownRole } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  return ownRole?.role === 'admin';
+};
+
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(() => {
     // Check URL immediately during initialization
@@ -46,6 +62,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [isClearingSession, setIsClearingSession] = useState(false);
+  const [isCheckingAdminSession, setIsCheckingAdminSession] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
   const [isRecoverySession, setIsRecoverySession] = useState(() => {
@@ -60,6 +77,34 @@ export default function Auth() {
   const goToAdmin = useCallback(() => {
     navigate("/admin");
   }, [navigate]);
+
+  const enterAdminIfAllowed = useCallback(async (userId: string, options?: { showSuccess?: boolean; showDenied?: boolean }) => {
+    setIsCheckingAdminSession(true);
+    try {
+      const allowed = await isAdminUser(userId);
+
+      if (!allowed) {
+        await supabase.auth.signOut();
+        clearStoredAuthSession();
+        if (options?.showDenied) {
+          toast({
+            title: "Access denied",
+            description: "This email address is not approved for Augurion admin access.",
+            variant: "destructive",
+          });
+        }
+        return false;
+      }
+
+      if (options?.showSuccess) {
+        toast({ title: "Welcome back", description: "Admin access verified" });
+      }
+      goToAdmin();
+      return true;
+    } finally {
+      setIsCheckingAdminSession(false);
+    }
+  }, [goToAdmin, toast]);
 
   useEffect(() => {
     // Check for recovery indicators using window.location directly (more reliable than React Router)
@@ -77,6 +122,7 @@ export default function Auth() {
     // Visit /auth?force=true to sign out and show the login form.
     const urlParams = new URLSearchParams(window.location.search);
     const forceLogin = urlParams.get('force') === 'true';
+    const deniedRedirect = urlParams.get('denied') === 'true';
 
     if (forceLogin) {
       setIsClearingSession(true);
@@ -125,13 +171,13 @@ export default function Auth() {
         setMode('reset');
         return;
       }
-      if (urlParams.get('oauth') === 'google' && session?.user) {
-        goToAdmin();
+      if (session?.user) {
+        enterAdminIfAllowed(session.user.id, { showDenied: deniedRedirect });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [goToAdmin, isRecoverySession, mode]);
+  }, [enterAdminIfAllowed, isRecoverySession, mode, toast]);
 
   const validateForm = () => {
     if (mode === 'forgot') {
