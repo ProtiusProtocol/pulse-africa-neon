@@ -17,8 +17,7 @@ import {
   FileText,
   Briefcase,
   CheckCircle,
-  AlertTriangle,
-  Loader2
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 
