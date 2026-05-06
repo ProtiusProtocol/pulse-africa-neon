@@ -241,6 +241,37 @@ export default function Auth() {
     setMode('login');
   };
 
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth?oauth=google`,
+        extraParams: { prompt: "select_account" },
+      });
+
+      if (result.error) {
+        toast({ title: "Google sign-in failed", description: result.error.message, variant: "destructive" });
+        return;
+      }
+
+      if (result.redirected) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await goToAdminIfAllowed(user.id, user.email);
+      }
+    } catch (error) {
+      toast({
+        title: "Google sign-in failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
