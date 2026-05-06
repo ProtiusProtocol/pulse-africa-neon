@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   ArrowLeft, 
-  Shield, 
   Save, 
   Sparkles, 
   Send,
@@ -19,7 +18,6 @@ import {
   Briefcase,
   CheckCircle,
   AlertTriangle,
-  LogOut,
   Loader2
 } from "lucide-react";
 import { toast } from "sonner";
