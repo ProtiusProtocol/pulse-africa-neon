@@ -8,6 +8,7 @@ type AuthContextValue = {
   loading: boolean;
   isAdmin: boolean;
   signOut: () => Promise<void>;
+  recheckAccess: () => Promise<{ isAdmin: boolean; error?: string }>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -100,12 +101,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAdmin(false);
   };
 
+  const recheckAccess = async () => {
+    const checkId = ++checkIdRef.current;
+    setLoading(true);
+    try {
+      // Force a fresh JWT so updated role/email claims are present
+      const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+      const activeSession = refreshed?.session ?? (await supabase.auth.getSession()).data.session;
+
+      if (refreshError && !activeSession) {
+        setUser(null);
+        setSession(null);
+        setIsAdmin(false);
+        return { isAdmin: false, error: refreshError.message };
+      }
+
+      setSession(activeSession ?? null);
+      setUser(activeSession?.user ?? null);
+
+      if (!activeSession?.user) {
+        setIsAdmin(false);
+        return { isAdmin: false, error: "Not signed in" };
+      }
+
+      const admin = await checkAdminRole(activeSession.user.id);
+      if (checkId === checkIdRef.current) setIsAdmin(admin);
+      return { isAdmin: admin };
+    } finally {
+      if (checkId === checkIdRef.current) setLoading(false);
+    }
+  };
+
   const value: AuthContextValue = {
     user,
     session,
     loading,
     isAdmin,
     signOut,
+    recheckAccess,
   };
 
   return createElement(AuthContext.Provider, { value }, children);
