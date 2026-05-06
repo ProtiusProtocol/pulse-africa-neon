@@ -48,8 +48,6 @@ const queryClient = new QueryClient({
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isAdmin, recheckAccess } = useAuth();
   const [rechecking, setRechecking] = useState(false);
-  const [autoRecheckDone, setAutoRecheckDone] = useState(false);
-  const [recheckMsg, setRecheckMsg] = useState<string | null>(null);
   const routeMountedRef = useRef(true);
 
   useEffect(() => {
@@ -59,29 +57,17 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    setAutoRecheckDone(false);
-    setRecheckMsg(null);
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (loading || !user || isAdmin || autoRecheckDone || rechecking) return;
+    if (loading || !user || isAdmin || rechecking) return;
 
     setRechecking(true);
-    setRecheckMsg(null);
 
-    recheckAccess().then((res) => {
+    recheckAccess().finally(() => {
       if (!routeMountedRef.current) return;
-      if (!res.isAdmin) {
-        setRecheckMsg(res.error ?? "Still no admin role on this account.");
-      }
-    }).finally(() => {
-      if (!routeMountedRef.current) return;
-      setAutoRecheckDone(true);
       setRechecking(false);
     });
-  }, [autoRecheckDone, isAdmin, loading, recheckAccess, rechecking, user]);
+  }, [isAdmin, loading, recheckAccess, rechecking, user]);
 
-  if (loading || rechecking || (user && !isAdmin && !autoRecheckDone)) {
+  if (loading || rechecking || (user && !isAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
@@ -96,43 +82,6 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="max-w-md w-full text-center space-y-4 border border-border rounded-lg p-6 bg-card">
-          <h1 className="text-xl font-semibold">Admin access not detected</h1>
-          <p className="text-sm text-muted-foreground">
-            Signed in as <span className="text-foreground">{user.email}</span>. If admin rights were
-            just granted, your session token may be stale. Recheck refreshes your JWT and re-verifies your role.
-          </p>
-          {recheckMsg && <p className="text-sm text-destructive">{recheckMsg}</p>}
-          <div className="flex gap-2 justify-center">
-            <button
-              className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium"
-              onClick={async () => {
-                setRecheckMsg(null);
-                setRechecking(true);
-                const res = await recheckAccess();
-                setRechecking(false);
-                if (!res.isAdmin) {
-                  setRecheckMsg(res.error ?? "Still no admin role on this account.");
-                }
-              }}
-            >
-              Recheck my access
-            </button>
-            <a
-              href="/auth?force=true"
-              className="px-4 py-2 rounded-md border border-border text-sm font-medium"
-            >
-              Sign in as another user
-            </a>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return <>{children}</>;
