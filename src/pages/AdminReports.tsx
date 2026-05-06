@@ -30,7 +30,7 @@ interface WeekStatus {
 }
 
 export default function AdminReports() {
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const [weeks, setWeeks] = useState<WeekStatus[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -118,30 +118,6 @@ export default function AdminReports() {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-
-  // Loading state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Route guard handles redirects; keep page neutral while auth state settles.
-  if (!user || !isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center space-y-4">
-          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
-          <p className="text-muted-foreground">Checking admin access...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background pt-24 pb-12">
