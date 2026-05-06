@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -57,9 +57,9 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const goToAdmin = () => {
+  const goToAdmin = useCallback(() => {
     navigate("/admin");
-  };
+  }, [navigate]);
 
   useEffect(() => {
     // Check for recovery indicators using window.location directly (more reliable than React Router)
@@ -131,7 +131,7 @@ export default function Auth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, isRecoverySession, mode]);
+  }, [goToAdmin, isRecoverySession, mode]);
 
   const validateForm = () => {
     if (mode === 'forgot') {
