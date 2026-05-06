@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const checkIdRef = useRef(0);
+  const latestUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -27,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const checkId = ++checkIdRef.current;
       setSession(session);
       setUser(session?.user ?? null);
+      latestUserIdRef.current = session?.user?.id ?? null;
 
       if (!session?.user) {
         setIsAdmin(false);
@@ -49,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(true);
         setSession(session);
         setUser(session?.user ?? null);
+        latestUserIdRef.current = session?.user?.id ?? null;
         
         // Defer role check with setTimeout to prevent deadlocks
         if (session?.user) {
@@ -98,11 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
+    latestUserIdRef.current = null;
     setIsAdmin(false);
   };
 
   const recheckAccess = async () => {
-    const checkId = ++checkIdRef.current;
+    let checkedUserId: string | null = null;
     setLoading(true);
     try {
       // Force a fresh JWT so updated role/email claims are present
@@ -118,17 +122,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       setSession(activeSession ?? null);
       setUser(activeSession?.user ?? null);
+      latestUserIdRef.current = activeSession?.user?.id ?? null;
 
       if (!activeSession?.user) {
         setIsAdmin(false);
         return { isAdmin: false, error: "Not signed in" };
       }
 
-      const admin = await checkAdminRole(activeSession.user.id);
-      if (checkId === checkIdRef.current) setIsAdmin(admin);
+      checkedUserId = activeSession.user.id;
+      const admin = await checkAdminRole(checkedUserId);
+      if (latestUserIdRef.current === checkedUserId) setIsAdmin(admin);
       return { isAdmin: admin };
     } finally {
-      if (checkId === checkIdRef.current) setLoading(false);
+      if (!checkedUserId || latestUserIdRef.current === checkedUserId) setLoading(false);
     }
   };
 
