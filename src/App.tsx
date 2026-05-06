@@ -48,6 +48,7 @@ const queryClient = new QueryClient({
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading, isAdmin, recheckAccess } = useAuth();
   const [rechecking, setRechecking] = useState(false);
+  const [autoRecheckDone, setAutoRecheckDone] = useState(false);
   const routeMountedRef = useRef(true);
 
   useEffect(() => {
@@ -57,17 +58,22 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (loading || !user || isAdmin || rechecking) return;
+    setAutoRecheckDone(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (loading || !user || isAdmin || autoRecheckDone || rechecking) return;
 
     setRechecking(true);
 
     recheckAccess().finally(() => {
       if (!routeMountedRef.current) return;
+      setAutoRecheckDone(true);
       setRechecking(false);
     });
-  }, [isAdmin, loading, recheckAccess, rechecking, user]);
+  }, [autoRecheckDone, isAdmin, loading, recheckAccess, rechecking, user]);
 
-  if (loading || rechecking || (user && !isAdmin)) {
+  if (loading || rechecking || (user && !isAdmin && !autoRecheckDone)) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
@@ -82,6 +88,10 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/auth?force=true" replace />;
   }
 
   return <>{children}</>;
