@@ -411,7 +411,7 @@ export default function Auth() {
                   variant="outline"
                   className="w-full"
                   onClick={handleGoogleSignIn}
-                  disabled={loading || googleLoading || isClearingSession}
+                  disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                 >
                   {googleLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -440,7 +440,7 @@ export default function Auth() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
                     className="pl-10 bg-input border-border"
-                    disabled={loading || googleLoading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                   />
                 </div>
                 {errors.email && (
@@ -461,7 +461,7 @@ export default function Auth() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 pr-10 bg-input border-border"
-                    disabled={loading || googleLoading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                   />
                   <button
                     type="button"
@@ -494,7 +494,7 @@ export default function Auth() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 bg-input border-border"
-                    disabled={loading || googleLoading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                   />
                 </div>
                 {errors.confirmPassword && (
