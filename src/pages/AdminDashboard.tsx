@@ -622,46 +622,14 @@ const handleCreateMarket = async () => {
     );
   }
 
-  // Not logged in - redirect handled by useEffect
-  if (!user) {
+  // Route guard handles redirects; keep page neutral while auth state settles.
+  if (!user || !isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-border bg-card">
-          <CardHeader className="text-center">
-            <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
-            <CardTitle className="text-2xl text-glow-primary">Admin Access</CardTitle>
-            <CardDescription>Redirecting to login...</CardDescription>
-          </CardHeader>
-          <CardContent className="flex justify-center">
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Logged in but not admin
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md border-border bg-card">
-          <CardHeader className="text-center">
-            <AlertTriangle className="w-12 h-12 mx-auto text-destructive mb-4" />
-            <CardTitle className="text-2xl">Access Denied</CardTitle>
-            <CardDescription>
-              You don't have admin privileges. Contact an administrator to request access.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Logged in as: {user.email}
-            </p>
-            <Button onClick={handleLogout} variant="outline" className="w-full">
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+          <p className="text-muted-foreground">Checking admin access...</p>
+        </div>
       </div>
     );
   }
