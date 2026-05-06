@@ -42,7 +42,8 @@ import {
   X,
   Save,
   Sparkles,
-  Rocket
+  Rocket,
+  Zap
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -692,10 +693,10 @@ const handleCreateMarket = async () => {
         </div>
 
         <Tabs value={adminTab} onValueChange={setAdminTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-2 bg-card border border-border h-auto p-1">
+          <TabsList className="grid w-full grid-cols-2 bg-card border border-primary/40 h-auto p-1 glow-primary motion-reduce:shadow-none">
             <TabsTrigger value="overview" className="min-h-11 gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Dashboard Overview
+              <Zap className="w-4 h-4" />
+              Automatic Market Creation
             </TabsTrigger>
             <TabsTrigger value="manual-deployment" className="min-h-11 gap-2">
               <Rocket className="w-4 h-4" />
@@ -807,6 +808,20 @@ const handleCreateMarket = async () => {
             ))}
           </div>
         </section>
+
+        <Card className="border-primary/30 bg-primary/5">
+          <CardContent className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-primary">Automatic Market Creation</p>
+              <p className="text-xs text-muted-foreground">
+                Generate AI suggestions, approve one, then use Pending Deployments to auto-create the TestNet contract.
+              </p>
+            </div>
+            <Badge variant="outline" className="w-fit border-primary/50 text-primary">
+              New admin flow
+            </Badge>
+          </CardContent>
+        </Card>
 
         {/* AI Market Suggestions Review */}
         <MarketSuggestionsReview 

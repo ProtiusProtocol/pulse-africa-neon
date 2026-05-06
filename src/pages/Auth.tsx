@@ -30,6 +30,22 @@ const clearStoredAuthSession = () => {
   clearMatchingKeys(window.sessionStorage);
 };
 
+const isAdminUser = async (userId: string): Promise<boolean> => {
+  const { data, error } = await supabase
+    .rpc('has_role', { _user_id: userId, _role: 'admin' });
+
+  if (!error) return Boolean(data);
+
+  const { data: ownRole } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin')
+    .maybeSingle();
+
+  return ownRole?.role === 'admin';
+};
+
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(() => {
     // Check URL immediately during initialization
@@ -46,6 +62,7 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [isClearingSession, setIsClearingSession] = useState(false);
+  const [isCheckingAdminSession, setIsCheckingAdminSession] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; confirmPassword?: string }>({});
   const [isRecoverySession, setIsRecoverySession] = useState(() => {
@@ -60,6 +77,34 @@ export default function Auth() {
   const goToAdmin = useCallback(() => {
     navigate("/admin");
   }, [navigate]);
+
+  const enterAdminIfAllowed = useCallback(async (userId: string, options?: { showSuccess?: boolean; showDenied?: boolean }) => {
+    setIsCheckingAdminSession(true);
+    try {
+      const allowed = await isAdminUser(userId);
+
+      if (!allowed) {
+        await supabase.auth.signOut();
+        clearStoredAuthSession();
+        if (options?.showDenied) {
+          toast({
+            title: "Access denied",
+            description: "This email address is not approved for Augurion admin access.",
+            variant: "destructive",
+          });
+        }
+        return false;
+      }
+
+      if (options?.showSuccess) {
+        toast({ title: "Welcome back", description: "Admin access verified" });
+      }
+      goToAdmin();
+      return true;
+    } finally {
+      setIsCheckingAdminSession(false);
+    }
+  }, [goToAdmin, toast]);
 
   useEffect(() => {
     // Check for recovery indicators using window.location directly (more reliable than React Router)
@@ -77,6 +122,7 @@ export default function Auth() {
     // Visit /auth?force=true to sign out and show the login form.
     const urlParams = new URLSearchParams(window.location.search);
     const forceLogin = urlParams.get('force') === 'true';
+    const deniedRedirect = urlParams.get('denied') === 'true';
 
     if (forceLogin) {
       setIsClearingSession(true);
@@ -125,13 +171,13 @@ export default function Auth() {
         setMode('reset');
         return;
       }
-      if (urlParams.get('oauth') === 'google' && session?.user) {
-        goToAdmin();
+      if (session?.user) {
+        enterAdminIfAllowed(session.user.id, { showDenied: deniedRedirect });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [goToAdmin, isRecoverySession, mode]);
+  }, [enterAdminIfAllowed, isRecoverySession, mode, toast]);
 
   const validateForm = () => {
     if (mode === 'forgot') {
@@ -186,7 +232,7 @@ export default function Auth() {
     setPassword("");
     setConfirmPassword("");
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) goToAdmin();
+    if (user) await enterAdminIfAllowed(user.id, { showDenied: true });
   };
 
   const handleForgotPassword = async () => {
@@ -226,7 +272,7 @@ export default function Auth() {
       if (result.redirected) return;
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) goToAdmin();
+      if (user) await enterAdminIfAllowed(user.id, { showDenied: true });
     } catch (error) {
       toast({
         title: "Google sign-in failed",
@@ -265,8 +311,7 @@ export default function Auth() {
         }
 
         if (data.user) {
-          goToAdmin();
-          toast({ title: "Welcome back", description: "Admin access verified" });
+          await enterAdminIfAllowed(data.user.id, { showSuccess: true, showDenied: true });
         }
       } else {
         const redirectUrl = `${window.location.origin}/`;
@@ -315,6 +360,9 @@ export default function Auth() {
   };
 
   const getDescription = () => {
+    if (isCheckingAdminSession) return "Checking existing admin session";
+    if (isClearingSession) return "Signing out this browser before login";
+
     switch (mode) {
       case 'reset': return "Enter your new password";
       case 'forgot': return "Enter your email to receive a reset link";
@@ -344,13 +392,15 @@ export default function Auth() {
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md border-border bg-card">
         <CardHeader className="text-center">
-          <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
+          {isCheckingAdminSession ? (
+            <Loader2 className="w-12 h-12 mx-auto text-primary mb-4 animate-spin" />
+          ) : (
+            <Shield className="w-12 h-12 mx-auto text-primary mb-4" />
+          )}
           <CardTitle className="text-2xl text-glow-primary">
             {getTitle()}
           </CardTitle>
-          <CardDescription>
-            {isClearingSession ? "Signing out this browser before login" : getDescription()}
-          </CardDescription>
+          <CardDescription>{getDescription()}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -361,7 +411,7 @@ export default function Auth() {
                   variant="outline"
                   className="w-full"
                   onClick={handleGoogleSignIn}
-                  disabled={loading || googleLoading || isClearingSession}
+                  disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                 >
                   {googleLoading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -390,7 +440,7 @@ export default function Auth() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@example.com"
                     className="pl-10 bg-input border-border"
-                    disabled={loading || googleLoading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                   />
                 </div>
                 {errors.email && (
@@ -411,7 +461,7 @@ export default function Auth() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 pr-10 bg-input border-border"
-                    disabled={loading || googleLoading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                   />
                   <button
                     type="button"
@@ -444,7 +494,7 @@ export default function Auth() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     className="pl-10 bg-input border-border"
-                    disabled={loading || googleLoading || isClearingSession}
+                    disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                   />
                 </div>
                 {errors.confirmPassword && (
@@ -459,18 +509,18 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode('forgot')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                  disabled={loading || googleLoading || isClearingSession}
+                  disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}
                 >
                   Forgot password?
                 </button>
               </div>
             )}
 
-            <Button type="submit" className="w-full" variant="neon" disabled={loading || googleLoading || isClearingSession}>
-              {loading || isClearingSession ? (
+            <Button type="submit" className="w-full" variant="neon" disabled={loading || googleLoading || isClearingSession || isCheckingAdminSession}>
+              {loading || isClearingSession || isCheckingAdminSession ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {isClearingSession ? "Signing out..." : getButtonText()}
+                  {isCheckingAdminSession ? "Checking access..." : isClearingSession ? "Signing out..." : getButtonText()}
                 </>
               ) : (
                 <>
@@ -488,7 +538,7 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode('login')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    disabled={loading || isClearingSession}
+                    disabled={loading || isClearingSession || isCheckingAdminSession}
                 >
                   Back to login
                 </button>
@@ -497,7 +547,7 @@ export default function Auth() {
                   type="button"
                   onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
                   className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                   disabled={loading || isClearingSession}
+                   disabled={loading || isClearingSession || isCheckingAdminSession}
                 >
                   {mode === 'login' 
                     ? "Don't have an account? Sign up" 
