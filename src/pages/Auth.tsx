@@ -30,8 +30,6 @@ const clearStoredAuthSession = () => {
   clearMatchingKeys(window.sessionStorage);
 };
 
-const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
-
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(() => {
     // Check URL immediately during initialization
@@ -59,45 +57,8 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const verifyAdminAccess = async (userId: string) => {
-    const { data, error } = await supabase
-      .rpc('has_role', { _user_id: userId, _role: 'admin' });
-
-    if (!error) return Boolean(data);
-
-    const { data: ownRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .eq('role', 'admin')
-      .maybeSingle();
-
-    return ownRole?.role === 'admin';
-  };
-
-  const goToAdminIfAllowed = async (userId: string, signedInEmail?: string) => {
-    let allowed = await verifyAdminAccess(userId);
-
-    if (!allowed) {
-      await supabase.auth.refreshSession();
-      await wait(300);
-      const { data: { session } } = await supabase.auth.getSession();
-      allowed = await verifyAdminAccess(session?.user?.id ?? userId);
-    }
-
-    if (!allowed) {
-      toast({
-        title: "Access denied",
-        description: signedInEmail
-          ? `${signedInEmail} is signed in, but this app has not assigned it admin access. giorgiomauro63@gmail.com is now allowlisted as an app admin.`
-          : "This signed-in account does not have admin access. giorgiomauro63@gmail.com is now allowlisted as an app admin.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
+  const goToAdmin = () => {
     navigate("/admin");
-    return true;
   };
 
   useEffect(() => {
