@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 import { StickyBanner } from "@/components/StickyBanner";
@@ -50,28 +50,35 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const [rechecking, setRechecking] = useState(false);
   const [autoRecheckDone, setAutoRecheckDone] = useState(false);
   const [recheckMsg, setRecheckMsg] = useState<string | null>(null);
+  const routeMountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      routeMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setAutoRecheckDone(false);
+    setRecheckMsg(null);
+  }, [user?.id]);
 
   useEffect(() => {
     if (loading || !user || isAdmin || autoRecheckDone || rechecking) return;
 
-    let active = true;
     setRechecking(true);
     setRecheckMsg(null);
 
     recheckAccess().then((res) => {
-      if (!active) return;
+      if (!routeMountedRef.current) return;
       if (!res.isAdmin) {
         setRecheckMsg(res.error ?? "Still no admin role on this account.");
       }
     }).finally(() => {
-      if (!active) return;
+      if (!routeMountedRef.current) return;
       setAutoRecheckDone(true);
       setRechecking(false);
     });
-
-    return () => {
-      active = false;
-    };
   }, [autoRecheckDone, isAdmin, loading, recheckAccess, rechecking, user]);
 
   if (loading || rechecking || (user && !isAdmin && !autoRecheckDone)) {
