@@ -157,6 +157,17 @@ export const Navigation = () => {
             <div className="px-2 py-3">
               <LanguageSelector />
             </div>
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                className="flex items-center gap-2 text-primary hover:bg-primary/10 transition-colors font-semibold py-3 px-2 rounded-md min-h-[44px] border border-primary/40"
+                activeClassName="bg-primary/20 text-glow-primary"
+                onClick={() => setIsOpen(false)}
+              >
+                <Shield className="w-4 h-4" />
+                Admin
+              </NavLink>
+            )}
             {walletAddress ? (
               <div className="space-y-2">
                 <Button variant="outline" size="sm" className="w-full font-mono text-xs justify-between">
