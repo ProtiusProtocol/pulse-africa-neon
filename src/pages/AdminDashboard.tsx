@@ -89,7 +89,7 @@ export default function AdminDashboard() {
   const [signupsLoading, setSignupsLoading] = useState(false);
   const [subscribers, setSubscribers] = useState<EmailSubscriber[]>([]);
   const [subscribersLoading, setSubscribersLoading] = useState(false);
-  const [showManualDeploy, setShowManualDeploy] = useState(false);
+  const [adminTab, setAdminTab] = useState("overview");
   
   // Edit market state
   const [editingMarket, setEditingMarket] = useState<Market | null>(null);
@@ -750,6 +750,19 @@ const handleCreateMarket = async () => {
           </div>
         </div>
 
+        <Tabs value={adminTab} onValueChange={setAdminTab} className="space-y-8">
+          <TabsList className="grid w-full grid-cols-2 bg-card border border-border h-auto p-1">
+            <TabsTrigger value="overview" className="min-h-11 gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Dashboard Overview
+            </TabsTrigger>
+            <TabsTrigger value="manual-deployment" className="min-h-11 gap-2">
+              <Rocket className="w-4 h-4" />
+              Manual Market Deployment
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-8 mt-0">
         {/* Pool & Fees Summary */}
         <section>
           <div className="flex items-center gap-2 mb-4">
@@ -872,10 +885,12 @@ const handleCreateMarket = async () => {
             });
             toast({ 
               title: "Suggestion Loaded", 
-              description: "Fill in the Algorand App ID from Lora to complete registration" 
+              description: "Open Manual Market Deployment to complete Lora registration" 
             });
-            // Scroll to the register form
-            document.getElementById('register-market-section')?.scrollIntoView({ behavior: 'smooth' });
+            setAdminTab("manual-deployment");
+            window.setTimeout(() => {
+              document.getElementById('register-market-section')?.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
           }}
         />
 
@@ -885,46 +900,27 @@ const handleCreateMarket = async () => {
           onDeploySuccess={fetchMarkets}
         />
 
-        {/* Manual Market Deployment — collapsed by default to keep dashboard clean */}
-        <section>
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              <Plus className="w-5 h-5 text-muted-foreground" />
-              <h2 className="text-xl font-semibold text-muted-foreground">Manual Market Deployment</h2>
-              <Badge variant="outline" className="text-xs ml-1">Advanced</Badge>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowManualDeploy((v) => !v)}
-            >
-              {showManualDeploy ? "Hide" : "Show"} manual tools
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1 mb-4">
-            Use the Pending Deployments queue above for normal workflow. These tools are for legacy Lora-based registration and bulk migrations.
-          </p>
-        </section>
+        </TabsContent>
 
-        {showManualDeploy && (
-        <section>
-          <Tabs defaultValue="register" className="w-full">
-            <div className="flex items-center gap-2 mb-4">
-              <Plus className="w-5 h-5 text-muted-foreground" />
-              <h2 className="text-xl font-semibold">Manual Market Deployment</h2>
-              <Badge variant="outline" className="text-xs ml-2">Advanced</Badge>
-            </div>
-            <div className="flex items-center gap-2 mb-4">
-              <Plus className="w-5 h-5 text-muted-foreground" />
-              <h2 className="text-xl font-semibold">Manual Market Deployment</h2>
-              <Badge variant="outline" className="text-xs ml-2">Advanced</Badge>
-            </div>
-            <TabsList className="mb-4">
-              <TabsTrigger value="register">Register from Lora</TabsTrigger>
-              <TabsTrigger value="migrate">Bulk App ID Migration</TabsTrigger>
-            </TabsList>
+          <TabsContent value="manual-deployment" className="space-y-6 mt-0">
+            <section>
+              <div className="flex items-center gap-2 mb-2">
+                <Rocket className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold">Manual Market Deployment</h2>
+                <Badge variant="outline" className="text-xs ml-2">Advanced</Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Legacy Lora-based registration and bulk App ID migration tools.
+              </p>
+            </section>
 
-            <TabsContent value="register">
+            <Tabs defaultValue="register" className="w-full">
+              <TabsList className="mb-4 bg-card border border-border">
+                <TabsTrigger value="register">Register from Lora</TabsTrigger>
+                <TabsTrigger value="migrate">Bulk App ID Migration</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="register">
         <section id="register-market-section">
           <div className="flex items-center gap-2 mb-4">
             <Plus className="w-5 h-5 text-primary" />
@@ -1139,10 +1135,10 @@ const handleCreateMarket = async () => {
                   onMigrationComplete={fetchMarkets}
                 />
               </section>
-            </TabsContent>
-          </Tabs>
-        </section>
-        )}
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+        </Tabs>
 
         {/* Market Management - Expandable List & Universe */}
         <section>
