@@ -30,6 +30,8 @@ const clearStoredAuthSession = () => {
   clearMatchingKeys(window.sessionStorage);
 };
 
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(() => {
     // Check URL immediately during initialization
@@ -74,7 +76,14 @@ export default function Auth() {
   };
 
   const goToAdminIfAllowed = async (userId: string, signedInEmail?: string) => {
-    const allowed = await verifyAdminAccess(userId);
+    let allowed = await verifyAdminAccess(userId);
+
+    if (!allowed) {
+      await supabase.auth.refreshSession();
+      await wait(300);
+      const { data: { session } } = await supabase.auth.getSession();
+      allowed = await verifyAdminAccess(session?.user?.id ?? userId);
+    }
 
     if (!allowed) {
       toast({
