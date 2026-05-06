@@ -30,6 +30,18 @@ interface Digest {
   news_digest_md: string | null;
 }
 
+const normalizeMarketSnapshot = (value: unknown): Digest["market_snapshot"] => {
+  return Array.isArray(value)
+    ? value.map((item) => {
+        const market = item && typeof item === "object" ? item as { title?: unknown; status?: unknown } : {};
+        return {
+          title: typeof market.title === "string" ? market.title : "Untitled market",
+          status: typeof market.status === "string" ? market.status : "unknown",
+        };
+      })
+    : [];
+};
+
 interface AdminInputs {
   top_drivers: string[];
   contrarian_view: string;
@@ -78,7 +90,14 @@ export default function AdminReportWeek() {
       .eq("week_id", weekId)
       .single();
     
-    setDigest(digestData);
+    setDigest(digestData ? {
+      week_id: digestData.week_id,
+      week_start: digestData.week_start,
+      week_end: digestData.week_end,
+      market_snapshot: normalizeMarketSnapshot(digestData.market_snapshot),
+      market_moves_md: digestData.market_moves_md,
+      news_digest_md: digestData.news_digest_md,
+    } : null);
     
     // Fetch reports
     const { data: reportsData } = await supabase
