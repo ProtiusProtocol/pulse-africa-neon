@@ -693,7 +693,7 @@ const handleCreateMarket = async () => {
         </div>
 
         <Tabs value={adminTab} onValueChange={setAdminTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-2 bg-card border border-primary/40 h-auto p-1 shadow-glow-primary">
+          <TabsList className="grid w-full grid-cols-2 bg-card border border-primary/40 h-auto p-1 glow-primary motion-reduce:shadow-none">
             <TabsTrigger value="overview" className="min-h-11 gap-2">
               <Zap className="w-4 h-4" />
               Automatic Market Creation
