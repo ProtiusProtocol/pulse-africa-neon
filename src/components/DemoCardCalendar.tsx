@@ -81,19 +81,6 @@ export function DemoCardCalendar() {
 
   const claimCard = useMutation({
     mutationFn: async (dayIndex: number) => {
-      if (cards.length === 0) throw new Error("No cards available");
-
-      // Weighted random selection
-      const weightedCards: FanCard[] = [];
-      cards.forEach((card) => {
-        const weight = RARITY_WEIGHTS[card.rarity as keyof typeof RARITY_WEIGHTS] || 1;
-        for (let i = 0; i < weight; i++) {
-          weightedCards.push(card);
-        }
-      });
-
-      const selectedCard = weightedCards[Math.floor(Math.random() * weightedCards.length)];
-
       // Calculate streak based on consecutive days claimed
       const newClaimedDays = [...claimedDays, dayIndex].sort((a, b) => a - b);
       let currentStreak = 1;
@@ -104,55 +91,24 @@ export function DemoCardCalendar() {
           break;
         }
       }
-      
       const streakBonusAmount = Math.min(currentStreak * 5, 50);
-      const totalCp = selectedCard.cp_value + streakBonusAmount;
 
-      // Update leaderboard card_points
-      const { data: currentStats, error: statsError } = await supabase
-        .from("paper_leaderboard")
-        .select("id, card_points, card_streak_current, card_streak_best")
-        .eq("session_id", sessionId)
-        .eq("tenant_id", TENANT_ID)
-        .single();
-
-      if (statsError && statsError.code !== "PGRST116") throw statsError;
-
-      const newCardPoints = (currentStats?.card_points || 0) + totalCp;
-      const newStreakBest = Math.max(currentStreak, currentStats?.card_streak_best || 0);
-
-      if (currentStats) {
-        const { error: updateError } = await supabase
-          .from("paper_leaderboard")
-          .update({
-            card_points: newCardPoints,
-            card_streak_current: currentStreak,
-            card_streak_best: newStreakBest,
-            last_card_claim: new Date().toISOString(),
-          })
-          .eq("id", currentStats.id);
-
-        if (updateError) throw updateError;
-      }
-
-      // Add card to collection
-      const { error: cardError } = await supabase
-        .from("user_cards")
-        .insert({
+      const { data, error } = await supabase.functions.invoke("paper-trading-write", {
+        body: {
+          action: "demo_claim_card",
           session_id: sessionId,
-          card_id: selectedCard.id,
-          tenant_id: TENANT_ID,
-        });
+          bonus_points: streakBonusAmount,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      if (cardError) throw cardError;
-
-      // Update local state
       setDemoClaimedDays(newClaimedDays);
       setClaimedDaysState(newClaimedDays);
 
       return {
-        card: selectedCard,
-        cpEarned: totalCp,
+        card: data.card as FanCard,
+        cpEarned: data.cpEarned as number,
         streakBonus: streakBonusAmount,
         streak: currentStreak,
       };
@@ -199,33 +155,15 @@ export function DemoCardCalendar() {
   const handleReset = async () => {
     setIsResetting(true);
     try {
-      // Clear demo claimed days
       clearDemoClaimedDays();
       setClaimedDaysState([]);
 
-      // Delete all user cards for this session
-      const { error: deleteCardsError } = await supabase
-        .from("user_cards")
-        .delete()
-        .eq("session_id", sessionId)
-        .eq("tenant_id", TENANT_ID);
+      const { data, error } = await supabase.functions.invoke("paper-trading-write", {
+        body: { action: "demo_reset_cards", session_id: sessionId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      if (deleteCardsError) throw deleteCardsError;
-
-      // Reset card points in leaderboard
-      const { error: updateError } = await supabase
-        .from("paper_leaderboard")
-        .update({
-          card_points: 0,
-          card_streak_current: 0,
-          last_card_claim: null,
-        })
-        .eq("session_id", sessionId)
-        .eq("tenant_id", TENANT_ID);
-
-      if (updateError) throw updateError;
-
-      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["card-points-stats"] });
       queryClient.invalidateQueries({ queryKey: ["user-cards"] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard-entry"] });

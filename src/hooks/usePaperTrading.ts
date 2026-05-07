@@ -101,54 +101,17 @@ export function useMakePrediction() {
 
   return useMutation({
     mutationFn: async ({ marketId, side }: { marketId: string; side: "yes" | "no" }) => {
-      // First, ensure user has a leaderboard entry
-      const { data: existingEntry } = await supabase
-        .from("paper_leaderboard")
-        .select("id, total_points, predictions_made")
-        .eq("session_id", sessionId)
-        .eq("tenant_id", TENANT_ID)
-        .single();
-
-      const pointsToStake = 50;
-
-      if (!existingEntry) {
-        // Create new leaderboard entry with starting points
-        const { error: createError } = await supabase
-          .from("paper_leaderboard")
-          .insert({
-            session_id: sessionId,
-            tenant_id: TENANT_ID,
-            total_points: 1000 - pointsToStake,
-            predictions_made: 1,
-          });
-        if (createError) throw createError;
-      } else {
-        // Update existing entry
-        const { error: updateError } = await supabase
-          .from("paper_leaderboard")
-          .update({
-            total_points: existingEntry.total_points - pointsToStake,
-            predictions_made: existingEntry.predictions_made + 1,
-          })
-          .eq("id", existingEntry.id);
-        if (updateError) throw updateError;
-      }
-
-      // Insert the prediction
-      const { data, error } = await supabase
-        .from("paper_predictions")
-        .insert({
+      const { data, error } = await supabase.functions.invoke("paper-trading-write", {
+        body: {
+          action: "make_prediction",
           session_id: sessionId,
           market_id: marketId,
           side,
-          points_staked: pointsToStake,
-          tenant_id: TENANT_ID,
-        })
-        .select()
-        .single();
-
+        },
+      });
       if (error) throw error;
-      return data;
+      if (data?.error) throw new Error(data.error);
+      return data?.prediction;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["paper-predictions"] });
