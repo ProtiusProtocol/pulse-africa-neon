@@ -880,6 +880,9 @@ const handleCreateMarket = async () => {
           </CardContent>
         </Card>
 
+        {/* Admin topic suggestion → fragility signal */}
+        <AdminSignalSuggestionBox />
+
         {/* AI Market Suggestions Review */}
         <MarketSuggestionsReview 
           onCreateMarket={(suggestion) => {
