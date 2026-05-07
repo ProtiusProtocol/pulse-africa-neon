@@ -848,9 +848,30 @@ const handleCreateMarket = async () => {
 
         {/* Fragility Signals - Layer 1 */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-5 h-5 text-secondary" />
-            <h2 className="text-xl font-semibold">Fragility Signals (Layer 1)</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-secondary" />
+              <h2 className="text-xl font-semibold">Fragility Signals (Layer 1)</h2>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-primary/50 text-primary hover:bg-primary/10"
+              onClick={async () => {
+                toast({ title: "Running weekly auto-update…", description: "AI is reassessing all signals." });
+                const { data, error } = await supabase.functions.invoke("auto-update-fragility-signals", { body: {} });
+                if (error || (data as any)?.error) {
+                  toast({ title: "Auto-update failed", description: (error?.message ?? (data as any)?.error) || "Unknown", variant: "destructive" });
+                  return;
+                }
+                const d = data as any;
+                toast({ title: "Weekly auto-update done", description: `${d.updated} signals refreshed · ${d.alerts} alert(s) · ${d.marketsTriggered} market suggestion(s)` });
+                fetchSignals();
+              }}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Run weekly auto-update now
+            </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {signals.map((signal) => (
