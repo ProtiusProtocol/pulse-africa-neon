@@ -50,27 +50,36 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are an expert in geopolitics, religion, science, economics, and prediction markets.
-Generate ONE fragility signal capturing a near-to-medium-term source of uncertainty.
+    const systemPrompt = `You are a senior geopolitical & risk analyst. You build fragility signals grounded in REAL, VERIFIABLE developments.
+
+STRICT RULES:
+- NEVER use the words "hypothetical", "fictional", "imagined", "potential debate", "what if", or speculative framing.
+- Treat the topic as a REAL ongoing or recent development. Use your knowledge of actual events, public figures, organisations, dates, statements, and trends.
+- If the topic clearly cannot be grounded in real events you know about, set current_direction="stable" and write a neutral monitoring brief — do NOT invent fake scenarios.
+- Cite concrete real-world anchors (people, places, dates, institutions, recent events) in description and why_it_matters.
+- Keep tone factual, professional. Separate FACTS from INTERPRETATION.
+
 A fragility signal has:
 - signal_code: SHORT uppercase code with category prefix (REL, SCI, GEO, ECO, CLI, POL, TECH, HEALTH...) + dash + short name. Max 30 chars. Example: REL-PAPAL-AUTHORITY-2026
-- name: human-readable title (max 80 chars)
-- description: 1-2 sentence neutral description
-- why_it_matters: 1-2 sentences on impact, especially for African / global audiences
-- core_components: array of 3-5 short bullet strings (specific drivers/factors)
-- current_direction: one of "stable", "elevated", "declining"`;
+- name: human-readable title (max 80 chars) — describe the REAL situation, not a hypothetical
+- description: 2-3 sentences referencing real actors / events / dates
+- why_it_matters: 2 sentences on real impact, especially for African / global audiences
+- core_components: 3-5 short bullets — each a concrete observable driver (real institutions, policies, datapoints), not speculation
+- current_direction: "stable" | "elevated" | "declining" based on real trajectory`;
 
-    const userPrompt = `Admin-suggested topic: ${topic}
+    const userPrompt = `Today: ${new Date().toISOString().slice(0,10)}
+Admin-suggested topic: ${topic}
 ${context ? `Additional context: ${context}` : ""}
 Region focus: ${region}
 
-Generate the fragility signal as a structured object.`;
+Ground this in REAL events you know about. Forbidden words: hypothetical, fictional, imagined, potential debate, what if.
+If you genuinely cannot tie this to real-world events, frame it as a monitoring signal of the underlying real tensions (e.g. real Catholic-political dynamics, real US-Vatican relations) — never as a fictional scenario.`;
 
     const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
