@@ -53,6 +53,7 @@ import { BulkAppIdMigration } from "@/components/BulkAppIdMigration";
 import { UpcomingResolutions } from "@/components/UpcomingResolutions";
 import { MarketSuggestionsReview } from "@/components/MarketSuggestionsReview";
 import { AdminSignalSuggestionBox } from "@/components/AdminSignalSuggestionBox";
+import { EditFragilitySignalDialog } from "@/components/EditFragilitySignalDialog";
 import { DeployContractDialog } from "@/components/DeployContractDialog";
 import { PendingDeploymentsSection } from "@/components/PendingDeploymentsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
