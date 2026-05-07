@@ -168,136 +168,49 @@
    return lastClaimDate !== todayDate;
  }
  
- // Claim daily card
- export function useClaimDailyCard() {
-   const queryClient = useQueryClient();
-   const sessionId = getSessionId();
- 
-   return useMutation({
-     mutationFn: async () => {
-       // Get available cards
-       const { data: cards, error: cardsError } = await supabase
-         .from("fan_cards")
-         .select("*")
-         .eq("is_active", true);
- 
-       if (cardsError) throw cardsError;
-       if (!cards || cards.length === 0) throw new Error("No cards available");
- 
-       // Weighted random selection by rarity
-       const weightedCards: FanCard[] = [];
-       cards.forEach((card) => {
-         const weight = RARITY_WEIGHTS[card.rarity as keyof typeof RARITY_WEIGHTS] || 1;
-         for (let i = 0; i < weight; i++) {
-           weightedCards.push(card as FanCard);
-         }
-       });
- 
-       const selectedCard = weightedCards[Math.floor(Math.random() * weightedCards.length)];
- 
-       // Get current stats
-       const { data: currentStats, error: statsError } = await supabase
-         .from("paper_leaderboard")
-         .select("id, card_points, card_streak_current, card_streak_best, last_card_claim")
-         .eq("session_id", sessionId)
-         .eq("tenant_id", TENANT_ID)
-         .single();
- 
-       if (statsError && statsError.code !== "PGRST116") throw statsError;
- 
-       const now = new Date();
-       let newStreak = 1;
-       let streakBonus = 0;
- 
-       if (currentStats?.last_card_claim) {
-         const lastClaim = new Date(currentStats.last_card_claim);
-         const hoursSinceClaim = (now.getTime() - lastClaim.getTime()) / (1000 * 60 * 60);
-         
-         // If claimed within 48 hours, continue streak
-         if (hoursSinceClaim < 48) {
-           newStreak = (currentStats.card_streak_current || 0) + 1;
-           // Streak bonus: +5 CP per day of streak (max +50)
-           streakBonus = Math.min(newStreak * 5, 50);
-         }
-       }
- 
-       const cpEarned = selectedCard.cp_value + streakBonus;
-       const newCardPoints = (currentStats?.card_points || 0) + cpEarned;
-       const newStreakBest = Math.max(newStreak, currentStats?.card_streak_best || 0);
- 
-       // Update or create leaderboard entry
-       if (currentStats) {
-         const { error: updateError } = await supabase
-           .from("paper_leaderboard")
-           .update({
-             card_points: newCardPoints,
-             card_streak_current: newStreak,
-             card_streak_best: newStreakBest,
-             last_card_claim: now.toISOString(),
-           })
-           .eq("id", currentStats.id);
- 
-         if (updateError) throw updateError;
-       } else {
-         const { error: insertError } = await supabase
-           .from("paper_leaderboard")
-           .insert({
-             session_id: sessionId,
-             tenant_id: TENANT_ID,
-             card_points: cpEarned,
-             card_streak_current: 1,
-             card_streak_best: 1,
-             last_card_claim: now.toISOString(),
-           });
- 
-         if (insertError) throw insertError;
-       }
- 
-       // Add card to user collection
-       const { error: cardError } = await supabase
-         .from("user_cards")
-         .insert({
-           session_id: sessionId,
-           card_id: selectedCard.id,
-           tenant_id: TENANT_ID,
-         });
- 
-       if (cardError) throw cardError;
- 
-       return {
-         card: selectedCard,
-         cpEarned,
-         streakBonus,
-         newStreak,
-         isNewStreakBest: newStreak > (currentStats?.card_streak_best || 0),
-       };
-     },
-     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ["card-points-stats"] });
-       queryClient.invalidateQueries({ queryKey: ["user-cards"] });
-       queryClient.invalidateQueries({ queryKey: ["leaderboard-entry"] });
-     },
-   });
- }
- 
- // Mark cards as seen (not new)
- export function useMarkCardsSeen() {
-   const queryClient = useQueryClient();
-   const sessionId = getSessionId();
- 
-   return useMutation({
-     mutationFn: async () => {
-       const { error } = await supabase
-         .from("user_cards")
-         .update({ is_new: false })
-         .eq("session_id", sessionId)
-         .eq("tenant_id", TENANT_ID)
-         .eq("is_new", true);
- 
-       if (error) throw error;
-     },
-     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ["user-cards"] });
-     },
-   });
- }
+// Claim daily card
+export function useClaimDailyCard() {
+  const queryClient = useQueryClient();
+  const sessionId = getSessionId();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("paper-trading-write", {
+        body: { action: "claim_daily_card", session_id: sessionId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data as {
+        card: FanCard;
+        cpEarned: number;
+        streakBonus: number;
+        newStreak: number;
+        isNewStreakBest: boolean;
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["card-points-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["user-cards"] });
+      queryClient.invalidateQueries({ queryKey: ["leaderboard-entry"] });
+    },
+  });
+}
+
+// Mark cards as seen (not new)
+export function useMarkCardsSeen() {
+  const queryClient = useQueryClient();
+  const sessionId = getSessionId();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase.functions.invoke("paper-trading-write", {
+        body: { action: "mark_cards_seen", session_id: sessionId },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user-cards"] });
+    },
+  });
+}

@@ -30,12 +30,15 @@ export const DemoSettingsPanel = ({ currentName = "Anonymous Fan", currentPoints
 
     setIsUpdating(true);
     try {
-      const { error } = await supabase
-        .from("paper_leaderboard")
-        .update({ display_name: nickname.trim() })
-        .eq("session_id", sessionId);
-
+      const { data, error } = await supabase.functions.invoke("paper-trading-write", {
+        body: {
+          action: "update_display_name",
+          session_id: sessionId,
+          display_name: nickname.trim(),
+        },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast.success(`Nickname updated to "${nickname.trim()}"!`);
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
@@ -51,24 +54,17 @@ export const DemoSettingsPanel = ({ currentName = "Anonymous Fan", currentPoints
   const handleAddBonusPoints = async (amount: number) => {
     setIsAddingPoints(true);
     try {
-      const { data: current, error: fetchError } = await supabase
-        .from("paper_leaderboard")
-        .select("total_points")
-        .eq("session_id", sessionId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const newTotal = (current?.total_points ?? 1000) + amount;
-
-      const { error } = await supabase
-        .from("paper_leaderboard")
-        .update({ total_points: newTotal })
-        .eq("session_id", sessionId);
-
+      const { data, error } = await supabase.functions.invoke("paper-trading-write", {
+        body: {
+          action: "add_bonus_points",
+          session_id: sessionId,
+          bonus_points: amount,
+        },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      toast.success(`Added ${amount} bonus PP! Total: ${newTotal.toLocaleString()}`);
+      toast.success(`Added ${amount} bonus PP!`);
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
       queryClient.invalidateQueries({ queryKey: ["leaderboard-entry"] });
     } catch (error) {
