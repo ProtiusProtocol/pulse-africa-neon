@@ -650,7 +650,7 @@ const handleCreateMarket = async () => {
           
           <Card className="border-primary/40 bg-primary/10 glow-primary motion-reduce:shadow-none">
             <CardContent className="p-4 md:p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-4">
                 <div className="space-y-2 text-center lg:text-left">
                   <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                     <Badge variant="default" className="font-mono text-xs">Admin v2026.05.07</Badge>
@@ -661,7 +661,7 @@ const handleCreateMarket = async () => {
                     Start here: generate AI market suggestions, approve one, then deploy it from Pending Deployments.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:min-w-[520px]">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <Button
                     type="button"
                     variant="neon"
@@ -848,9 +848,30 @@ const handleCreateMarket = async () => {
 
         {/* Fragility Signals - Layer 1 */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-5 h-5 text-secondary" />
-            <h2 className="text-xl font-semibold">Fragility Signals (Layer 1)</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5 text-secondary" />
+              <h2 className="text-xl font-semibold">Fragility Signals (Layer 1)</h2>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-primary/50 text-primary hover:bg-primary/10"
+              onClick={async () => {
+                toast({ title: "Running weekly auto-update…", description: "AI is reassessing all signals." });
+                const { data, error } = await supabase.functions.invoke("auto-update-fragility-signals", { body: {} });
+                if (error || (data as any)?.error) {
+                  toast({ title: "Auto-update failed", description: (error?.message ?? (data as any)?.error) || "Unknown", variant: "destructive" });
+                  return;
+                }
+                const d = data as any;
+                toast({ title: "Weekly auto-update done", description: `${d.updated} signals refreshed · ${d.alerts} alert(s) · ${d.marketsTriggered} market suggestion(s)` });
+                fetchSignals();
+              }}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Run weekly auto-update now
+            </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {signals.map((signal) => (
