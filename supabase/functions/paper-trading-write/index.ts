@@ -239,6 +239,46 @@ Deno.serve(async (req) => {
         return json(200, { ok: true });
       }
 
+      case "demo_claim_card": {
+        // Demo-only: bypasses daily limit. Caller supplies streak bonus.
+        const streakBonus = Math.max(0, Math.min(50, Number(body.bonus_points) || 0));
+        const lb = await ensureLeaderboard();
+        const { data: cards, error: cardsErr } = await supabase
+          .from("fan_cards").select("*").eq("is_active", true);
+        if (cardsErr) throw cardsErr;
+        if (!cards || cards.length === 0) return json(500, { error: "no_cards" });
+        const weighted: any[] = [];
+        for (const c of cards) {
+          const w = RARITY_WEIGHTS[c.rarity as string] ?? 1;
+          for (let i = 0; i < w; i++) weighted.push(c);
+        }
+        const selected = weighted[Math.floor(Math.random() * weighted.length)];
+        const cpEarned = (selected.cp_value ?? 0) + streakBonus;
+        await supabase
+          .from("paper_leaderboard")
+          .update({
+            card_points: (lb.card_points ?? 0) + cpEarned,
+            card_streak_best: Math.max(lb.card_streak_best ?? 0, lb.card_streak_current ?? 0),
+            last_card_claim: new Date().toISOString(),
+          })
+          .eq("id", lb.id);
+        await supabase.from("user_cards").insert({
+          session_id: sessionId, card_id: selected.id, tenant_id: TENANT_ID,
+        });
+        return json(200, { card: selected, cpEarned, streakBonus });
+      }
+
+      case "demo_reset_cards": {
+        await supabase.from("user_cards").delete()
+          .eq("session_id", sessionId).eq("tenant_id", TENANT_ID);
+        await supabase.from("paper_leaderboard").update({
+          card_points: 0,
+          card_streak_current: 0,
+          last_card_claim: null,
+        }).eq("session_id", sessionId).eq("tenant_id", TENANT_ID);
+        return json(200, { ok: true });
+      }
+
       case "ensure_referral_code": {
         const lb = await ensureLeaderboard();
         if (lb.referral_code) {
