@@ -42,6 +42,7 @@ import {
   X,
   Save,
   Sparkles,
+  Check,
   Rocket,
   Zap
 } from "lucide-react";
@@ -644,6 +645,61 @@ const handleCreateMarket = async () => {
             </div>
           </div>
           
+          <Card className="border-primary/40 bg-primary/10 glow-primary motion-reduce:shadow-none">
+            <CardContent className="p-4 md:p-5">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge variant="default" className="font-mono text-xs">Admin v2026.05.07</Badge>
+                    <Badge variant="outline" className="border-primary/50 text-primary">Automatic Market Creation is live</Badge>
+                  </div>
+                  <h2 className="text-xl font-semibold text-primary">Create markets automatically from Layer-1 signals</h2>
+                  <p className="max-w-3xl text-sm text-muted-foreground">
+                    Start here: generate AI market suggestions, approve one, then deploy it from Pending Deployments.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:min-w-[520px]">
+                  <Button
+                    type="button"
+                    variant="neon"
+                    className="min-h-11 justify-start"
+                    onClick={() => {
+                      setAdminTab("overview");
+                      window.setTimeout(() => document.getElementById("ai-market-suggestions")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    1. Generate Suggestions
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 justify-start border-primary/50 text-primary hover:bg-primary/10"
+                    onClick={() => {
+                      setAdminTab("overview");
+                      window.setTimeout(() => document.getElementById("ai-market-suggestions")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                    }}
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    2. Approve Market
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 justify-start border-accent text-accent hover:bg-accent/10"
+                    onClick={() => {
+                      setAdminTab("overview");
+                      window.setTimeout(() => document.getElementById("pending-deployments")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                    }}
+                  >
+                    <Rocket className="w-4 h-4 mr-2" />
+                    3. Auto-Deploy
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Prominent Generate Reports Button */}
           <div className="bg-accent/20 border-2 border-accent rounded-lg p-4">
             <div className="flex items-center justify-between">

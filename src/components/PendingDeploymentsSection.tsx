@@ -51,7 +51,7 @@ export function PendingDeploymentsSection({
   };
 
   return (
-    <section>
+    <section id="pending-deployments" className="scroll-mt-24">
       <div className="flex items-center gap-2 mb-4">
         <Rocket className="w-5 h-5 text-primary" />
         <h2 className="text-xl font-semibold">Pending Deployments</h2>
