@@ -82,6 +82,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
+  const [editingSignal, setEditingSignal] = useState<FragilitySignal | null>(null);
   const [tradeCounts, setTradeCounts] = useState<TradeCounts>({});
   const [realTradeCounts, setRealTradeCounts] = useState<RealTradeCounts>({}); // Excludes SEED_DATA
   const [allTrades, setAllTrades] = useState<TradeRecord[]>([]); // All trades for universe viz
