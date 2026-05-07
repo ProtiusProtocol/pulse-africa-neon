@@ -42,6 +42,7 @@ import {
   X,
   Save,
   Sparkles,
+  Check,
   Rocket,
   Zap
 } from "lucide-react";
