@@ -53,6 +53,7 @@ import { BulkAppIdMigration } from "@/components/BulkAppIdMigration";
 import { UpcomingResolutions } from "@/components/UpcomingResolutions";
 import { MarketSuggestionsReview } from "@/components/MarketSuggestionsReview";
 import { AdminSignalSuggestionBox } from "@/components/AdminSignalSuggestionBox";
+import { EditFragilitySignalDialog } from "@/components/EditFragilitySignalDialog";
 import { DeployContractDialog } from "@/components/DeployContractDialog";
 import { PendingDeploymentsSection } from "@/components/PendingDeploymentsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -81,6 +82,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [markets, setMarkets] = useState<Market[]>([]);
   const [signals, setSignals] = useState<FragilitySignal[]>([]);
+  const [editingSignal, setEditingSignal] = useState<FragilitySignal | null>(null);
   const [tradeCounts, setTradeCounts] = useState<TradeCounts>({});
   const [realTradeCounts, setRealTradeCounts] = useState<RealTradeCounts>({}); // Excludes SEED_DATA
   const [allTrades, setAllTrades] = useState<TradeRecord[]>([]); // All trades for universe viz
@@ -852,19 +854,39 @@ const handleCreateMarket = async () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {signals.map((signal) => (
-              <Card key={signal.id} className="border-border bg-card hover:border-primary/50 transition-colors">
+              <Card
+                key={signal.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setEditingSignal(signal)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setEditingSignal(signal); }}
+                className="border-border bg-card hover:border-primary/50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-2">
                     <Badge variant="outline" className="text-xs">{signal.signal_code}</Badge>
-                    {getDirectionIcon(signal.current_direction)}
+                    <div className="flex items-center gap-2">
+                      {getDirectionIcon(signal.current_direction)}
+                      <Pencil className="w-3 h-3 text-muted-foreground" />
+                    </div>
                   </div>
                   <h3 className="font-medium text-sm mb-1">{signal.name}</h3>
                   <p className="text-xs text-muted-foreground line-clamp-2">{signal.description}</p>
+                  {signal.weekly_update_md && (
+                    <p className="text-[10px] text-primary/80 mt-2 line-clamp-1">📝 weekly note set</p>
+                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
+
+        <EditFragilitySignalDialog
+          signal={editingSignal}
+          open={!!editingSignal}
+          onOpenChange={(o) => { if (!o) setEditingSignal(null); }}
+          onSaved={fetchSignals}
+        />
 
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
