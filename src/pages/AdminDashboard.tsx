@@ -648,13 +648,13 @@ const handleCreateMarket = async () => {
           <Card className="border-primary/40 bg-primary/10 glow-primary motion-reduce:shadow-none">
             <CardContent className="p-4 md:p-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
+                <div className="space-y-2 text-center lg:text-left">
+                  <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                     <Badge variant="default" className="font-mono text-xs">Admin v2026.05.07</Badge>
                     <Badge variant="outline" className="border-primary/50 text-primary">Automatic Market Creation is live</Badge>
                   </div>
                   <h2 className="text-xl font-semibold text-primary">Create markets automatically from Layer-1 signals</h2>
-                  <p className="max-w-3xl text-sm text-muted-foreground">
+                  <p className="max-w-3xl mx-auto lg:mx-0 text-sm text-muted-foreground">
                     Start here: generate AI market suggestions, approve one, then deploy it from Pending Deployments.
                   </p>
                 </div>
