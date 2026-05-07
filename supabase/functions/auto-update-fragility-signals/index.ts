@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const ALERT_EMAIL = "giorgiomauro63@gmail.com";
+const ALERT_EMAILS = ["giorgiomauro63@gmail.com", "petroscali@yahoo.co.uk"];
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -188,7 +188,7 @@ ${alerts.map((a) => `
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "Augurion Pulse <alerts@augurionpulse.com>",
-          to: [ALERT_EMAIL],
+          to: ALERT_EMAILS,
           subject: `[Augurion] ${alerts.length} fragility signal alert(s) this week`,
           html,
         }),
