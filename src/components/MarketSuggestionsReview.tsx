@@ -193,7 +193,7 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
   }
 
   return (
-    <section>
+    <section id="ai-market-suggestions" className="scroll-mt-24">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-accent" />
