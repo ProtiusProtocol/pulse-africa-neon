@@ -188,7 +188,7 @@ ${alerts.map((a) => `
         headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           from: "Augurion Pulse <alerts@augurionpulse.com>",
-          to: [ALERT_EMAIL],
+          to: ALERT_EMAILS,
           subject: `[Augurion] ${alerts.length} fragility signal alert(s) this week`,
           html,
         }),
