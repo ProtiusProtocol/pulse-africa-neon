@@ -650,7 +650,7 @@ const handleCreateMarket = async () => {
           
           <Card className="border-primary/40 bg-primary/10 glow-primary motion-reduce:shadow-none">
             <CardContent className="p-4 md:p-5">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-col gap-4">
                 <div className="space-y-2 text-center lg:text-left">
                   <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
                     <Badge variant="default" className="font-mono text-xs">Admin v2026.05.07</Badge>
@@ -661,7 +661,7 @@ const handleCreateMarket = async () => {
                     Start here: generate AI market suggestions, approve one, then deploy it from Pending Deployments.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:min-w-[520px]">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <Button
                     type="button"
                     variant="neon"
