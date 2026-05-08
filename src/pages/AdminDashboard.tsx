@@ -58,6 +58,7 @@ import { DeployContractDialog } from "@/components/DeployContractDialog";
 import { PendingDeploymentsSection } from "@/components/PendingDeploymentsSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketStatsSummary } from "@/components/admin/MarketStatsSummary";
+import { DeployerWalletInfo } from "@/components/admin/DeployerWalletInfo";
 import { MarketListSection } from "@/components/admin/MarketListSection";
 import { InfoHint } from "@/components/admin/InfoHint";
 import type { Tables } from "@/integrations/supabase/types";
@@ -836,6 +837,9 @@ const handleCreateMarket = async () => {
             <InfoHint text={"Counts every market currently in the database, broken down by time horizon, status, category and region.\n\nThe Time Horizon row should sum back to the Total Markets number."} />
           </div>
           <MarketStatsSummary markets={markets} />
+          <div className="mt-4">
+            <DeployerWalletInfo />
+          </div>
         </section>
 
         {/* Wallet Warning */}
