@@ -59,6 +59,7 @@ import { PendingDeploymentsSection } from "@/components/PendingDeploymentsSectio
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketStatsSummary } from "@/components/admin/MarketStatsSummary";
 import { MarketListSection } from "@/components/admin/MarketListSection";
+import { InfoHint } from "@/components/admin/InfoHint";
 import type { Tables } from "@/integrations/supabase/types";
 
 type EarlyAccessSignup = Tables<'early_access_signups'>;
