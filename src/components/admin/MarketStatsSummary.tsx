@@ -34,7 +34,24 @@ export function MarketStatsSummary({ markets }: MarketStatsSummaryProps) {
 
   const sortedCategories = Object.entries(categoryStats).sort((a, b) => b[1] - a[1]);
   const sortedStatuses = Object.entries(statusStats).sort((a, b) => b[1] - a[1]);
-  const sortedRegions = Object.entries(regionStats).sort((a, b) => b[1] - a[1]);
+  // Time-bucket stats (only markets with a deadline)
+  const now = new Date();
+  const timeStats: Record<string, number> = {
+    "This week": 0, "This month": 0, "Next month": 0, "Next 3 months": 0, "Rest of year": 0, "Past deadline": 0, "No deadline": 0,
+  };
+  for (const m of markets) {
+    if (!m.deadline) { timeStats["No deadline"]++; continue; }
+    const ms = new Date(m.deadline).getTime() - now.getTime();
+    if (ms <= 0) { timeStats["Past deadline"]++; continue; }
+    const days = ms / (1000 * 60 * 60 * 24);
+    if (days <= 7) timeStats["This week"]++;
+    else if (days <= 30) timeStats["This month"]++;
+    else if (days <= 60) timeStats["Next month"]++;
+    else if (days <= 90) timeStats["Next 3 months"]++;
+    else timeStats["Rest of year"]++;
+  }
+  const timeBuckets = Object.entries(timeStats);
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
