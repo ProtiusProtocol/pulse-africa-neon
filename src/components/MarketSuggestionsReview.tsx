@@ -198,6 +198,7 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
         <div className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-accent" />
           <h2 className="text-xl font-semibold">AI Market Suggestions</h2>
+          <InfoHint text={"Markets the AI has drafted from elevated fragility signals.\n\nFlow: AI proposes → you approve or reject → approved suggestions land in 'Pending Deployments' below, ready to deploy on-chain."} />
           {pendingSuggestions.length > 0 && (
             <Badge variant="destructive" className="ml-2">
               {pendingSuggestions.length} pending review
