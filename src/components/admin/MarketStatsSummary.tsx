@@ -87,6 +87,25 @@ export function MarketStatsSummary({ markets }: MarketStatsSummaryProps) {
         </CardContent>
       </Card>
 
+      {/* By Time Horizon */}
+      <Card className="border-border bg-card">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="w-4 h-4 text-warning" />
+            <h3 className="font-medium text-sm">By Time Horizon</h3>
+            <InfoHint text={"Buckets every market by how soon it expires:\n\n• This week ≤7d\n• This month 8–30d\n• Next month 31–60d\n• Next 3 months 61–90d\n• Rest of year >90d\n• Past deadline (overdue or resolved)\n• No deadline set"} />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            {timeBuckets.map(([label, count]) => (
+              <div key={label} className="rounded-md border border-border bg-muted/30 px-2 py-2 text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{label}</p>
+                <p className="text-lg font-bold">{count}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* By Category */}
         <Card className="border-border bg-card">
