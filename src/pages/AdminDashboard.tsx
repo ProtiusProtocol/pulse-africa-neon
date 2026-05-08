@@ -836,6 +836,9 @@ const handleCreateMarket = async () => {
             <InfoHint text={"Counts every market currently in the database, broken down by time horizon, status, category and region.\n\nThe Time Horizon row should sum back to the Total Markets number."} />
           </div>
           <MarketStatsSummary markets={markets} />
+          <div className="mt-4">
+            <DeployerWalletInfo />
+          </div>
         </section>
 
         {/* Wallet Warning */}
