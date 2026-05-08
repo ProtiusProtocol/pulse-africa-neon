@@ -34,7 +34,7 @@ export function MarketStatsSummary({ markets }: MarketStatsSummaryProps) {
 
   const sortedCategories = Object.entries(categoryStats).sort((a, b) => b[1] - a[1]);
   const sortedStatuses = Object.entries(statusStats).sort((a, b) => b[1] - a[1]);
-  // Time-bucket stats (only markets with a deadline)
+  const sortedRegions = Object.entries(regionStats).sort((a, b) => b[1] - a[1]);
   const now = new Date();
   const timeStats: Record<string, number> = {
     "This week": 0, "This month": 0, "Next month": 0, "Next 3 months": 0, "Rest of year": 0, "Past deadline": 0, "No deadline": 0,
