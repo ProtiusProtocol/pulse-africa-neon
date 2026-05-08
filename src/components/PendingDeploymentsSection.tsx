@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Rocket, Loader2, Clock, AlertTriangle } from "lucide-react";
+import { InfoHint } from "@/components/admin/InfoHint";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
@@ -55,6 +56,7 @@ export function PendingDeploymentsSection({
       <div className="flex items-center gap-2 mb-4">
         <Rocket className="w-5 h-5 text-primary" />
         <h2 className="text-xl font-semibold">Pending Deployments</h2>
+        <InfoHint text={"Markets whose database row exists but no Algorand contract has been deployed yet (app_id = PENDING).\n\nMarkets land here in two ways:\n1. You approve an AI Market Suggestion (most common)\n2. You manually create a market without deploying the contract\n\nClick 'Auto-Deploy' to create the TestNet contract — takes ~30s and uses ~0.6 ALGO from the deployer wallet. Status flips to 'active' on success."} />
         {pending.length > 0 && (
           <Badge variant="destructive" className="ml-2">
             {pending.length} ready to deploy

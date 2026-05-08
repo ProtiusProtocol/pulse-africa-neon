@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BarChart3, Activity, Globe, CheckCircle } from "lucide-react";
+import { BarChart3, Activity, Globe, CheckCircle, Clock } from "lucide-react";
+import { InfoHint } from "@/components/admin/InfoHint";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Market = Tables<'markets'>;
@@ -34,6 +35,23 @@ export function MarketStatsSummary({ markets }: MarketStatsSummaryProps) {
   const sortedCategories = Object.entries(categoryStats).sort((a, b) => b[1] - a[1]);
   const sortedStatuses = Object.entries(statusStats).sort((a, b) => b[1] - a[1]);
   const sortedRegions = Object.entries(regionStats).sort((a, b) => b[1] - a[1]);
+  const now = new Date();
+  const timeStats: Record<string, number> = {
+    "This week": 0, "This month": 0, "Next month": 0, "Next 3 months": 0, "Rest of year": 0, "Past deadline": 0, "No deadline": 0,
+  };
+  for (const m of markets) {
+    if (!m.deadline) { timeStats["No deadline"]++; continue; }
+    const ms = new Date(m.deadline).getTime() - now.getTime();
+    if (ms <= 0) { timeStats["Past deadline"]++; continue; }
+    const days = ms / (1000 * 60 * 60 * 24);
+    if (days <= 7) timeStats["This week"]++;
+    else if (days <= 30) timeStats["This month"]++;
+    else if (days <= 60) timeStats["Next month"]++;
+    else if (days <= 90) timeStats["Next 3 months"]++;
+    else timeStats["Rest of year"]++;
+  }
+  const timeBuckets = Object.entries(timeStats);
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -61,10 +79,29 @@ export function MarketStatsSummary({ markets }: MarketStatsSummaryProps) {
             <div className="flex items-center gap-3">
               <BarChart3 className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Markets</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">Total Markets <InfoHint text={"Every market in the database, regardless of status or deadline.\n\nUse the breakdowns below to see where they live by time horizon, status, category and region."} /></p>
                 <p className="text-3xl font-bold text-primary">{markets.length}</p>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* By Time Horizon */}
+      <Card className="border-border bg-card">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="w-4 h-4 text-warning" />
+            <h3 className="font-medium text-sm">By Time Horizon</h3>
+            <InfoHint text={"Buckets every market by how soon it expires:\n\n• This week ≤7d\n• This month 8–30d\n• Next month 31–60d\n• Next 3 months 61–90d\n• Rest of year >90d\n• Past deadline (overdue or resolved)\n• No deadline set"} />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+            {timeBuckets.map(([label, count]) => (
+              <div key={label} className="rounded-md border border-border bg-muted/30 px-2 py-2 text-center">
+                <p className="text-[10px] uppercase tracking-wide text-muted-foreground truncate">{label}</p>
+                <p className="text-lg font-bold">{count}</p>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
