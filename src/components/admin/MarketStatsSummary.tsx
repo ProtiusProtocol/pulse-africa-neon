@@ -79,7 +79,7 @@ export function MarketStatsSummary({ markets }: MarketStatsSummaryProps) {
             <div className="flex items-center gap-3">
               <BarChart3 className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-sm text-muted-foreground">Total Markets</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1">Total Markets <InfoHint text={"Every market in the database, regardless of status or deadline.\n\nUse the breakdowns below to see where they live by time horizon, status, category and region."} /></p>
                 <p className="text-3xl font-bold text-primary">{markets.length}</p>
               </div>
             </div>
