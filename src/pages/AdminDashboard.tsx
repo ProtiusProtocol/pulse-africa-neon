@@ -833,6 +833,7 @@ const handleCreateMarket = async () => {
           <div className="flex items-center gap-2 mb-4">
             <BarChart3 className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-semibold">Market Overview</h2>
+            <InfoHint text={"Counts every market currently in the database, broken down by time horizon, status, category and region.\n\nThe Time Horizon row should sum back to the Total Markets number."} />
           </div>
           <MarketStatsSummary markets={markets} />
         </section>
