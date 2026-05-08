@@ -854,6 +854,7 @@ const handleCreateMarket = async () => {
             <div className="flex items-center gap-2">
               <Activity className="w-5 h-5 text-secondary" />
               <h2 className="text-xl font-semibold">Fragility Signals (Layer 1)</h2>
+              <InfoHint text={"The Layer-1 analysis layer that informs Layer-2 markets.\n\nIcons on each card:\n• ↑ red arrow + pulsing ⚠ = Elevated (worsening)\n• − grey hyphen = Stable (no movement this week)\n• ↓ green arrow = Improving\n• ✏ pencil = click anywhere on the card to edit\n• 📝 = a weekly note has been added\n\nUse 'Run weekly auto-update now' to ask the AI to refresh all directions."} />
             </div>
             <Button
               variant="outline"
