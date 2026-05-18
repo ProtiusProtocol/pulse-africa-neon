@@ -46,11 +46,11 @@ export function UpcomingResolutions({ markets }: UpcomingResolutionsProps) {
     };
     let noDeadline = 0;
     for (const m of markets) {
+      // exclude resolved/cancelled markets entirely — they're not "upcoming"
+      if (m.status === "resolved" || m.status === "cancelled") continue;
       if (!m.deadline) { noDeadline++; continue; }
       const deadline = new Date(m.deadline);
       const key = bucketOf(deadline, now);
-      // exclude already-resolved/cancelled markets from non-past buckets
-      if (key !== "past" && (m.status === "resolved" || m.status === "cancelled")) continue;
       const hoursLeft = Math.max(0, Math.floor((deadline.getTime() - now.getTime()) / (1000 * 60 * 60)));
       const daysOverdue = key === "past" ? Math.floor((now.getTime() - deadline.getTime()) / (1000 * 60 * 60 * 24)) : 0;
       grouped[key].push({ ...m, hoursLeft, daysOverdue });
