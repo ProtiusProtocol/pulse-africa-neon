@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (market.app_id && market.app_id !== "PENDING" && !isNaN(Number(market.app_id))) {
+    if (market.app_id && !market.app_id.startsWith("PENDING") && !isNaN(Number(market.app_id))) {
       return new Response(
         JSON.stringify({ error: `Market already deployed with app_id ${market.app_id}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },

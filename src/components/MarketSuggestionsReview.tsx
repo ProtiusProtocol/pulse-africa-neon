@@ -91,12 +91,14 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
     
     const suggestion = suggestions.find(s => s.id === id);
     
-    // If approving, create a market record with PENDING app_id
+    // If approving, create a market record with a unique PENDING-<token> app_id
+    // (app_id has a UNIQUE constraint, so plain "PENDING" collides across approvals)
     if (status === 'approved' && suggestion) {
+      const pendingAppId = `PENDING-${(crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)).slice(0, 8)}`;
       const { data: newMarket, error: marketError } = await supabase
         .from('markets')
         .insert({
-          app_id: 'PENDING',
+          app_id: pendingAppId,
           title: suggestion.suggested_title,
           outcome_ref: suggestion.suggested_outcome_ref,
           category: suggestion.suggested_category,
@@ -110,7 +112,12 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
         .single();
 
       if (marketError) {
-        toast({ title: "Error", description: "Failed to create market record", variant: "destructive" });
+        console.error('Market insert error:', marketError);
+        toast({
+          title: "Error",
+          description: `Failed to create market record: ${marketError.message}`,
+          variant: "destructive"
+        });
         setActionLoading(null);
         return;
       }

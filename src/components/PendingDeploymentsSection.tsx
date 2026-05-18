@@ -22,7 +22,7 @@ export function PendingDeploymentsSection({
   const [deployingId, setDeployingId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const pending = markets.filter((m) => m.app_id === "PENDING");
+  const pending = markets.filter((m) => m.app_id?.startsWith("PENDING"));
 
   const handleAutoDeploy = async (market: Market) => {
     setDeployingId(market.id);
