@@ -2,7 +2,17 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Rocket, Loader2, Clock, AlertTriangle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Rocket, Loader2, Clock, AlertTriangle, Pencil, Save } from "lucide-react";
 import { InfoHint } from "@/components/admin/InfoHint";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,14 +25,66 @@ interface PendingDeploymentsSectionProps {
   onDeploySuccess: () => void;
 }
 
+// Convert ISO timestamp to value suitable for <input type="datetime-local">
+const toLocalInputValue = (iso: string | null) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 export function PendingDeploymentsSection({
   markets,
   onDeploySuccess,
 }: PendingDeploymentsSectionProps) {
   const [deployingId, setDeployingId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Market | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    deadline: "",
+    outcome_ref: "",
+    resolution_criteria: "",
+  });
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const pending = markets.filter((m) => m.app_id?.startsWith("PENDING"));
+
+  const openEdit = (m: Market) => {
+    setEditing(m);
+    setEditForm({
+      title: m.title ?? "",
+      deadline: toLocalInputValue(m.deadline),
+      outcome_ref: m.outcome_ref ?? "",
+      resolution_criteria: m.resolution_criteria ?? "",
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setIsSaving(true);
+    const { error } = await supabase
+      .from("markets")
+      .update({
+        title: editForm.title,
+        deadline: editForm.deadline ? new Date(editForm.deadline).toISOString() : null,
+        outcome_ref: editForm.outcome_ref,
+        resolution_criteria: editForm.resolution_criteria || null,
+      })
+      .eq("id", editing.id);
+    setIsSaving(false);
+    if (error) {
+      toast({
+        title: "Save failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+    toast({ title: "Market updated", description: "Ready to deploy." });
+    setEditing(null);
+    onDeploySuccess(); // refetch
+  };
 
   const handleAutoDeploy = async (market: Market) => {
     setDeployingId(market.id);
@@ -56,7 +118,7 @@ export function PendingDeploymentsSection({
       <div className="flex items-center gap-2 mb-4">
         <Rocket className="w-5 h-5 text-primary" />
         <h2 className="text-xl font-semibold">Pending Deployments</h2>
-        <InfoHint text={"Markets whose database row exists but no Algorand contract has been deployed yet (app_id = PENDING).\n\nMarkets land here in two ways:\n1. You approve an AI Market Suggestion (most common)\n2. You manually create a market without deploying the contract\n\nClick 'Auto-Deploy' to create the TestNet contract — takes ~30s and uses ~0.6 ALGO from the deployer wallet. Status flips to 'active' on success."} />
+        <InfoHint text={"Markets whose database row exists but no Algorand contract has been deployed yet (app_id = PENDING).\n\nClick 'Edit' to fix the title, deadline, outcome ID, or resolution criteria BEFORE deploying. Once deployed on-chain, the deadline is locked into the contract.\n\nClick 'Auto-Deploy' to create the TestNet contract — takes ~30s and uses ~0.6 ALGO from the deployer wallet."} />
         {pending.length > 0 && (
           <Badge variant="destructive" className="ml-2">
             {pending.length} ready to deploy
@@ -80,8 +142,8 @@ export function PendingDeploymentsSection({
             <CardContent className="p-3 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-secondary mt-0.5 flex-shrink-0" />
               <p className="text-xs text-muted-foreground">
+                Edit any market BEFORE deploying — the deadline is written into the on-chain contract and can't be changed afterward.
                 Each deployment uses ~0.6 ALGO from the deployer wallet (TestNet) and takes ~30 seconds.
-                Status will change to <strong>active</strong> once complete.
               </p>
             </CardContent>
           </Card>
@@ -107,30 +169,100 @@ export function PendingDeploymentsSection({
                       </p>
                     )}
                   </div>
-                  <Button
-                    onClick={() => handleAutoDeploy(market)}
-                    disabled={deployingId !== null}
-                    variant="neon"
-                    className="flex-shrink-0"
-                  >
-                    {deployingId === market.id ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Deploying…
-                      </>
-                    ) : (
-                      <>
-                        <Rocket className="w-4 h-4 mr-2" />
-                        Auto-Deploy
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Button
+                      onClick={() => openEdit(market)}
+                      disabled={deployingId !== null}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                    <Button
+                      onClick={() => handleAutoDeploy(market)}
+                      disabled={deployingId !== null}
+                      variant="neon"
+                    >
+                      {deployingId === market.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Deploying…
+                        </>
+                      ) : (
+                        <>
+                          <Rocket className="w-4 h-4 mr-2" />
+                          Auto-Deploy
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Pending Market</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-title">Title</Label>
+              <Textarea
+                id="edit-title"
+                value={editForm.title}
+                onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                rows={2}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-deadline">Deadline</Label>
+              <Input
+                id="edit-deadline"
+                type="datetime-local"
+                value={editForm.deadline}
+                onChange={(e) => setEditForm((f) => ({ ...f, deadline: e.target.value }))}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                This deadline will be written into the Algorand contract on deploy.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="edit-outcome-ref">Outcome Ref (ID)</Label>
+              <Input
+                id="edit-outcome-ref"
+                value={editForm.outcome_ref}
+                onChange={(e) => setEditForm((f) => ({ ...f, outcome_ref: e.target.value }))}
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-criteria">Resolution Criteria</Label>
+              <Textarea
+                id="edit-criteria"
+                value={editForm.resolution_criteria}
+                onChange={(e) => setEditForm((f) => ({ ...f, resolution_criteria: e.target.value }))}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditing(null)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button onClick={saveEdit} disabled={isSaving} variant="neon">
+              {isSaving ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving…</>
+              ) : (
+                <><Save className="w-4 h-4 mr-2" />Save Changes</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
