@@ -116,6 +116,17 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Guard: refuse to burn an already-expired deadline into the on-chain contract.
+    if (!market.deadline || new Date(market.deadline).getTime() <= Date.now()) {
+      return new Response(
+        JSON.stringify({
+          error:
+            "Market deadline is missing or already in the past. Edit the market and set a future deadline before deploying — the on-chain expiry is immutable.",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // --- Set up Algorand client + signer ---
     const algod = new algosdk.Algodv2("", ALGOD_SERVER, "");
     const account = algosdk.mnemonicToSecretKey(mnemonic);
