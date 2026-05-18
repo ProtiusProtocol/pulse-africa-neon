@@ -226,7 +226,7 @@ export function MarketListSection({
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-              {selectedMarket.app_id === 'PENDING' && (
+              {selectedMarket.app_id?.startsWith('PENDING') && (
                 <Button 
                   onClick={() => onOpenDeployDialog(selectedMarket)}
                   disabled={!isConnected}
