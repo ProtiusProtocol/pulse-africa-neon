@@ -62,6 +62,19 @@ export function PendingDeploymentsSection({
 
   const saveEdit = async () => {
     if (!editing) return;
+    if (!editForm.deadline) {
+      toast({ title: "Deadline required", description: "Pick a deadline before saving.", variant: "destructive" });
+      return;
+    }
+    const deadlineDate = new Date(editForm.deadline);
+    if (deadlineDate.getTime() <= Date.now()) {
+      toast({
+        title: "Deadline must be in the future",
+        description: "On-chain expiry is immutable — pick a date after today.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSaving(true);
     const { error } = await supabase
       .from("markets")
