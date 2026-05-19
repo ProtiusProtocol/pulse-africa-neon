@@ -31,6 +31,7 @@ import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
 import PastMarkets from "./pages/PastMarkets";
 import NotFound from "./pages/NotFound";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import SoccerLadumaHome from "./pages/SoccerLadumaHome";
 import SoccerLadumaMarkets from "./pages/SoccerLadumaMarkets";
 import SoccerLadumaDashboard from "./pages/SoccerLadumaDashboard";
@@ -164,7 +165,9 @@ const App = () => (
           <BrowserRouter>
             <TenantProvider>
               <AuthProvider>
-                <AppRoutes />
+                <ErrorBoundary>
+                  <AppRoutes />
+                </ErrorBoundary>
               </AuthProvider>
             </TenantProvider>
           </BrowserRouter>
