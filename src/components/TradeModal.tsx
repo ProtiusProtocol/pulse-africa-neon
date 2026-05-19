@@ -114,6 +114,14 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
           toast.warning('Trade confirmed on-chain but failed to save to portfolio');
         }
 
+        // Trigger on-chain → DB sync so YES/NO totals refresh immediately.
+        // Wait ~5s for the block to be confirmed and indexed by the public node.
+        setTimeout(() => {
+          supabase.functions.invoke('market-indexer').catch((err) => {
+            console.warn('Post-trade market-indexer sync failed:', err);
+          });
+        }, 5000);
+
         toast.success(
           <div className="flex flex-col gap-1">
             <span>Trade submitted!</span>
