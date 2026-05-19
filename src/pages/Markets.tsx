@@ -83,6 +83,12 @@ const Markets = () => {
   useEffect(() => {
     fetchData();
 
+    // Fire-and-forget on-chain sync so YES/NO totals reflect latest bets.
+    // Realtime subscription below will refresh the UI once the indexer writes.
+    supabase.functions.invoke('market-indexer').catch((err) => {
+      console.warn('market-indexer sync failed:', err);
+    });
+
     // Subscribe to realtime updates for markets table
     const channel = supabase
       .channel('markets-realtime')
