@@ -99,7 +99,7 @@ const Intelligence = () => {
       },
       improving: {
         color: 'bg-primary/20 text-primary border-primary/30',
-        label: 'Improving',
+        label: 'De-escalating',
         icon: <TrendingDown className="w-3 h-3" />
       }
     };
