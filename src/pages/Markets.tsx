@@ -113,6 +113,24 @@ const Markets = () => {
     };
   }, []);
 
+  // Auto-open trade modal when ?market=ID is present in URL
+  useEffect(() => {
+    const marketId = searchParams.get('market');
+    if (!marketId || allMarkets.length === 0) return;
+    const m = allMarkets.find(x => x.id === marketId);
+    if (m) {
+      setSelectedMarket(m);
+      setIsTradeModalOpen(true);
+      // If market is past-deadline/resolved, switch to that tab so it's visible
+      if (m.status === 'resolved' || (m.deadline && new Date(m.deadline) < new Date())) {
+        setActiveTab('past-deadline');
+      }
+      // Clean URL so re-opens don't re-trigger
+      searchParams.delete('market');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, allMarkets, setSearchParams]);
+
   // Helper to check if market is past deadline
   const isMarketPastDeadline = (market: Market): boolean => {
     if (!market.deadline) return false;
