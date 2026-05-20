@@ -48,6 +48,7 @@ const Markets = () => {
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [activeTab, setActiveTab] = useState<MarketTab>("active");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const fetchData = async () => {
     const [marketsRes, signalsRes, tradesRes] = await Promise.all([
