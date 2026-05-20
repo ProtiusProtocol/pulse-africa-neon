@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity, Target, Clock, ChevronRight, Zap, Globe, Link2, ArrowRight, RefreshCw, Flame, ListChecks } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity, Target, Clock, ChevronRight, Zap, Globe, Link2, ArrowRight, RefreshCw, Flame, ListChecks, ChevronDown, Bell, Calendar, Coins } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailSubscribeForm } from "@/components/EmailSubscribeForm";
 import { AttentionAnalytics } from "@/components/AttentionAnalytics";
 import { OutcomesWatchlist } from "@/components/OutcomesWatchlist";
+import { formatDistanceToNow } from "date-fns";
 
 // Types
 interface CoreComponent {
@@ -47,6 +51,14 @@ const Intelligence = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState<string>('ALL');
   const [selectedDirection, setSelectedDirection] = useState<string>('ALL');
+  const [expandedSignals, setExpandedSignals] = useState<Record<string, boolean>>({});
+  const [analyticsView, setAnalyticsView] = useState<'drift' | 'heat'>('drift');
+  const subscribeRef = useRef<HTMLDivElement>(null);
+
+  const scrollToSubscribe = () => {
+    subscribeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   const fetchData = async () => {
     const [signalsRes, marketsRes] = await Promise.all([supabase.from("fragility_signals").select("*").order("signal_code"), supabase.from("markets").select("*").eq("status", "active").order("created_at")]);
     if (signalsRes.data) {
@@ -87,7 +99,7 @@ const Intelligence = () => {
       },
       improving: {
         color: 'bg-primary/20 text-primary border-primary/30',
-        label: 'Improving',
+        label: 'De-escalating',
         icon: <TrendingDown className="w-3 h-3" />
       }
     };
@@ -210,16 +222,15 @@ const Intelligence = () => {
       <section className="py-8">
         <div className="container mx-auto px-4">
           <Tabs defaultValue="signals" className="space-y-6">
-            <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 bg-card border border-border">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 bg-card border border-border">
               <TabsTrigger value="signals">Signals & Markets</TabsTrigger>
               <TabsTrigger value="outcomes" className="gap-1">
                 <ListChecks className="w-3 h-3" />
                 Outcomes
               </TabsTrigger>
-              <TabsTrigger value="drift">Drift Map</TabsTrigger>
               <TabsTrigger value="analytics" className="gap-1">
                 <Flame className="w-3 h-3" />
-                Heat Map
+                Analytics
               </TabsTrigger>
             </TabsList>
 
@@ -284,49 +295,117 @@ const Intelligence = () => {
                       })}
                         </div>
 
-                        {/* Weekly Update */}
-                        {signal.weekly_update_md && <div className="p-3 bg-muted/50 rounded-lg border border-border">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Clock className="w-3 h-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">Weekly Update</span>
+                        {/* Weekly Update — truncated, expandable */}
+                        {signal.weekly_update_md && (() => {
+                          const isExpanded = expandedSignals[`wu-${signal.id}`];
+                          const text = signal.weekly_update_md;
+                          const isLong = text.length > 220;
+                          return (
+                            <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Clock className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">Weekly Update</span>
+                              </div>
+                              <p className={`text-sm text-foreground ${!isExpanded && isLong ? 'line-clamp-3' : ''}`}>{text}</p>
+                              {isLong && (
+                                <button
+                                  onClick={() => setExpandedSignals(s => ({ ...s, [`wu-${signal.id}`]: !isExpanded }))}
+                                  className="text-xs text-primary hover:underline mt-1"
+                                >
+                                  {isExpanded ? 'Show less' : 'Show more'}
+                                </button>
+                              )}
                             </div>
-                            <p className="text-sm text-foreground">{signal.weekly_update_md}</p>
-                          </div>}
+                          );
+                        })()}
 
-                        {/* Linked Markets Section */}
-                        {linkedMarkets.length > 0 && <div className="pt-4 border-t border-border">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Link2 className="w-4 h-4 text-primary" />
-                              <span className="text-sm font-medium text-foreground">
-                                Linked Markets ({linkedMarkets.length})
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {linkedMarkets.map(market => {
-                          const odds = getOdds(market);
-                          return <div key={market.id} className="p-3 bg-background border border-border rounded-lg hover:border-primary/50 transition-colors">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="flex-1">
-                                        <div className="text-xs text-muted-foreground mb-1">{market.category}</div>
-                                        <div className="text-sm font-medium text-foreground line-clamp-2">
-                                          {market.title}
+                        {/* Subscribe CTA for elevated signals */}
+                        {signal.current_direction === 'elevated' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={scrollToSubscribe}
+                            className="border-destructive/40 text-destructive hover:bg-destructive/10 gap-1"
+                          >
+                            <Bell className="w-3 h-3" />
+                            Subscribe to alerts for this signal
+                          </Button>
+                        )}
+
+                        {/* Linked Markets — collapsible if >2 */}
+                        {linkedMarkets.length > 0 && (() => {
+                          const collapsible = linkedMarkets.length > 2;
+                          const key = `lm-${signal.id}`;
+                          const open = collapsible ? !!expandedSignals[key] : true;
+                          return (
+                            <Collapsible open={open} onOpenChange={(o) => setExpandedSignals(s => ({ ...s, [key]: o }))} className="pt-4 border-t border-border">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Link2 className="w-4 h-4 text-primary" />
+                                  <span className="text-sm font-medium text-foreground">
+                                    Linked Markets ({linkedMarkets.length})
+                                  </span>
+                                </div>
+                                {collapsible && (
+                                  <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                                      {open ? 'Hide' : 'Show'}
+                                      <ChevronDown className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+                                    </Button>
+                                  </CollapsibleTrigger>
+                                )}
+                              </div>
+                              <CollapsibleContent forceMount={!collapsible as any} className={collapsible ? '' : 'block'}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {linkedMarkets.map(market => {
+                                    const odds = getOdds(market);
+                                    const pool = (market.yes_total || 0) + (market.no_total || 0);
+                                    return (
+                                      <Link
+                                        key={market.id}
+                                        to={`/markets?market=${market.id}`}
+                                        className="block p-3 bg-background border border-border rounded-lg hover:border-primary/50 transition-colors"
+                                      >
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="flex-1">
+                                            <div className="text-xs text-muted-foreground mb-1">{market.category}</div>
+                                            <div className="text-sm font-medium text-foreground line-clamp-2">
+                                              {market.title}
+                                            </div>
+                                          </div>
+                                          <div className="text-right">
+                                            <div className="text-lg font-bold text-primary">{odds.yes}%</div>
+                                            <div className="text-xs text-muted-foreground">YES</div>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <div className="text-lg font-bold text-primary">{odds.yes}%</div>
-                                        <div className="text-xs text-muted-foreground">YES</div>
-                                      </div>
-                                    </div>
-                                    <div className="mt-2 flex items-center gap-2">
-                                      <Progress value={odds.yes} className="h-1.5 flex-1" />
-                                      <a href="/markets" className="text-xs text-primary hover:underline flex items-center gap-1">
-                                        Trade <ArrowRight className="w-3 h-3" />
-                                      </a>
-                                    </div>
-                                  </div>;
-                        })}
-                            </div>
-                          </div>}
+                                        <div className="mt-2">
+                                          <Progress value={odds.yes} className="h-1.5" />
+                                        </div>
+                                        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                                          <div className="flex items-center gap-3">
+                                            {market.deadline && (
+                                              <span className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" />
+                                                {formatDistanceToNow(new Date(market.deadline), { addSuffix: true })}
+                                              </span>
+                                            )}
+                                            <span className="flex items-center gap-1">
+                                              <Coins className="w-3 h-3" />
+                                              {pool.toFixed(2)} ALGO
+                                            </span>
+                                          </div>
+                                          <span className="text-primary flex items-center gap-1">
+                                            Trade <ArrowRight className="w-3 h-3" />
+                                          </span>
+                                        </div>
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          );
+                        })()}
 
                         {/* No linked markets message */}
                         {linkedMarkets.length === 0 && <div className="pt-4 border-t border-border">
@@ -335,6 +414,7 @@ const Intelligence = () => {
                               <span className="text-sm">No tradeable markets linked yet</span>
                             </div>
                           </div>}
+
 
                         {/* Last updated */}
                         <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
@@ -359,8 +439,8 @@ const Intelligence = () => {
                     <span className="text-sm text-muted-foreground">No significant change</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="default">↓ Improving</Badge>
-                    <span className="text-sm text-muted-foreground">Improving resilience</span>
+                    <Badge variant="default">↓ De-escalating</Badge>
+                    <span className="text-sm text-muted-foreground">Easing / improving resilience</span>
                   </div>
                 </div>
               </div>
@@ -371,99 +451,110 @@ const Intelligence = () => {
               <OutcomesWatchlist />
             </TabsContent>
 
-            {/* Drift Map Tab */}
-            <TabsContent value="drift" className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Signal Drift Map</h2>
-                <Badge variant="outline" className="border-accent/30 text-accent">
-                  <Activity className="w-3 h-3 mr-1" />
-                  Weekly Tracking
-                </Badge>
-              </div>
-
-              <Card className="bg-card border-border p-6">
-                <div className="space-y-6">
-                  {signals.map(signal => {
-                  const linkedMarkets = getLinkedMarkets(signal.signal_code);
-                  const directionValue = signal.current_direction === 'elevated' ? 75 : signal.current_direction === 'improving' ? 25 : 50;
-                  return <div key={signal.id} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="font-mono text-xs text-primary">{signal.signal_code}</span>
-                            <span className="font-medium text-foreground">{signal.name}</span>
-                            <Badge variant="outline" className="text-xs">{signal.region}</Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {getTrendIcon(signal.current_direction)}
-                            <span className="text-sm capitalize text-muted-foreground">
-                              {signal.current_direction}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Visual drift indicator */}
-                        <div className="relative h-6 bg-muted rounded-full overflow-hidden">
-                          <div className={`absolute left-0 h-full transition-all duration-500 ${signal.current_direction === 'elevated' ? 'bg-gradient-to-r from-warning to-destructive' : signal.current_direction === 'improving' ? 'bg-gradient-to-r from-primary/50 to-primary' : 'bg-gradient-to-r from-muted-foreground/30 to-muted-foreground/50'}`} style={{
-                        width: `${directionValue}%`
-                      }} />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-xs font-medium text-foreground">
-                              {linkedMarkets.length} linked market{linkedMarkets.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Linked market indicators */}
-                        {linkedMarkets.length > 0 && <div className="flex flex-wrap gap-2 pl-4">
-                            {linkedMarkets.map(market => {
-                        const odds = getOdds(market);
-                        return <Badge key={market.id} variant="outline" className="text-xs border-primary/30">
-                                  {market.category}: {odds.yes}% YES
-                                </Badge>;
-                      })}
-                          </div>}
-                      </div>;
-                })}
+            {/* Analytics Tab — Drift Map + Heat Map */}
+            <TabsContent value="analytics" className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="text-xl font-semibold">
+                  {analyticsView === 'drift' ? 'Signal Drift Map' : 'Attention Heat Map'}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={analyticsView === 'drift' ? 'default' : 'outline'}
+                    onClick={() => setAnalyticsView('drift')}
+                    className="gap-1"
+                  >
+                    <Activity className="w-3 h-3" /> Drift
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={analyticsView === 'heat' ? 'default' : 'outline'}
+                    onClick={() => setAnalyticsView('heat')}
+                    className="gap-1"
+                  >
+                    <Flame className="w-3 h-3" /> Heat
+                  </Button>
                 </div>
-              </Card>
-
-              {/* Drift Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-destructive/10 border-destructive/30">
-                  <CardContent className="p-4 text-center">
-                    <div className="text-3xl font-bold text-destructive">
-                      {signals.filter(s => s.current_direction === 'elevated').length}
-                    </div>
-                    <div className="text-sm text-destructive/80">Elevated Signals</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-muted border-border">
-                  <CardContent className="p-4 text-center">
-                    <div className="text-3xl font-bold text-muted-foreground">
-                      {signals.filter(s => s.current_direction === 'stable').length}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Stable Signals</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-primary/10 border-primary/30">
-                  <CardContent className="p-4 text-center">
-                    <div className="text-3xl font-bold text-primary">
-                      {signals.filter(s => s.current_direction === 'improving').length}
-                    </div>
-                    <div className="text-sm text-primary/80">Improving Signals</div>
-                  </CardContent>
-                </Card>
               </div>
-            </TabsContent>
 
-            {/* Analytics Tab - Heat Map */}
-            <TabsContent value="analytics">
-              <AttentionAnalytics />
+              {analyticsView === 'drift' ? (
+                <>
+                  <Card className="bg-card border-border p-6">
+                    <div className="space-y-6">
+                      {signals.map(signal => {
+                        const linkedMarkets = getLinkedMarkets(signal.signal_code);
+                        const directionValue = signal.current_direction === 'elevated' ? 75 : signal.current_direction === 'improving' ? 25 : 50;
+                        const directionLabel = signal.current_direction === 'improving' ? 'de-escalating' : signal.current_direction;
+                        return <div key={signal.id} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className="font-mono text-xs text-primary">{signal.signal_code}</span>
+                                <span className="font-medium text-foreground">{signal.name}</span>
+                                <Badge variant="outline" className="text-xs">{signal.region}</Badge>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {getTrendIcon(signal.current_direction)}
+                                <span className="text-sm capitalize text-muted-foreground">
+                                  {directionLabel}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="relative h-6 bg-muted rounded-full overflow-hidden">
+                              <div className={`absolute left-0 h-full transition-all duration-500 ${signal.current_direction === 'elevated' ? 'bg-gradient-to-r from-warning to-destructive' : signal.current_direction === 'improving' ? 'bg-gradient-to-r from-primary/50 to-primary' : 'bg-gradient-to-r from-muted-foreground/30 to-muted-foreground/50'}`} style={{ width: `${directionValue}%` }} />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-xs font-medium text-foreground">
+                                  {linkedMarkets.length} linked market{linkedMarkets.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            </div>
+                            {linkedMarkets.length > 0 && <div className="flex flex-wrap gap-2 pl-4">
+                                {linkedMarkets.map(market => {
+                                  const odds = getOdds(market);
+                                  return <Badge key={market.id} variant="outline" className="text-xs border-primary/30">
+                                    {market.category}: {odds.yes}% YES
+                                  </Badge>;
+                                })}
+                              </div>}
+                          </div>;
+                      })}
+                    </div>
+                  </Card>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="bg-destructive/10 border-destructive/30">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-3xl font-bold text-destructive">
+                          {signals.filter(s => s.current_direction === 'elevated').length}
+                        </div>
+                        <div className="text-sm text-destructive/80">Elevated Signals</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted border-border">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-3xl font-bold text-muted-foreground">
+                          {signals.filter(s => s.current_direction === 'stable').length}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Stable Signals</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-primary/10 border-primary/30">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-3xl font-bold text-primary">
+                          {signals.filter(s => s.current_direction === 'improving').length}
+                        </div>
+                        <div className="text-sm text-primary/80">De-escalating Signals</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              ) : (
+                <AttentionAnalytics />
+              )}
             </TabsContent>
           </Tabs>
 
           {/* Email Subscription Section */}
-          <div className="max-w-2xl mx-auto mt-12">
+          <div ref={subscribeRef} className="max-w-2xl mx-auto mt-12 scroll-mt-24">
             <EmailSubscribeForm />
           </div>
         </div>

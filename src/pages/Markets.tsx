@@ -2,6 +2,7 @@ import { MarketCard } from "@/components/MarketCard";
 import { MarketMatrixView } from "@/components/MarketMatrixView";
 import { TradeModal } from "@/components/TradeModal";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronRight, Activity, RefreshCw, LayoutGrid, TableProperties, Clock, CheckCircle } from "lucide-react";
@@ -47,6 +48,7 @@ const Markets = () => {
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [activeTab, setActiveTab] = useState<MarketTab>("active");
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const fetchData = async () => {
     const [marketsRes, signalsRes, tradesRes] = await Promise.all([
@@ -110,6 +112,24 @@ const Markets = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // Auto-open trade modal when ?market=ID is present in URL
+  useEffect(() => {
+    const marketId = searchParams.get('market');
+    if (!marketId || allMarkets.length === 0) return;
+    const m = allMarkets.find(x => x.id === marketId);
+    if (m) {
+      setSelectedMarket(m);
+      setIsTradeModalOpen(true);
+      // If market is past-deadline/resolved, switch to that tab so it's visible
+      if (m.status === 'resolved' || (m.deadline && new Date(m.deadline) < new Date())) {
+        setActiveTab('past-deadline');
+      }
+      // Clean URL so re-opens don't re-trigger
+      searchParams.delete('market');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, allMarkets, setSearchParams]);
 
   // Helper to check if market is past deadline
   const isMarketPastDeadline = (market: Market): boolean => {
