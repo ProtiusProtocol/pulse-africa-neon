@@ -295,49 +295,117 @@ const Intelligence = () => {
                       })}
                         </div>
 
-                        {/* Weekly Update */}
-                        {signal.weekly_update_md && <div className="p-3 bg-muted/50 rounded-lg border border-border">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Clock className="w-3 h-3 text-muted-foreground" />
-                              <span className="text-xs text-muted-foreground">Weekly Update</span>
+                        {/* Weekly Update — truncated, expandable */}
+                        {signal.weekly_update_md && (() => {
+                          const isExpanded = expandedSignals[`wu-${signal.id}`];
+                          const text = signal.weekly_update_md;
+                          const isLong = text.length > 220;
+                          return (
+                            <div className="p-3 bg-muted/50 rounded-lg border border-border">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Clock className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">Weekly Update</span>
+                              </div>
+                              <p className={`text-sm text-foreground ${!isExpanded && isLong ? 'line-clamp-3' : ''}`}>{text}</p>
+                              {isLong && (
+                                <button
+                                  onClick={() => setExpandedSignals(s => ({ ...s, [`wu-${signal.id}`]: !isExpanded }))}
+                                  className="text-xs text-primary hover:underline mt-1"
+                                >
+                                  {isExpanded ? 'Show less' : 'Show more'}
+                                </button>
+                              )}
                             </div>
-                            <p className="text-sm text-foreground">{signal.weekly_update_md}</p>
-                          </div>}
+                          );
+                        })()}
 
-                        {/* Linked Markets Section */}
-                        {linkedMarkets.length > 0 && <div className="pt-4 border-t border-border">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Link2 className="w-4 h-4 text-primary" />
-                              <span className="text-sm font-medium text-foreground">
-                                Linked Markets ({linkedMarkets.length})
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {linkedMarkets.map(market => {
-                          const odds = getOdds(market);
-                          return <div key={market.id} className="p-3 bg-background border border-border rounded-lg hover:border-primary/50 transition-colors">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="flex-1">
-                                        <div className="text-xs text-muted-foreground mb-1">{market.category}</div>
-                                        <div className="text-sm font-medium text-foreground line-clamp-2">
-                                          {market.title}
+                        {/* Subscribe CTA for elevated signals */}
+                        {signal.current_direction === 'elevated' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={scrollToSubscribe}
+                            className="border-destructive/40 text-destructive hover:bg-destructive/10 gap-1"
+                          >
+                            <Bell className="w-3 h-3" />
+                            Subscribe to alerts for this signal
+                          </Button>
+                        )}
+
+                        {/* Linked Markets — collapsible if >2 */}
+                        {linkedMarkets.length > 0 && (() => {
+                          const collapsible = linkedMarkets.length > 2;
+                          const key = `lm-${signal.id}`;
+                          const open = collapsible ? !!expandedSignals[key] : true;
+                          return (
+                            <Collapsible open={open} onOpenChange={(o) => setExpandedSignals(s => ({ ...s, [key]: o }))} className="pt-4 border-t border-border">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-2">
+                                  <Link2 className="w-4 h-4 text-primary" />
+                                  <span className="text-sm font-medium text-foreground">
+                                    Linked Markets ({linkedMarkets.length})
+                                  </span>
+                                </div>
+                                {collapsible && (
+                                  <CollapsibleTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                                      {open ? 'Hide' : 'Show'}
+                                      <ChevronDown className={`w-3 h-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+                                    </Button>
+                                  </CollapsibleTrigger>
+                                )}
+                              </div>
+                              <CollapsibleContent forceMount={!collapsible as any} className={collapsible ? '' : 'block'}>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                  {linkedMarkets.map(market => {
+                                    const odds = getOdds(market);
+                                    const pool = (market.yes_total || 0) + (market.no_total || 0);
+                                    return (
+                                      <Link
+                                        key={market.id}
+                                        to={`/markets?market=${market.id}`}
+                                        className="block p-3 bg-background border border-border rounded-lg hover:border-primary/50 transition-colors"
+                                      >
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="flex-1">
+                                            <div className="text-xs text-muted-foreground mb-1">{market.category}</div>
+                                            <div className="text-sm font-medium text-foreground line-clamp-2">
+                                              {market.title}
+                                            </div>
+                                          </div>
+                                          <div className="text-right">
+                                            <div className="text-lg font-bold text-primary">{odds.yes}%</div>
+                                            <div className="text-xs text-muted-foreground">YES</div>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <div className="text-lg font-bold text-primary">{odds.yes}%</div>
-                                        <div className="text-xs text-muted-foreground">YES</div>
-                                      </div>
-                                    </div>
-                                    <div className="mt-2 flex items-center gap-2">
-                                      <Progress value={odds.yes} className="h-1.5 flex-1" />
-                                      <a href="/markets" className="text-xs text-primary hover:underline flex items-center gap-1">
-                                        Trade <ArrowRight className="w-3 h-3" />
-                                      </a>
-                                    </div>
-                                  </div>;
-                        })}
-                            </div>
-                          </div>}
+                                        <div className="mt-2">
+                                          <Progress value={odds.yes} className="h-1.5" />
+                                        </div>
+                                        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                                          <div className="flex items-center gap-3">
+                                            {market.deadline && (
+                                              <span className="flex items-center gap-1">
+                                                <Calendar className="w-3 h-3" />
+                                                {formatDistanceToNow(new Date(market.deadline), { addSuffix: true })}
+                                              </span>
+                                            )}
+                                            <span className="flex items-center gap-1">
+                                              <Coins className="w-3 h-3" />
+                                              {pool.toFixed(2)} ALGO
+                                            </span>
+                                          </div>
+                                          <span className="text-primary flex items-center gap-1">
+                                            Trade <ArrowRight className="w-3 h-3" />
+                                          </span>
+                                        </div>
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
+                          );
+                        })()}
 
                         {/* No linked markets message */}
                         {linkedMarkets.length === 0 && <div className="pt-4 border-t border-border">
@@ -346,6 +414,7 @@ const Intelligence = () => {
                               <span className="text-sm">No tradeable markets linked yet</span>
                             </div>
                           </div>}
+
 
                         {/* Last updated */}
                         <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
