@@ -451,94 +451,105 @@ const Intelligence = () => {
               <OutcomesWatchlist />
             </TabsContent>
 
-            {/* Drift Map Tab */}
-            <TabsContent value="drift" className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">Signal Drift Map</h2>
-                <Badge variant="outline" className="border-accent/30 text-accent">
-                  <Activity className="w-3 h-3 mr-1" />
-                  Weekly Tracking
-                </Badge>
-              </div>
-
-              <Card className="bg-card border-border p-6">
-                <div className="space-y-6">
-                  {signals.map(signal => {
-                  const linkedMarkets = getLinkedMarkets(signal.signal_code);
-                  const directionValue = signal.current_direction === 'elevated' ? 75 : signal.current_direction === 'improving' ? 25 : 50;
-                  return <div key={signal.id} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="font-mono text-xs text-primary">{signal.signal_code}</span>
-                            <span className="font-medium text-foreground">{signal.name}</span>
-                            <Badge variant="outline" className="text-xs">{signal.region}</Badge>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {getTrendIcon(signal.current_direction)}
-                            <span className="text-sm capitalize text-muted-foreground">
-                              {signal.current_direction}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Visual drift indicator */}
-                        <div className="relative h-6 bg-muted rounded-full overflow-hidden">
-                          <div className={`absolute left-0 h-full transition-all duration-500 ${signal.current_direction === 'elevated' ? 'bg-gradient-to-r from-warning to-destructive' : signal.current_direction === 'improving' ? 'bg-gradient-to-r from-primary/50 to-primary' : 'bg-gradient-to-r from-muted-foreground/30 to-muted-foreground/50'}`} style={{
-                        width: `${directionValue}%`
-                      }} />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-xs font-medium text-foreground">
-                              {linkedMarkets.length} linked market{linkedMarkets.length !== 1 ? 's' : ''}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Linked market indicators */}
-                        {linkedMarkets.length > 0 && <div className="flex flex-wrap gap-2 pl-4">
-                            {linkedMarkets.map(market => {
-                        const odds = getOdds(market);
-                        return <Badge key={market.id} variant="outline" className="text-xs border-primary/30">
-                                  {market.category}: {odds.yes}% YES
-                                </Badge>;
-                      })}
-                          </div>}
-                      </div>;
-                })}
+            {/* Analytics Tab — Drift Map + Heat Map */}
+            <TabsContent value="analytics" className="space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h2 className="text-xl font-semibold">
+                  {analyticsView === 'drift' ? 'Signal Drift Map' : 'Attention Heat Map'}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant={analyticsView === 'drift' ? 'default' : 'outline'}
+                    onClick={() => setAnalyticsView('drift')}
+                    className="gap-1"
+                  >
+                    <Activity className="w-3 h-3" /> Drift
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={analyticsView === 'heat' ? 'default' : 'outline'}
+                    onClick={() => setAnalyticsView('heat')}
+                    className="gap-1"
+                  >
+                    <Flame className="w-3 h-3" /> Heat
+                  </Button>
                 </div>
-              </Card>
-
-              {/* Drift Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="bg-destructive/10 border-destructive/30">
-                  <CardContent className="p-4 text-center">
-                    <div className="text-3xl font-bold text-destructive">
-                      {signals.filter(s => s.current_direction === 'elevated').length}
-                    </div>
-                    <div className="text-sm text-destructive/80">Elevated Signals</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-muted border-border">
-                  <CardContent className="p-4 text-center">
-                    <div className="text-3xl font-bold text-muted-foreground">
-                      {signals.filter(s => s.current_direction === 'stable').length}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Stable Signals</div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-primary/10 border-primary/30">
-                  <CardContent className="p-4 text-center">
-                    <div className="text-3xl font-bold text-primary">
-                      {signals.filter(s => s.current_direction === 'improving').length}
-                    </div>
-                    <div className="text-sm text-primary/80">Improving Signals</div>
-                  </CardContent>
-                </Card>
               </div>
-            </TabsContent>
 
-            {/* Analytics Tab - Heat Map */}
-            <TabsContent value="analytics">
-              <AttentionAnalytics />
+              {analyticsView === 'drift' ? (
+                <>
+                  <Card className="bg-card border-border p-6">
+                    <div className="space-y-6">
+                      {signals.map(signal => {
+                        const linkedMarkets = getLinkedMarkets(signal.signal_code);
+                        const directionValue = signal.current_direction === 'elevated' ? 75 : signal.current_direction === 'improving' ? 25 : 50;
+                        const directionLabel = signal.current_direction === 'improving' ? 'de-escalating' : signal.current_direction;
+                        return <div key={signal.id} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className="font-mono text-xs text-primary">{signal.signal_code}</span>
+                                <span className="font-medium text-foreground">{signal.name}</span>
+                                <Badge variant="outline" className="text-xs">{signal.region}</Badge>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {getTrendIcon(signal.current_direction)}
+                                <span className="text-sm capitalize text-muted-foreground">
+                                  {directionLabel}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="relative h-6 bg-muted rounded-full overflow-hidden">
+                              <div className={`absolute left-0 h-full transition-all duration-500 ${signal.current_direction === 'elevated' ? 'bg-gradient-to-r from-warning to-destructive' : signal.current_direction === 'improving' ? 'bg-gradient-to-r from-primary/50 to-primary' : 'bg-gradient-to-r from-muted-foreground/30 to-muted-foreground/50'}`} style={{ width: `${directionValue}%` }} />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-xs font-medium text-foreground">
+                                  {linkedMarkets.length} linked market{linkedMarkets.length !== 1 ? 's' : ''}
+                                </span>
+                              </div>
+                            </div>
+                            {linkedMarkets.length > 0 && <div className="flex flex-wrap gap-2 pl-4">
+                                {linkedMarkets.map(market => {
+                                  const odds = getOdds(market);
+                                  return <Badge key={market.id} variant="outline" className="text-xs border-primary/30">
+                                    {market.category}: {odds.yes}% YES
+                                  </Badge>;
+                                })}
+                              </div>}
+                          </div>;
+                      })}
+                    </div>
+                  </Card>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Card className="bg-destructive/10 border-destructive/30">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-3xl font-bold text-destructive">
+                          {signals.filter(s => s.current_direction === 'elevated').length}
+                        </div>
+                        <div className="text-sm text-destructive/80">Elevated Signals</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-muted border-border">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-3xl font-bold text-muted-foreground">
+                          {signals.filter(s => s.current_direction === 'stable').length}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Stable Signals</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-primary/10 border-primary/30">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-3xl font-bold text-primary">
+                          {signals.filter(s => s.current_direction === 'improving').length}
+                        </div>
+                        <div className="text-sm text-primary/80">De-escalating Signals</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </>
+              ) : (
+                <AttentionAnalytics />
+              )}
             </TabsContent>
           </Tabs>
 
