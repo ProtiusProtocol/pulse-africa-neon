@@ -222,16 +222,15 @@ const Intelligence = () => {
       <section className="py-8">
         <div className="container mx-auto px-4">
           <Tabs defaultValue="signals" className="space-y-6">
-            <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-4 bg-card border border-border">
+            <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-3 bg-card border border-border">
               <TabsTrigger value="signals">Signals & Markets</TabsTrigger>
               <TabsTrigger value="outcomes" className="gap-1">
                 <ListChecks className="w-3 h-3" />
                 Outcomes
               </TabsTrigger>
-              <TabsTrigger value="drift">Drift Map</TabsTrigger>
               <TabsTrigger value="analytics" className="gap-1">
                 <Flame className="w-3 h-3" />
-                Heat Map
+                Analytics
               </TabsTrigger>
             </TabsList>
 
