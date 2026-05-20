@@ -554,7 +554,7 @@ const Intelligence = () => {
           </Tabs>
 
           {/* Email Subscription Section */}
-          <div className="max-w-2xl mx-auto mt-12">
+          <div ref={subscribeRef} className="max-w-2xl mx-auto mt-12 scroll-mt-24">
             <EmailSubscribeForm />
           </div>
         </div>
