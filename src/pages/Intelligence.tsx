@@ -1,14 +1,18 @@
-import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity, Target, Clock, ChevronRight, Zap, Globe, Link2, ArrowRight, RefreshCw, Flame, ListChecks } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, Minus, AlertTriangle, Activity, Target, Clock, ChevronRight, Zap, Globe, Link2, ArrowRight, RefreshCw, Flame, ListChecks, ChevronDown, Bell, Calendar, Coins } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { EmailSubscribeForm } from "@/components/EmailSubscribeForm";
 import { AttentionAnalytics } from "@/components/AttentionAnalytics";
 import { OutcomesWatchlist } from "@/components/OutcomesWatchlist";
+import { formatDistanceToNow } from "date-fns";
 
 // Types
 interface CoreComponent {
