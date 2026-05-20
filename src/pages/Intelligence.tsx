@@ -51,6 +51,14 @@ const Intelligence = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRegion, setSelectedRegion] = useState<string>('ALL');
   const [selectedDirection, setSelectedDirection] = useState<string>('ALL');
+  const [expandedSignals, setExpandedSignals] = useState<Record<string, boolean>>({});
+  const [analyticsView, setAnalyticsView] = useState<'drift' | 'heat'>('drift');
+  const subscribeRef = useRef<HTMLDivElement>(null);
+
+  const scrollToSubscribe = () => {
+    subscribeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   const fetchData = async () => {
     const [signalsRes, marketsRes] = await Promise.all([supabase.from("fragility_signals").select("*").order("signal_code"), supabase.from("markets").select("*").eq("status", "active").order("created_at")]);
     if (signalsRes.data) {
