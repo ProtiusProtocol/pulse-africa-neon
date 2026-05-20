@@ -2,6 +2,7 @@ import { MarketCard } from "@/components/MarketCard";
 import { MarketMatrixView } from "@/components/MarketMatrixView";
 import { TradeModal } from "@/components/TradeModal";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronRight, Activity, RefreshCw, LayoutGrid, TableProperties, Clock, CheckCircle } from "lucide-react";
