@@ -439,8 +439,8 @@ const Intelligence = () => {
                     <span className="text-sm text-muted-foreground">No significant change</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="default">↓ Improving</Badge>
-                    <span className="text-sm text-muted-foreground">Improving resilience</span>
+                    <Badge variant="default">↓ De-escalating</Badge>
+                    <span className="text-sm text-muted-foreground">Easing / improving resilience</span>
                   </div>
                 </div>
               </div>
