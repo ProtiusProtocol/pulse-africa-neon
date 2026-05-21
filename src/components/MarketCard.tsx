@@ -339,14 +339,14 @@ export const MarketCard = ({
           </div>
         </div>
 
-        {/* Prediction Universe */}
+        {/* Prediction Universe (lazy-mounted when scrolled into view) */}
         {id && yesAmount !== undefined && noAmount !== undefined && (
-          <div className="pt-2">
-            <MarketCardUniverse 
-              marketId={id} 
-              yesTotal={yesAmount} 
-              noTotal={noAmount} 
-            />
+          <div ref={universeRef} className="pt-2 min-h-[80px]">
+            {universeVisible ? (
+              <MarketCardUniverse marketId={id} yesTotal={yesAmount} noTotal={noAmount} />
+            ) : (
+              <div className="h-20 rounded-md bg-muted/20 animate-pulse" />
+            )}
           </div>
         )}
 
@@ -356,6 +356,12 @@ export const MarketCard = ({
             <Clock className={`w-3 h-3 ${isUrgent ? "text-accent" : ""}`} />
             {timeLeft}
           </div>
+          {tradeCount !== undefined && tradeCount > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground" title={`${tradeCount} trade${tradeCount === 1 ? "" : "s"}`}>
+              <Users className="w-3 h-3" />
+              <span className="font-mono">{tradeCount}</span>
+            </div>
+          )}
           <div
             className={`flex items-center gap-1 text-sm font-bold ${
               trend === "up" ? "text-primary" : "text-accent"
@@ -369,6 +375,7 @@ export const MarketCard = ({
             {trendValue}%
           </div>
         </div>
+
 
         {/* CTA */}
         {isPastDeadline ? (
