@@ -148,19 +148,29 @@ const Markets = () => {
   const isPastDeadline = (m: Market) => !!m.deadline && new Date(m.deadline) < new Date();
 
   // Bucket markets into the 4 tabs (mutually exclusive)
+  // Resolved tab auto-archives entries older than 30 days → they live on /past-markets
+  const ARCHIVE_AFTER_DAYS = 30;
+  const archiveCutoff = useMemo(
+    () => Date.now() - ARCHIVE_AFTER_DAYS * 24 * 60 * 60 * 1000,
+    []
+  );
   const buckets = useMemo(() => {
     const active: Market[] = [];
     const awaiting: Market[] = [];
     const resolved: Market[] = [];
     const pending: Market[] = [];
+    let archivedCount = 0;
     allMarkets.forEach((m) => {
-      if (m.status === "resolved") resolved.push(m);
-      else if (isPastDeadline(m)) awaiting.push(m);
+      if (m.status === "resolved") {
+        const resolvedAt = new Date(m.updated_at).getTime();
+        if (resolvedAt >= archiveCutoff) resolved.push(m);
+        else archivedCount++;
+      } else if (isPastDeadline(m)) awaiting.push(m);
       else if (m.status === "active") active.push(m);
       else if (m.status === "pending") pending.push(m);
     });
-    return { active, awaiting, resolved, pending };
-  }, [allMarkets]);
+    return { active, awaiting, resolved, pending, archivedCount };
+  }, [allMarkets, archiveCutoff]);
 
   const current = buckets[activeTab];
 
@@ -364,8 +374,17 @@ const Markets = () => {
               Showing <span className="text-foreground font-semibold">{filteredMarkets.length}</span>
               {filteredMarkets.length !== current.length && <> of {current.length}</>} markets
             </span>
-            {activeTab === "resolved" && !isConnected && (
-              <span className="text-amber-500">Connect your wallet to claim payouts.</span>
+            {activeTab === "resolved" && (
+              <span className="flex items-center gap-2">
+                {!isConnected && (
+                  <span className="text-amber-500">Connect your wallet to claim payouts.</span>
+                )}
+                {buckets.archivedCount > 0 && (
+                  <a href="/past-markets" className="text-primary hover:underline">
+                    {buckets.archivedCount} older resolved → Archive
+                  </a>
+                )}
+              </span>
             )}
             {activeTab === "awaiting" && (
               <span>Deadline passed — awaiting on-chain resolution.</span>
