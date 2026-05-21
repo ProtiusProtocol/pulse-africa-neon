@@ -99,11 +99,23 @@ export const MarketCard = ({
   const { language: globalLanguage } = useLanguage();
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const { walletAddress, isConnected, getSigner } = useWallet();
-  
-  // Determine which language to show as secondary (per-card selection or global)
-  const secondaryLang = selectedLanguage || (globalLanguage !== 'en' ? globalLanguage : null);
-  
-  // Available languages for per-card selector (exclude English since it's always shown)
+
+  // Lazy-mount Universe when card scrolls into view
+  const universeRef = useRef<HTMLDivElement | null>(null);
+  const [universeVisible, setUniverseVisible] = useState(false);
+  useEffect(() => {
+    if (universeVisible) return;
+    const el = universeRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        setUniverseVisible(true);
+        io.disconnect();
+      }
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [universeVisible]);
   const availableLanguages = LANGUAGES.filter(l => l.code !== 'en');
   const currentSecondaryLang = availableLanguages.find(l => l.code === secondaryLang);
   
