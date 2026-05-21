@@ -116,6 +116,8 @@ export const MarketCard = ({
     io.observe(el);
     return () => io.disconnect();
   }, [universeVisible]);
+
+  const secondaryLang = selectedLanguage || (globalLanguage !== 'en' ? globalLanguage : null);
   const availableLanguages = LANGUAGES.filter(l => l.code !== 'en');
   const currentSecondaryLang = availableLanguages.find(l => l.code === secondaryLang);
   
