@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown, AlertCircle, CheckCircle2, Loader2, Gift } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown, AlertCircle, CheckCircle2, Loader2, Gift, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { getMarketClient } from "@/contracts/AugurionMarketV4Client";
@@ -99,11 +99,25 @@ export const MarketCard = ({
   const { language: globalLanguage } = useLanguage();
   const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const { walletAddress, isConnected, getSigner } = useWallet();
-  
-  // Determine which language to show as secondary (per-card selection or global)
+
+  // Lazy-mount Universe when card scrolls into view
+  const universeRef = useRef<HTMLDivElement | null>(null);
+  const [universeVisible, setUniverseVisible] = useState(false);
+  useEffect(() => {
+    if (universeVisible) return;
+    const el = universeRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) {
+        setUniverseVisible(true);
+        io.disconnect();
+      }
+    }, { rootMargin: "200px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [universeVisible]);
+
   const secondaryLang = selectedLanguage || (globalLanguage !== 'en' ? globalLanguage : null);
-  
-  // Available languages for per-card selector (exclude English since it's always shown)
   const availableLanguages = LANGUAGES.filter(l => l.code !== 'en');
   const currentSecondaryLang = availableLanguages.find(l => l.code === secondaryLang);
   
@@ -325,14 +339,14 @@ export const MarketCard = ({
           </div>
         </div>
 
-        {/* Prediction Universe */}
+        {/* Prediction Universe (lazy-mounted when scrolled into view) */}
         {id && yesAmount !== undefined && noAmount !== undefined && (
-          <div className="pt-2">
-            <MarketCardUniverse 
-              marketId={id} 
-              yesTotal={yesAmount} 
-              noTotal={noAmount} 
-            />
+          <div ref={universeRef} className="pt-2 min-h-[80px]">
+            {universeVisible ? (
+              <MarketCardUniverse marketId={id} yesTotal={yesAmount} noTotal={noAmount} />
+            ) : (
+              <div className="h-20 rounded-md bg-muted/20 animate-pulse" />
+            )}
           </div>
         )}
 
@@ -342,6 +356,12 @@ export const MarketCard = ({
             <Clock className={`w-3 h-3 ${isUrgent ? "text-accent" : ""}`} />
             {timeLeft}
           </div>
+          {tradeCount !== undefined && tradeCount > 0 && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground" title={`${tradeCount} trade${tradeCount === 1 ? "" : "s"}`}>
+              <Users className="w-3 h-3" />
+              <span className="font-mono">{tradeCount}</span>
+            </div>
+          )}
           <div
             className={`flex items-center gap-1 text-sm font-bold ${
               trend === "up" ? "text-primary" : "text-accent"
@@ -355,6 +375,7 @@ export const MarketCard = ({
             {trendValue}%
           </div>
         </div>
+
 
         {/* CTA */}
         {isPastDeadline ? (
