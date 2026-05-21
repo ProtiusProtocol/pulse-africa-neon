@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown, AlertCircle, CheckCircle2, Loader2, Gift } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { TrendingUp, TrendingDown, Clock, Globe, ChevronDown, AlertCircle, CheckCircle2, Loader2, Gift, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
 import { getMarketClient } from "@/contracts/AugurionMarketV4Client";
