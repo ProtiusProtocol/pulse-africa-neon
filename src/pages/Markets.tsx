@@ -374,8 +374,17 @@ const Markets = () => {
               Showing <span className="text-foreground font-semibold">{filteredMarkets.length}</span>
               {filteredMarkets.length !== current.length && <> of {current.length}</>} markets
             </span>
-            {activeTab === "resolved" && !isConnected && (
-              <span className="text-amber-500">Connect your wallet to claim payouts.</span>
+            {activeTab === "resolved" && (
+              <span className="flex items-center gap-2">
+                {!isConnected && (
+                  <span className="text-amber-500">Connect your wallet to claim payouts.</span>
+                )}
+                {buckets.archivedCount > 0 && (
+                  <a href="/past-markets" className="text-primary hover:underline">
+                    {buckets.archivedCount} older resolved → Archive
+                  </a>
+                )}
+              </span>
             )}
             {activeTab === "awaiting" && (
               <span>Deadline passed — awaiting on-chain resolution.</span>
