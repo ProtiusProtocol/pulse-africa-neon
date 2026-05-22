@@ -380,42 +380,22 @@ export const MarketCard = ({
         {/* CTA */}
         {isPastDeadline ? (
           <div className="space-y-2">
-            {resolvedOutcome && isConnected && appId && !isNaN(Number(appId)) && (
-              <Button 
-                variant="hero" 
-                size="sm" 
-                className="w-full gap-2" 
-                disabled={isClaiming}
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!walletAddress || !appId) return;
-                  setIsClaiming(true);
-                  try {
-                    const client = getMarketClient(Number(appId));
-                    const result = await client.claimPayout(walletAddress, getSigner());
-                    if (result.success) {
-                      toast.success(`Payout claimed! TX: ${result.txId?.slice(0, 8)}...`);
-                    } else {
-                      toast.error(`Claim failed: ${result.error}`);
-                    }
-                  } catch (err) {
-                    toast.error('Failed to claim payout');
-                    console.error('Claim error:', err);
-                  } finally {
-                    setIsClaiming(false);
-                  }
-                }}
+            {resolvedOutcome ? (
+              <div
+                className={`w-full rounded-md border px-3 py-2 text-center text-sm font-semibold ${
+                  resolvedOutcome.toUpperCase() === 'YES'
+                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    : 'border-accent/40 bg-accent/10 text-accent'
+                }`}
+                title="Winning predictions have been auto-settled on TestNet"
               >
-                {isClaiming ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Claiming...</>
-                ) : (
-                  <><Gift className="w-4 h-4" /> Claim Payout</>
-                )}
+                Resolved: {resolvedOutcome.toUpperCase()} · Auto-settled
+              </div>
+            ) : (
+              <Button variant="secondary" size="sm" className="w-full" disabled>
+                Awaiting Resolution
               </Button>
             )}
-            <Button variant="secondary" size="sm" className="w-full" disabled>
-              {resolvedOutcome ? 'Market Resolved' : 'Trading Closed'}
-            </Button>
           </div>
         ) : (
           <Button variant="hero" size="sm" className="w-full" onClick={onTrade}>
