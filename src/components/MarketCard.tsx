@@ -50,7 +50,7 @@ const formatAmount = (amount: number): string => {
 };
 
 const formatCountdown = (ms: number): string => {
-  if (ms <= 0) return "Resolved";
+  if (ms <= 0) return "Awaiting Resolution";
   
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
@@ -141,14 +141,18 @@ export const MarketCard = ({
     const updateCountdown = () => {
       const now = new Date().getTime();
       const distance = targetDate.getTime() - now;
-      setTimeLeft(formatCountdown(distance));
+      if (distance <= 0 && resolvedOutcome) {
+        setTimeLeft(`Resolved: ${resolvedOutcome.toUpperCase()}`);
+      } else {
+        setTimeLeft(formatCountdown(distance));
+      }
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
-  }, [deadline, endsIn]);
+  }, [deadline, endsIn, resolvedOutcome]);
 
   const volatilityConfig = {
     low: { icon: "🔥", text: "Low", color: "text-muted-foreground" },
