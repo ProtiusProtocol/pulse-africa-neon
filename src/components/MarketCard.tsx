@@ -50,7 +50,7 @@ const formatAmount = (amount: number): string => {
 };
 
 const formatCountdown = (ms: number): string => {
-  if (ms <= 0) return "Resolved";
+  if (ms <= 0) return "Awaiting Resolution";
   
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
