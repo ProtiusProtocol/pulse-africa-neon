@@ -17,15 +17,16 @@ interface Props {
 
 export function ResolveMarketPanel({ markets, onResolved }: Props) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [forceById, setForceById] = useState<Record<string, boolean>>({});
 
   // Markets that still need resolving: no resolved_outcome AND status not cancelled
   const pending = markets.filter(
     (m) => !m.resolved_outcome && m.status !== "cancelled"
   );
 
-  const resolveMarket = async (market: Market, side: "YES" | "NO") => {
+  const resolveMarket = async (market: Market, side: "YES" | "NO", force: boolean) => {
     if (!confirm(
-      `Resolve "${market.title}" as ${side}?\n\n` +
+      `Resolve "${market.title}" as ${side}?${force ? "\n\n⚠️ FORCE EARLY RESOLUTION (deadline not reached)" : ""}\n\n` +
       `This will:\n` +
       `1. Call resolve_market(${side}) on-chain via the deployer wallet\n` +
       `2. Mark the market resolved in the database\n` +
@@ -36,7 +37,7 @@ export function ResolveMarketPanel({ markets, onResolved }: Props) {
     setLoadingId(market.id);
     try {
       const { data, error } = await supabase.functions.invoke("admin-resolve-market", {
-        body: { market_id: market.id, winning_side: side },
+        body: { market_id: market.id, winning_side: side, force },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
