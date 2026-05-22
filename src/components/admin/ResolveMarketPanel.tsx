@@ -77,47 +77,63 @@ export function ResolveMarketPanel({ markets, onResolved }: Props) {
         ) : (
           pending.map((m) => {
             const deadlinePast = m.deadline ? new Date(m.deadline) < new Date() : false;
+            const force = !!forceById[m.id];
+            const canResolve = deadlinePast || force;
             return (
               <div
                 key={m.id}
-                className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-3 rounded-lg border border-border bg-background"
+                className="flex flex-col gap-3 p-3 rounded-lg border border-border bg-background"
               >
-                <div className="min-w-0 flex-1">
-                  <div className="font-medium text-sm truncate">{m.title}</div>
-                  <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
-                    <span>app: {m.app_id || "—"}</span>
-                    {m.deadline && (
-                      <span className={deadlinePast ? "text-destructive" : ""}>
-                        deadline: {new Date(m.deadline).toLocaleDateString()}
-                        {deadlinePast && " (past)"}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-sm truncate">{m.title}</div>
+                    <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      <Badge variant="outline" className="text-[10px]">{m.status}</Badge>
+                      <span>app: {m.app_id || "—"}</span>
+                      {m.deadline && (
+                        <span className={deadlinePast ? "text-destructive" : "flex items-center gap-1"}>
+                          {!deadlinePast && <Clock className="w-3 h-3" />}
+                          deadline: {new Date(m.deadline).toLocaleString()}
+                          {deadlinePast && " (past)"}
+                        </span>
+                      )}
+                      <span>
+                        pool: {Number(m.yes_total || 0).toFixed(2)} YES / {Number(m.no_total || 0).toFixed(2)} NO ALGO
                       </span>
-                    )}
-                    <span>
-                      pool: {Number(m.yes_total || 0).toFixed(2)} YES / {Number(m.no_total || 0).toFixed(2)} NO ALGO
-                    </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      disabled={loadingId === m.id || !canResolve}
+                      onClick={() => resolveMarket(m, "YES", force)}
+                      className="min-h-11"
+                    >
+                      {loadingId === m.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resolve YES"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={loadingId === m.id || !canResolve}
+                      onClick={() => resolveMarket(m, "NO", force)}
+                      className="min-h-11"
+                    >
+                      {loadingId === m.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resolve NO"}
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    disabled={loadingId === m.id}
-                    onClick={() => resolveMarket(m, "YES")}
-                    className="min-h-11"
-                  >
-                    {loadingId === m.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resolve YES"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={loadingId === m.id}
-                    onClick={() => resolveMarket(m, "NO")}
-                    className="min-h-11"
-                  >
-                    {loadingId === m.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Resolve NO"}
-                  </Button>
-                </div>
+                {!deadlinePast && (
+                  <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                    <Checkbox
+                      checked={force}
+                      onCheckedChange={(v) => setForceById((s) => ({ ...s, [m.id]: !!v }))}
+                    />
+                    <span>
+                      Force early resolution — use only if the underlying event resolved before its deadline (e.g. cancelled, abandoned, settled early).
+                    </span>
+                  </label>
+                )}
               </div>
             );
           })
