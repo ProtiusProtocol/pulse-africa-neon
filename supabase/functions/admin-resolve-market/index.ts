@@ -77,7 +77,20 @@ Deno.serve(async (req) => {
       .single();
     if (mErr || !market) return json({ error: "Market not found" }, 404);
 
+    // Deadline guard — markets resolve only after deadline unless admin forces it
+    if (market.deadline) {
+      const deadlineMs = new Date(market.deadline).getTime();
+      if (Number.isFinite(deadlineMs) && deadlineMs > Date.now() && !force) {
+        return json({
+          error: `Market deadline not yet reached (${new Date(deadlineMs).toISOString()}). Pass force=true to override.`,
+        }, 400);
+      }
+    }
+
     const steps: string[] = [];
+    if (force && market.deadline && new Date(market.deadline).getTime() > Date.now()) {
+      steps.push(`⚠️ FORCED early resolution by ${userData.user.email || userData.user.id}`);
+    }
     let resolveTxId: string | null = null;
 
     // 1) On-chain resolve_market (if app_id exists and not a demo)
