@@ -135,19 +135,7 @@ const PastMarkets = () => {
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-primary" />
                 <span className="text-muted-foreground">
-                  <strong className="text-foreground">{resolvedMarkets.length}</strong> Resolved
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-muted-foreground" />
-                <span className="text-muted-foreground">
-                  <strong className="text-foreground">{expiredMarkets.length}</strong> Expired
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-accent" />
-                <span className="text-muted-foreground">
-                  <strong className="text-foreground">{(markets?.length || 0)}</strong> Total Past
+                  <strong className="text-foreground">{resolvedMarkets.length}</strong> Resolved Markets
                 </span>
               </div>
             </div>
@@ -161,24 +149,6 @@ const PastMarkets = () => {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {resolvedMarkets.map((market) => (
-                    <MarketArchiveCard key={market.id} market={market} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Expired Section */}
-            {expiredMarkets.length > 0 && (
-              <div>
-                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  Expired Markets
-                </h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                  These markets have passed their deadline and are awaiting resolution or kept as historical reference.
-                </p>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {expiredMarkets.map((market) => (
                     <MarketArchiveCard key={market.id} market={market} />
                   ))}
                 </div>
