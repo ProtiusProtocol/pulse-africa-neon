@@ -60,6 +60,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarketStatsSummary } from "@/components/admin/MarketStatsSummary";
 import { DeployerWalletInfo } from "@/components/admin/DeployerWalletInfo";
 import { MarketListSection } from "@/components/admin/MarketListSection";
+import { ResolveMarketPanel } from "@/components/admin/ResolveMarketPanel";
 import { InfoHint } from "@/components/admin/InfoHint";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -828,6 +829,9 @@ const handleCreateMarket = async () => {
 
         {/* Upcoming Resolutions Alert */}
         <UpcomingResolutions markets={markets} />
+
+        {/* Resolve Markets (semi-automated on-chain + auto-payout) */}
+        <ResolveMarketPanel markets={markets} onResolved={fetchMarkets} />
 
         {/* Market Stats Summary */}
         <section>
