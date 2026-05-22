@@ -20,16 +20,15 @@ const PastMarkets = () => {
       const { data, error } = await supabase
         .from("markets")
         .select("*")
-        .or(`resolved_outcome.not.is.null,deadline.lt.${new Date().toISOString()}`)
-        .order("deadline", { ascending: false });
+        .not("resolved_outcome", "is", null)
+        .order("updated_at", { ascending: false });
 
       if (error) throw error;
       return data || [];
     },
   });
 
-  const resolvedMarkets = markets?.filter((m) => m.resolved_outcome) || [];
-  const expiredMarkets = markets?.filter((m) => !m.resolved_outcome) || [];
+  const resolvedMarkets = markets || [];
 
   const getStatusBadge = (market: any) => {
     if (market.resolved_outcome) {
