@@ -829,6 +829,9 @@ const handleCreateMarket = async () => {
         {/* Upcoming Resolutions Alert */}
         <UpcomingResolutions markets={markets} />
 
+        {/* Resolve Markets (semi-automated on-chain + auto-payout) */}
+        <ResolveMarketPanel markets={markets} onResolved={fetchMarkets} />
+
         {/* Market Stats Summary */}
         <section>
           <div className="flex items-center gap-2 mb-4">
