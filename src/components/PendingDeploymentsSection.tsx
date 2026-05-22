@@ -48,7 +48,16 @@ export function PendingDeploymentsSection({
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  const pending = markets.filter((m) => m.app_id?.startsWith("PENDING"));
+  // Only show markets that are actually awaiting deployment — exclude any that
+  // have already been resolved or cancelled in the DB (those should never be
+  // deployed on-chain, even if their app_id is still "PENDING").
+  const pending = markets.filter(
+    (m) =>
+      m.app_id?.startsWith("PENDING") &&
+      m.status !== "resolved" &&
+      m.status !== "cancelled" &&
+      !m.resolved_outcome,
+  );
 
   const openEdit = (m: Market) => {
     setEditing(m);
