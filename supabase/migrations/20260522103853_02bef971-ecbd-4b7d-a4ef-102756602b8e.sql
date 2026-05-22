@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.auto_settle_trades_on_resolution() FROM PUBLIC, anon, authenticated;

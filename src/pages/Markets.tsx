@@ -376,9 +376,7 @@ const Markets = () => {
             </span>
             {activeTab === "resolved" && (
               <span className="flex items-center gap-2">
-                {!isConnected && (
-                  <span className="text-amber-500">Connect your wallet to claim payouts.</span>
-                )}
+                <span className="text-muted-foreground">Winning predictions auto-settled.</span>
                 {buckets.archivedCount > 0 && (
                   <a href="/past-markets" className="text-primary hover:underline">
                     {buckets.archivedCount} older resolved → Archive
