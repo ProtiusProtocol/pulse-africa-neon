@@ -82,6 +82,10 @@ export const Footer = () => {
           <div className="h-px w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-50 animate-pulse-glow" />
           <p className="text-center text-sm text-muted-foreground mt-4">
             © 2025 Augurion. Outcome Intelligence Before Markets Move.
+            {" · "}
+            <Link to="/admin" className="hover:text-primary transition-colors underline-offset-4 hover:underline">
+              Admin
+            </Link>
           </p>
         </div>
       </div>
