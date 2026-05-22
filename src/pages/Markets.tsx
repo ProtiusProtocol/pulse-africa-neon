@@ -263,14 +263,24 @@ const Markets = () => {
               Binary, time-bound outcomes linked to fragility signals.
             </p>
           </div>
-          <a
-            href="/intelligence"
-            className="inline-flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-lg hover:border-primary/50 transition-all text-sm"
-          >
-            <Activity className="w-4 h-4 text-primary" />
-            <span className="font-medium">Signal Intelligence</span>
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href="/past-markets"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-lg hover:border-primary/50 transition-all text-sm"
+            >
+              <CheckCircle className="w-4 h-4 text-primary" />
+              <span className="font-medium">Market Archive</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </a>
+            <a
+              href="/intelligence"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-card border border-border rounded-lg hover:border-primary/50 transition-all text-sm"
+            >
+              <Activity className="w-4 h-4 text-primary" />
+              <span className="font-medium">Signal Intelligence</span>
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            </a>
+          </div>
         </div>
 
         {/* Tabs */}
