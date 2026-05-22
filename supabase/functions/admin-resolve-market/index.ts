@@ -59,6 +59,7 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const marketId: string = body.market_id;
     const winningSide: string = (body.winning_side || "").toUpperCase();
+    const force: boolean = !!body.force;
     if (!marketId || (winningSide !== "YES" && winningSide !== "NO")) {
       return json({ error: "market_id and winning_side (YES|NO) required" }, 400);
     }
