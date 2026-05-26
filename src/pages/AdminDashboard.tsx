@@ -1548,6 +1548,30 @@ const handleCreateMarket = async () => {
                   />
                 </div>
 
+                {/* Initial Odds Prior */}
+                <div className="space-y-2">
+                  <Label htmlFor="editPriorYes">Initial Odds — YES probability (%)</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      id="editPriorYes"
+                      type="number"
+                      min={5}
+                      max={95}
+                      step={1}
+                      value={editForm.priorYesPct}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, priorYesPct: Number(e.target.value) }))}
+                      className="bg-input border-border w-28"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      YES {editForm.priorYesPct}% / NO {100 - Number(editForm.priorYesPct || 50)}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Shown on the market card until real trades arrive. Range 5–95; avoid 50/50 unless the signal is genuinely balanced.
+                  </p>
+                </div>
+
+
                 {/* Actions */}
                 <div className="flex justify-end gap-2 pt-4 border-t border-border">
                   <Button variant="outline" onClick={handleCancelEdit}>
