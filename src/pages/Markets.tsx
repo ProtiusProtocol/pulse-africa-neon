@@ -218,9 +218,17 @@ const Markets = () => {
     const yes = market.yes_total || 0;
     const no = market.no_total || 0;
     const total = yes + no;
-    if (total === 0) return { yes: 50, no: 50 };
+    if (total === 0) {
+      const prior = (market as any).prior_yes_pct;
+      if (prior != null && Number.isFinite(Number(prior))) {
+        const p = Math.max(1, Math.min(99, Math.round(Number(prior))));
+        return { yes: p, no: 100 - p };
+      }
+      return { yes: 50, no: 50 };
+    }
     return { yes: Math.round((yes / total) * 100), no: Math.round((no / total) * 100) };
   };
+
 
   const getLinkedSignalNames = (linkedCodes: string[] | null) => {
     if (!linkedCodes) return [];

@@ -27,11 +27,14 @@ interface MarketSuggestion {
   suggested_deadline: string | null;
   suggested_resolution_criteria: string | null;
   ai_reasoning: string | null;
+  suggested_initial_yes_probability: number | null;
+  suggested_initial_probability_reasoning: string | null;
   source_signal_direction: string | null;
   status: string;
   created_at: string;
   created_market_id: string | null;
 }
+
 interface MarketSuggestionsReviewProps {
   onCreateMarket?: (suggestion: MarketSuggestion) => void;
 }
@@ -94,7 +97,20 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
     // If approving, create a market record with a unique PENDING-<token> app_id
     // (app_id has a UNIQUE constraint, so plain "PENDING" collides across approvals)
     if (status === 'approved' && suggestion) {
+      // Guard: deadline must be at least 30 days in the future.
+      const minMs = Date.now() + 30 * 24 * 3600 * 1000;
+      const deadlineMs = suggestion.suggested_deadline ? Date.parse(suggestion.suggested_deadline) : NaN;
+      if (!Number.isFinite(deadlineMs) || deadlineMs < minMs) {
+        toast({
+          title: "Deadline too soon",
+          description: "Suggested deadline is in the past or within 30 days. Edit the suggestion (or re-generate) to a date at least one month out before approving.",
+          variant: "destructive",
+        });
+        setActionLoading(null);
+        return;
+      }
       const pendingAppId = `PENDING-${(crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)).slice(0, 8)}`;
+
       const { data: newMarket, error: marketError } = await supabase
         .from('markets')
         .insert({
@@ -106,10 +122,12 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
           deadline: suggestion.suggested_deadline,
           resolution_criteria: suggestion.suggested_resolution_criteria,
           status: 'pending',
-          linked_signals: [suggestion.signal_code]
+          linked_signals: [suggestion.signal_code],
+          prior_yes_pct: suggestion.suggested_initial_yes_probability ?? null,
         })
         .select('id')
         .single();
+
 
       if (marketError) {
         console.error('Market insert error:', marketError);
@@ -259,7 +277,16 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
                           <p className="text-xs text-muted-foreground mt-1">
                             Deadline: {formatDeadline(suggestion.suggested_deadline)}
                           </p>
+                          {suggestion.suggested_initial_yes_probability != null && (
+                            <p className="text-xs mt-1">
+                              <span className="text-muted-foreground">Initial prior:</span>{" "}
+                              <span className="font-semibold text-accent">
+                                YES {Math.round(Number(suggestion.suggested_initial_yes_probability))}% / NO {100 - Math.round(Number(suggestion.suggested_initial_yes_probability))}%
+                              </span>
+                            </p>
+                          )}
                         </div>
+
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <CollapsibleTrigger asChild>
                             <Button variant="ghost" size="sm">
@@ -300,6 +327,15 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
                               <p className="text-muted-foreground">{suggestion.ai_reasoning}</p>
                             </div>
                           )}
+                          {suggestion.suggested_initial_probability_reasoning && (
+                            <div>
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                                Initial Prior ({Math.round(Number(suggestion.suggested_initial_yes_probability ?? 50))}% YES) — Why
+                              </p>
+                              <p className="text-muted-foreground">{suggestion.suggested_initial_probability_reasoning}</p>
+                            </div>
+                          )}
+
                           <p className="text-xs text-muted-foreground mt-2">
                             Approving will create a market with <span className="font-mono">app_id=PENDING</span> ready for Algorand deployment.
                           </p>

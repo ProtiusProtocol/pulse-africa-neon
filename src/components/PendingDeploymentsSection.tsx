@@ -76,14 +76,16 @@ export function PendingDeploymentsSection({
       return;
     }
     const deadlineDate = new Date(editForm.deadline);
-    if (deadlineDate.getTime() <= Date.now()) {
+    const minMs = Date.now() + 30 * 24 * 3600 * 1000;
+    if (deadlineDate.getTime() < minMs) {
       toast({
-        title: "Deadline must be in the future",
-        description: "On-chain expiry is immutable — pick a date after today.",
+        title: "Deadline must be at least 1 month away",
+        description: "Markets need to resolve on a future event — pick a date at least 30 days from today (and not a past event).",
         variant: "destructive",
       });
       return;
     }
+
     setIsSaving(true);
     const { error } = await supabase
       .from("markets")
