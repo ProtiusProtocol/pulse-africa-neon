@@ -95,7 +95,10 @@ Outcome reference ID rules:
 You must respond with a JSON object using the suggest_market function.`;
 
 
-      const userPrompt = `Based on this elevated fragility signal, suggest ONE specific prediction market:
+      const todayIso = new Date().toISOString().slice(0, 10);
+      const minDeadlineIso = new Date(Date.now() + 31 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+
+      const userPrompt = `Today is ${todayIso}. Based on this elevated fragility signal, suggest ONE specific prediction market:
 
 Signal Code: ${signal.signal_code}
 Signal Name: ${signal.name}
@@ -107,9 +110,10 @@ ${signal.weekly_update_md ? `Recent Update: ${signal.weekly_update_md}` : ''}
 
 Generate a market that:
 1. Captures the most likely near-term outcome from this elevated fragility
-2. Has a deadline within 3-12 months from now
+2. Has a deadline STRICTLY AFTER ${minDeadlineIso} (at least one month from today) and within 9 months. If a known event already happened in the past, pick the NEXT instance / next observable milestone instead — never resolve to a past event.
 3. Can be objectively resolved with public data
-4. Has a unique outcome_ref following our naming conventions`;
+4. Has a unique outcome_ref following our naming conventions
+5. Includes an honest initial_yes_probability (10–90) reflecting the signal direction — do not default to 50.`;
 
       try {
         const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -119,7 +123,7 @@ Generate a market that:
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+            model: "google/gemini-2.5-pro",
             messages: [
               { role: "system", content: systemPrompt },
               { role: "user", content: userPrompt }
@@ -133,33 +137,19 @@ Generate a market that:
                   parameters: {
                     type: "object",
                     properties: {
-                      title: { 
-                        type: "string", 
-                        description: "The market question as a YES/NO binary outcome" 
-                      },
-                      outcome_ref: { 
-                        type: "string", 
-                        description: "Unique identifier, CamelCase, max 40 chars, e.g. SAEnergyStage6PlusBy30Jun26" 
-                      },
-                      category: { 
-                        type: "string", 
+                      title: { type: "string", description: "The market question as a YES/NO binary outcome" },
+                      outcome_ref: { type: "string", description: "Unique identifier, CamelCase, max 40 chars" },
+                      category: {
+                        type: "string",
                         enum: ["Energy", "Politics", "Economy", "Climate", "Infrastructure", "Sport", "Tourism"],
-                        description: "Market category" 
                       },
-                      deadline: { 
-                        type: "string", 
-                        description: "ISO date string for resolution deadline" 
-                      },
-                      resolution_criteria: { 
-                        type: "string", 
-                        description: "Clear, objective criteria for YES/NO resolution" 
-                      },
-                      reasoning: { 
-                        type: "string", 
-                        description: "Why this market is relevant given the elevated fragility signal" 
-                      }
+                      deadline: { type: "string", description: `ISO date string for resolution deadline; MUST be strictly after ${minDeadlineIso}` },
+                      resolution_criteria: { type: "string" },
+                      reasoning: { type: "string" },
+                      initial_yes_probability: { type: "number", description: "Integer 10–90, prior probability YES resolves true" },
+                      initial_probability_reasoning: { type: "string", description: "1–2 sentences justifying the prior" },
                     },
-                    required: ["title", "outcome_ref", "category", "deadline", "resolution_criteria", "reasoning"],
+                    required: ["title", "outcome_ref", "category", "deadline", "resolution_criteria", "reasoning", "initial_yes_probability", "initial_probability_reasoning"],
                     additionalProperties: false
                   }
                 }
@@ -177,19 +167,33 @@ Generate a market that:
 
         const aiData = await aiResponse.json();
         const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-        
+
         if (!toolCall?.function?.arguments) {
           console.error(`No tool call response for ${signal.signal_code}`);
           continue;
         }
 
         const suggestion = JSON.parse(toolCall.function.arguments);
-        
+
         // Validate outcome_ref uniqueness
         if (existingRefs.has(suggestion.outcome_ref)) {
           console.log(`Duplicate outcome_ref ${suggestion.outcome_ref}, modifying...`);
           suggestion.outcome_ref = `${suggestion.outcome_ref}V2`;
         }
+
+        // Enforce: deadline must be at least 30 days in the future
+        const minMs = Date.now() + 30 * 24 * 3600 * 1000;
+        let deadlineMs = Date.parse(suggestion.deadline);
+        if (!Number.isFinite(deadlineMs) || deadlineMs < minMs) {
+          console.warn(`Deadline ${suggestion.deadline} for ${signal.signal_code} is too soon/invalid — pushing to +90 days`);
+          deadlineMs = Date.now() + 90 * 24 * 3600 * 1000;
+          suggestion.deadline = new Date(deadlineMs).toISOString();
+        }
+
+        // Clamp initial probability to 5..95
+        let prior = Number(suggestion.initial_yes_probability);
+        if (!Number.isFinite(prior)) prior = 50;
+        prior = Math.max(5, Math.min(95, Math.round(prior)));
 
         // Insert suggestion
         const { error: insertError } = await supabase
@@ -203,6 +207,8 @@ Generate a market that:
             suggested_deadline: suggestion.deadline,
             suggested_resolution_criteria: suggestion.resolution_criteria,
             ai_reasoning: suggestion.reasoning,
+            suggested_initial_yes_probability: prior,
+            suggested_initial_probability_reasoning: suggestion.initial_probability_reasoning ?? null,
             source_signal_direction: "elevated",
             status: "pending"
           });
@@ -211,6 +217,7 @@ Generate a market that:
           console.error(`Failed to insert suggestion for ${signal.signal_code}:`, insertError);
           continue;
         }
+
 
         console.log(`Created market suggestion for ${signal.signal_code}: ${suggestion.outcome_ref}`);
         suggestionsCreated++;
