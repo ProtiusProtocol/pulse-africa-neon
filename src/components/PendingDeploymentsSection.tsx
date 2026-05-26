@@ -44,6 +44,7 @@ export function PendingDeploymentsSection({
     deadline: "",
     outcome_ref: "",
     resolution_criteria: "",
+    prior_yes_pct: 50,
   });
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -66,6 +67,7 @@ export function PendingDeploymentsSection({
       deadline: toLocalInputValue(m.deadline),
       outcome_ref: m.outcome_ref ?? "",
       resolution_criteria: m.resolution_criteria ?? "",
+      prior_yes_pct: (m as any).prior_yes_pct ?? 50,
     });
   };
 
@@ -87,6 +89,7 @@ export function PendingDeploymentsSection({
     }
 
     setIsSaving(true);
+    const priorClamped = Math.max(5, Math.min(95, Math.round(Number(editForm.prior_yes_pct) || 50)));
     const { error } = await supabase
       .from("markets")
       .update({
@@ -94,7 +97,8 @@ export function PendingDeploymentsSection({
         deadline: editForm.deadline ? new Date(editForm.deadline).toISOString() : null,
         outcome_ref: editForm.outcome_ref,
         resolution_criteria: editForm.resolution_criteria || null,
-      })
+        prior_yes_pct: priorClamped,
+      } as any)
       .eq("id", editing.id);
     setIsSaving(false);
     if (error) {
@@ -271,6 +275,27 @@ export function PendingDeploymentsSection({
                 onChange={(e) => setEditForm((f) => ({ ...f, resolution_criteria: e.target.value }))}
                 rows={4}
               />
+            </div>
+            <div>
+              <Label htmlFor="edit-prior">Initial Odds (YES probability %)</Label>
+              <div className="flex items-center gap-3 mt-1">
+                <Input
+                  id="edit-prior"
+                  type="number"
+                  min={5}
+                  max={95}
+                  step={1}
+                  value={editForm.prior_yes_pct}
+                  onChange={(e) => setEditForm((f) => ({ ...f, prior_yes_pct: Number(e.target.value) }))}
+                  className="w-24"
+                />
+                <span className="text-sm text-muted-foreground">
+                  YES {editForm.prior_yes_pct}% / NO {100 - Number(editForm.prior_yes_pct || 50)}%
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Shown until real trades arrive. Use 5–95 (avoid 50 unless evidence is genuinely balanced).
+              </p>
             </div>
           </div>
           <DialogFooter>

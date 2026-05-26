@@ -108,6 +108,7 @@ export default function AdminDashboard() {
     resolutionCriteria: '',
     resolutionCriteriaFull: '',
     outcomeRef: '',
+    priorYesPct: 50,
   });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   
@@ -444,6 +445,7 @@ export default function AdminDashboard() {
       resolutionCriteria: market.resolution_criteria || '',
       resolutionCriteriaFull: market.resolution_criteria_full || '',
       outcomeRef: market.outcome_ref || '',
+      priorYesPct: (market as any).prior_yes_pct ?? 50,
     });
   };
 
@@ -461,6 +463,7 @@ export default function AdminDashboard() {
 
     setIsSavingEdit(true);
     try {
+      const priorClamped = Math.max(5, Math.min(95, Math.round(Number(editForm.priorYesPct) || 50)));
       const { error } = await supabase
         .from('markets')
         .update({
@@ -472,7 +475,8 @@ export default function AdminDashboard() {
           resolution_criteria: editForm.resolutionCriteria.trim() || null,
           resolution_criteria_full: editForm.resolutionCriteriaFull.trim() || null,
           outcome_ref: editForm.outcomeRef.trim() || null,
-        })
+          prior_yes_pct: priorClamped,
+        } as any)
         .eq('id', editingMarket.id);
 
       if (error) throw error;
@@ -1543,6 +1547,30 @@ const handleCreateMarket = async () => {
                     placeholder="Detailed resolution criteria..."
                   />
                 </div>
+
+                {/* Initial Odds Prior */}
+                <div className="space-y-2">
+                  <Label htmlFor="editPriorYes">Initial Odds — YES probability (%)</Label>
+                  <div className="flex items-center gap-3">
+                    <Input
+                      id="editPriorYes"
+                      type="number"
+                      min={5}
+                      max={95}
+                      step={1}
+                      value={editForm.priorYesPct}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, priorYesPct: Number(e.target.value) }))}
+                      className="bg-input border-border w-28"
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      YES {editForm.priorYesPct}% / NO {100 - Number(editForm.priorYesPct || 50)}%
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Shown on the market card until real trades arrive. Range 5–95; avoid 50/50 unless the signal is genuinely balanced.
+                  </p>
+                </div>
+
 
                 {/* Actions */}
                 <div className="flex justify-end gap-2 pt-4 border-t border-border">
