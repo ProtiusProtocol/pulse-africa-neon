@@ -159,6 +159,7 @@ export function MarketSuggestionsReview({ onCreateMarket, onMarketApproved }: Ma
           description: `Created market with outcome_ref: ${suggestion.suggested_outcome_ref}. Ready for Algorand deployment.` 
         });
         setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'approved', created_market_id: newMarket.id } : s));
+        onMarketApproved?.();
       }
     } else {
       // For reject/pending, just update the suggestion status
