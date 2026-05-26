@@ -27,11 +27,14 @@ interface MarketSuggestion {
   suggested_deadline: string | null;
   suggested_resolution_criteria: string | null;
   ai_reasoning: string | null;
+  suggested_initial_yes_probability: number | null;
+  suggested_initial_probability_reasoning: string | null;
   source_signal_direction: string | null;
   status: string;
   created_at: string;
   created_market_id: string | null;
 }
+
 interface MarketSuggestionsReviewProps {
   onCreateMarket?: (suggestion: MarketSuggestion) => void;
 }
