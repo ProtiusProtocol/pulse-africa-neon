@@ -82,8 +82,9 @@ const handler = async (req: Request): Promise<Response> => {
 A good prediction market has:
 1. A clear, binary YES/NO outcome
 2. An objective resolution criteria
-3. A specific deadline
+3. A specific deadline in the FUTURE — strictly at least ONE MONTH from today, and ideally 2–9 months out. NEVER propose an event that has already happened or that resolves within the next 30 days. If the natural event already occurred, pick the NEXT instance / next observable milestone instead.
 4. A unique outcome reference ID (CamelCase, no spaces, max 40 chars)
+5. An initial YES probability (integer 10–90) reflecting your honest prior based on the signal, recent evidence and base rates. Do NOT default to 50 unless the evidence is genuinely balanced — use 20/30/40/60/70/80 etc. where the signal clearly leans one way. Reserve <15 and >85 for cases that are almost certain.
 
 Outcome reference ID rules:
 - Use category prefixes: SAEnergy, SAPolitic, SAEcon, SAClimate, SAFDI, etc.
@@ -92,6 +93,7 @@ Outcome reference ID rules:
 - CamelCase format
 
 You must respond with a JSON object using the suggest_market function.`;
+
 
       const userPrompt = `Based on this elevated fragility signal, suggest ONE specific prediction market:
 
