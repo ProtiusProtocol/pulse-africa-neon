@@ -327,6 +327,15 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
                               <p className="text-muted-foreground">{suggestion.ai_reasoning}</p>
                             </div>
                           )}
+                          {suggestion.suggested_initial_probability_reasoning && (
+                            <div>
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                                Initial Prior ({Math.round(Number(suggestion.suggested_initial_yes_probability ?? 50))}% YES) — Why
+                              </p>
+                              <p className="text-muted-foreground">{suggestion.suggested_initial_probability_reasoning}</p>
+                            </div>
+                          )}
+
                           <p className="text-xs text-muted-foreground mt-2">
                             Approving will create a market with <span className="font-mono">app_id=PENDING</span> ready for Algorand deployment.
                           </p>
