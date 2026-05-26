@@ -443,6 +443,8 @@ export type Database = {
           status: string
           suggested_category: string
           suggested_deadline: string | null
+          suggested_initial_probability_reasoning: string | null
+          suggested_initial_yes_probability: number | null
           suggested_outcome_ref: string
           suggested_region: string
           suggested_resolution_criteria: string | null
@@ -461,6 +463,8 @@ export type Database = {
           status?: string
           suggested_category?: string
           suggested_deadline?: string | null
+          suggested_initial_probability_reasoning?: string | null
+          suggested_initial_yes_probability?: number | null
           suggested_outcome_ref: string
           suggested_region?: string
           suggested_resolution_criteria?: string | null
@@ -479,6 +483,8 @@ export type Database = {
           status?: string
           suggested_category?: string
           suggested_deadline?: string | null
+          suggested_initial_probability_reasoning?: string | null
+          suggested_initial_yes_probability?: number | null
           suggested_outcome_ref?: string
           suggested_region?: string
           suggested_resolution_criteria?: string | null
@@ -540,6 +546,7 @@ export type Database = {
           no_total: number | null
           oracle_address: string | null
           outcome_ref: string
+          prior_yes_pct: number | null
           region: string
           resolution_criteria: string | null
           resolution_criteria_full: string | null
@@ -560,6 +567,7 @@ export type Database = {
           no_total?: number | null
           oracle_address?: string | null
           outcome_ref: string
+          prior_yes_pct?: number | null
           region?: string
           resolution_criteria?: string | null
           resolution_criteria_full?: string | null
@@ -580,6 +588,7 @@ export type Database = {
           no_total?: number | null
           oracle_address?: string | null
           outcome_ref?: string
+          prior_yes_pct?: number | null
           region?: string
           resolution_criteria?: string | null
           resolution_criteria_full?: string | null
