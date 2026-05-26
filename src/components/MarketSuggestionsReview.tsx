@@ -40,7 +40,7 @@ interface MarketSuggestionsReviewProps {
   onMarketApproved?: () => void;
 }
 
-export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsReviewProps) {
+export function MarketSuggestionsReview({ onCreateMarket, onMarketApproved }: MarketSuggestionsReviewProps) {
   const [suggestions, setSuggestions] = useState<MarketSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
