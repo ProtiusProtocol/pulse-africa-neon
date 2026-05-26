@@ -37,6 +37,7 @@ interface MarketSuggestion {
 
 interface MarketSuggestionsReviewProps {
   onCreateMarket?: (suggestion: MarketSuggestion) => void;
+  onMarketApproved?: () => void;
 }
 
 export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsReviewProps) {
