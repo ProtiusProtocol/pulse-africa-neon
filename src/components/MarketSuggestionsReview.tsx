@@ -109,10 +109,12 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
           deadline: suggestion.suggested_deadline,
           resolution_criteria: suggestion.suggested_resolution_criteria,
           status: 'pending',
-          linked_signals: [suggestion.signal_code]
+          linked_signals: [suggestion.signal_code],
+          prior_yes_pct: suggestion.suggested_initial_yes_probability ?? null,
         })
         .select('id')
         .single();
+
 
       if (marketError) {
         console.error('Market insert error:', marketError);
