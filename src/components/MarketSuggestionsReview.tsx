@@ -264,7 +264,16 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
                           <p className="text-xs text-muted-foreground mt-1">
                             Deadline: {formatDeadline(suggestion.suggested_deadline)}
                           </p>
+                          {suggestion.suggested_initial_yes_probability != null && (
+                            <p className="text-xs mt-1">
+                              <span className="text-muted-foreground">Initial prior:</span>{" "}
+                              <span className="font-semibold text-accent">
+                                YES {Math.round(Number(suggestion.suggested_initial_yes_probability))}% / NO {100 - Math.round(Number(suggestion.suggested_initial_yes_probability))}%
+                              </span>
+                            </p>
+                          )}
                         </div>
+
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <CollapsibleTrigger asChild>
                             <Button variant="ghost" size="sm">
