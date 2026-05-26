@@ -97,7 +97,20 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
     // If approving, create a market record with a unique PENDING-<token> app_id
     // (app_id has a UNIQUE constraint, so plain "PENDING" collides across approvals)
     if (status === 'approved' && suggestion) {
+      // Guard: deadline must be at least 30 days in the future.
+      const minMs = Date.now() + 30 * 24 * 3600 * 1000;
+      const deadlineMs = suggestion.suggested_deadline ? Date.parse(suggestion.suggested_deadline) : NaN;
+      if (!Number.isFinite(deadlineMs) || deadlineMs < minMs) {
+        toast({
+          title: "Deadline too soon",
+          description: "Suggested deadline is in the past or within 30 days. Edit the suggestion (or re-generate) to a date at least one month out before approving.",
+          variant: "destructive",
+        });
+        setActionLoading(null);
+        return;
+      }
       const pendingAppId = `PENDING-${(crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)).slice(0, 8)}`;
+
       const { data: newMarket, error: marketError } = await supabase
         .from('markets')
         .insert({
