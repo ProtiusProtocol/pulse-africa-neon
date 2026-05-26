@@ -445,6 +445,7 @@ export default function AdminDashboard() {
       resolutionCriteria: market.resolution_criteria || '',
       resolutionCriteriaFull: market.resolution_criteria_full || '',
       outcomeRef: market.outcome_ref || '',
+      priorYesPct: (market as any).prior_yes_pct ?? 50,
     });
   };
 
@@ -462,6 +463,7 @@ export default function AdminDashboard() {
 
     setIsSavingEdit(true);
     try {
+      const priorClamped = Math.max(5, Math.min(95, Math.round(Number(editForm.priorYesPct) || 50)));
       const { error } = await supabase
         .from('markets')
         .update({
@@ -473,7 +475,8 @@ export default function AdminDashboard() {
           resolution_criteria: editForm.resolutionCriteria.trim() || null,
           resolution_criteria_full: editForm.resolutionCriteriaFull.trim() || null,
           outcome_ref: editForm.outcomeRef.trim() || null,
-        })
+          prior_yes_pct: priorClamped,
+        } as any)
         .eq('id', editingMarket.id);
 
       if (error) throw error;
