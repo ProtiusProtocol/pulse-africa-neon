@@ -939,6 +939,7 @@ const handleCreateMarket = async () => {
 
         {/* AI Market Suggestions Review */}
         <MarketSuggestionsReview 
+          onMarketApproved={fetchMarkets}
           onCreateMarket={(suggestion) => {
             // Pre-fill the new market form with AI suggestion
             setNewMarket({

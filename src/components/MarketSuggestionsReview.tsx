@@ -37,9 +37,10 @@ interface MarketSuggestion {
 
 interface MarketSuggestionsReviewProps {
   onCreateMarket?: (suggestion: MarketSuggestion) => void;
+  onMarketApproved?: () => void;
 }
 
-export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsReviewProps) {
+export function MarketSuggestionsReview({ onCreateMarket, onMarketApproved }: MarketSuggestionsReviewProps) {
   const [suggestions, setSuggestions] = useState<MarketSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -158,6 +159,7 @@ export function MarketSuggestionsReview({ onCreateMarket }: MarketSuggestionsRev
           description: `Created market with outcome_ref: ${suggestion.suggested_outcome_ref}. Ready for Algorand deployment.` 
         });
         setSuggestions(prev => prev.map(s => s.id === id ? { ...s, status: 'approved', created_market_id: newMarket.id } : s));
+        onMarketApproved?.();
       }
     } else {
       // For reject/pending, just update the suggestion status
