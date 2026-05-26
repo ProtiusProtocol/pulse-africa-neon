@@ -108,6 +108,7 @@ export default function AdminDashboard() {
     resolutionCriteria: '',
     resolutionCriteriaFull: '',
     outcomeRef: '',
+    priorYesPct: 50,
   });
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   
