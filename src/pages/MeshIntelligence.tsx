@@ -51,6 +51,7 @@ const MeshIntelligence = () => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
+  const { walletAddress, isConnecting, connect, disconnect } = useWallet();
 
   useEffect(() => {
     (async () => {
