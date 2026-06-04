@@ -142,6 +142,7 @@ const AppRoutes = () => (
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/past-markets" element={<PastMarkets />} />
+        <Route path="/mesh-intelligence" element={<MeshIntelligence />} />
         
         {/* Soccer Laduma tenant routes */}
         <Route path="/soccer-laduma" element={<SoccerLadumaHome />} />
