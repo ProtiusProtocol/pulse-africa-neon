@@ -57,6 +57,23 @@ const TENANT_CONFIGS: Record<string, TenantConfig> = {
     },
     authMethods: ["email", "social"],
   },
+  mesh: {
+    id: "mesh",
+    name: "MESH Intelligence",
+    tagline: "Regulated digital asset intelligence",
+    primaryColor: "142 76% 36%",
+    accentColor: "38 92% 50%",
+    marketFilter: {
+      tags: ["MESH-01"],
+    },
+    features: {
+      walletTrading: true,
+      paperTrading: false,
+      leaderboard: false,
+      weeklyReports: false,
+    },
+    authMethods: ["wallet", "email"],
+  },
 };
 
 interface TenantContextValue {
