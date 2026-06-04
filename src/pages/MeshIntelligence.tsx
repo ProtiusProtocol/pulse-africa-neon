@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { FragilitySignalCard } from "@/components/FragilitySignalCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, ShieldCheck, Activity, Archive, Clock } from "lucide-react";
+import { Sparkles, ShieldCheck, Activity, Archive, Clock, Wallet } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
 import meshLogo from "@/assets/mesh-logo.png";
 
 const SIGNAL_CODE = "MESH-01";
@@ -49,6 +51,7 @@ const MeshIntelligence = () => {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
+  const { walletAddress, isConnecting, connect, disconnect } = useWallet();
 
   useEffect(() => {
     (async () => {
@@ -82,7 +85,31 @@ const MeshIntelligence = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* MESH-only top bar */}
+      <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-background/95 backdrop-blur">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between max-w-6xl">
+          <Link to="/mesh" className="flex items-center gap-3">
+            <img src={meshLogo} alt="MESH" className="h-8 w-auto object-contain" />
+            <span className="font-bold tracking-tight text-primary text-glow-primary hidden sm:inline">
+              MESH Intelligence
+            </span>
+          </Link>
+          {walletAddress ? (
+            <Button variant="outline" size="sm" onClick={disconnect} className="font-mono text-xs">
+              <Wallet className="w-4 h-4 mr-2 text-primary" />
+              {walletAddress.slice(0, 4)}…{walletAddress.slice(-4)}
+            </Button>
+          ) : (
+            <Button variant="hero" size="sm" onClick={connect} disabled={isConnecting}>
+              <Wallet className="w-4 h-4 mr-2" />
+              {isConnecting ? "Connecting…" : "Connect Wallet"}
+            </Button>
+          )}
+        </div>
+      </header>
+
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 max-w-6xl">
+
         {/* Header / Logo */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
           <div className="flex items-center gap-4">
