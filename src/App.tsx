@@ -30,6 +30,7 @@ import AdminReportWeek from "./pages/AdminReportWeek";
 import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
 import PastMarkets from "./pages/PastMarkets";
+import MeshIntelligence from "./pages/MeshIntelligence";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import SoccerLadumaHome from "./pages/SoccerLadumaHome";
