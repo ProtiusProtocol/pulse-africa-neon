@@ -4,9 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { FragilitySignalCard } from "@/components/FragilitySignalCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, ShieldCheck, Activity, Archive, Clock } from "lucide-react";
+import { Sparkles, ShieldCheck, Activity, Archive, Clock, Wallet } from "lucide-react";
+import { useWallet } from "@/contexts/WalletContext";
 import meshLogo from "@/assets/mesh-logo.png";
 
 const SIGNAL_CODE = "MESH-01";
