@@ -30,6 +30,7 @@ import AdminReportWeek from "./pages/AdminReportWeek";
 import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
 import PastMarkets from "./pages/PastMarkets";
+import MeshIntelligence from "./pages/MeshIntelligence";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import SoccerLadumaHome from "./pages/SoccerLadumaHome";
@@ -141,6 +142,7 @@ const AppRoutes = () => (
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/past-markets" element={<PastMarkets />} />
+        <Route path="/mesh-intelligence" element={<MeshIntelligence />} />
         
         {/* Soccer Laduma tenant routes */}
         <Route path="/soccer-laduma" element={<SoccerLadumaHome />} />
