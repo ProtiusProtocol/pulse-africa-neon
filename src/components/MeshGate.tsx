@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-const MESH_KEY = "mesh-demo-june";
+const MESH_KEY = "mesh-demo-2026";
 const STORAGE_KEY = "mesh_access_granted";
 
 export const MeshGate = ({ children }: { children: React.ReactNode }) => {
