@@ -31,6 +31,7 @@ import Auth from "./pages/Auth";
 import Unsubscribe from "./pages/Unsubscribe";
 import PastMarkets from "./pages/PastMarkets";
 import MeshIntelligence from "./pages/MeshIntelligence";
+import { MeshGate } from "@/components/MeshGate";
 import NotFound from "./pages/NotFound";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import SoccerLadumaHome from "./pages/SoccerLadumaHome";
@@ -142,9 +143,9 @@ const AppRoutes = () => (
         <Route path="/dashboard" element={<UserDashboard />} />
         <Route path="/unsubscribe" element={<Unsubscribe />} />
         <Route path="/past-markets" element={<PastMarkets />} />
-        <Route path="/mesh-intelligence" element={<MeshIntelligence />} />
-        <Route path="/mesh" element={<MeshIntelligence />} />
-        <Route path="/mesh/*" element={<MeshIntelligence />} />
+        <Route path="/mesh-intelligence" element={<MeshGate><MeshIntelligence /></MeshGate>} />
+        <Route path="/mesh" element={<MeshGate><MeshIntelligence /></MeshGate>} />
+        <Route path="/mesh/*" element={<MeshGate><MeshIntelligence /></MeshGate>} />
         
         {/* Soccer Laduma tenant routes */}
         <Route path="/soccer-laduma" element={<SoccerLadumaHome />} />

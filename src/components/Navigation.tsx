@@ -31,7 +31,6 @@ export const Navigation = () => {
     { to: "/", label: "Home" },
     { to: "/intelligence", label: "Markets with Signals" },
     { to: "/markets", label: "Markets with Trades" },
-    { to: "/mesh", label: "MESH" },
     { to: "/past-markets", label: "Archive" },
     { to: "/dashboard", label: "Your Dashboard" },
   ];
