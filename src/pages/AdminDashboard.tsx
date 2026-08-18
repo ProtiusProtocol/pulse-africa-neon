@@ -61,6 +61,8 @@ import { MarketStatsSummary } from "@/components/admin/MarketStatsSummary";
 import { DeployerWalletInfo } from "@/components/admin/DeployerWalletInfo";
 import { MarketListSection } from "@/components/admin/MarketListSection";
 import { ResolveMarketPanel } from "@/components/admin/ResolveMarketPanel";
+import { SeasonCleanupPanel } from "@/components/admin/SeasonCleanupPanel";
+
 import { InfoHint } from "@/components/admin/InfoHint";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -834,8 +836,12 @@ const handleCreateMarket = async () => {
         {/* Upcoming Resolutions Alert */}
         <UpcomingResolutions markets={markets} />
 
+        {/* Bulk cleanup of expired markets (season rollover) */}
+        <SeasonCleanupPanel onChanged={fetchData} />
+
         {/* Resolve Markets (semi-automated on-chain + auto-payout) */}
         <ResolveMarketPanel markets={markets} onResolved={fetchMarkets} />
+
 
         {/* Market Stats Summary */}
         <section>
