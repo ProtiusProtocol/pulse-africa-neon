@@ -834,8 +834,12 @@ const handleCreateMarket = async () => {
         {/* Upcoming Resolutions Alert */}
         <UpcomingResolutions markets={markets} />
 
+        {/* Bulk cleanup of expired markets (season rollover) */}
+        <SeasonCleanupPanel onChanged={fetchData} />
+
         {/* Resolve Markets (semi-automated on-chain + auto-payout) */}
         <ResolveMarketPanel markets={markets} onResolved={fetchMarkets} />
+
 
         {/* Market Stats Summary */}
         <section>
