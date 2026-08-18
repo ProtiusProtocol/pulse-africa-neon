@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     if (action === "preview") {
       const { data: markets, error } = await admin
         .from("markets")
-        .select("id, title, category, region, status, deadline, prior_yes_pct, yes_total, no_total, app_id, resolved_outcome")
+        .select("id, title, category, region, status, deadline, prior_yes_pct, yes_total, no_total, app_id, resolved_outcome, researched_outcome, researched_source")
         .is("resolved_outcome", null)
         .not("status", "in", '("resolved","cancelled")')
         .lt("deadline", new Date().toISOString())

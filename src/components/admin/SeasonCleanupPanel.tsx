@@ -17,14 +17,19 @@ interface ExpiredMarket {
   prior_yes_pct: number | null;
   yes_total: number | null;
   no_total: number | null;
+  researched_outcome: string | null;
+  researched_source: string | null;
   pending_predictions: number;
   real_trades: number;
 }
 
 type Outcome = "YES" | "NO";
 
-/** Suggested outcome: market pool if traded, else the model prior, else NO. */
+/** Verified real-world result wins; then the traded pool; then the model prior; else NO. */
 function suggestedOutcome(m: ExpiredMarket): Outcome {
+  if (m.researched_outcome === "YES" || m.researched_outcome === "NO") {
+    return m.researched_outcome;
+  }
   const yes = Number(m.yes_total ?? 0);
   const no = Number(m.no_total ?? 0);
   if (yes + no > 0) return yes >= no ? "YES" : "NO";
@@ -195,6 +200,18 @@ export function SeasonCleanupPanel({ onChanged }: { onChanged?: () => void }) {
                             {m.real_trades > 0 && ` · ${m.real_trades} real trade(s)`}
                             {m.prior_yes_pct != null && ` · prior ${m.prior_yes_pct}% YES`}
                           </p>
+                          {m.researched_outcome ? (
+                            <p className="mt-1 text-xs text-primary">
+                              <Badge variant="outline" className="mr-1 border-primary/40 text-primary">
+                                Researched {m.researched_outcome}
+                              </Badge>
+                              {m.researched_source}
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-xs text-amber-500">
+                              No verified result on file — outcome derived from pool/prior
+                            </p>
+                          )}
                         </div>
                         <div className="flex gap-1">
                           {(["YES", "NO"] as Outcome[]).map((side) => (

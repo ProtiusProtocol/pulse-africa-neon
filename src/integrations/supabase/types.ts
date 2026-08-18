@@ -548,6 +548,8 @@ export type Database = {
           outcome_ref: string
           prior_yes_pct: number | null
           region: string
+          researched_outcome: string | null
+          researched_source: string | null
           resolution_criteria: string | null
           resolution_criteria_full: string | null
           resolved_outcome: string | null
@@ -569,6 +571,8 @@ export type Database = {
           outcome_ref: string
           prior_yes_pct?: number | null
           region?: string
+          researched_outcome?: string | null
+          researched_source?: string | null
           resolution_criteria?: string | null
           resolution_criteria_full?: string | null
           resolved_outcome?: string | null
@@ -590,6 +594,8 @@ export type Database = {
           outcome_ref?: string
           prior_yes_pct?: number | null
           region?: string
+          researched_outcome?: string | null
+          researched_source?: string | null
           resolution_criteria?: string | null
           resolution_criteria_full?: string | null
           resolved_outcome?: string | null
