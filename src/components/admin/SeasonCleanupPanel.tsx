@@ -17,14 +17,19 @@ interface ExpiredMarket {
   prior_yes_pct: number | null;
   yes_total: number | null;
   no_total: number | null;
+  researched_outcome: string | null;
+  researched_source: string | null;
   pending_predictions: number;
   real_trades: number;
 }
 
 type Outcome = "YES" | "NO";
 
-/** Suggested outcome: market pool if traded, else the model prior, else NO. */
+/** Verified real-world result wins; then the traded pool; then the model prior; else NO. */
 function suggestedOutcome(m: ExpiredMarket): Outcome {
+  if (m.researched_outcome === "YES" || m.researched_outcome === "NO") {
+    return m.researched_outcome;
+  }
   const yes = Number(m.yes_total ?? 0);
   const no = Number(m.no_total ?? 0);
   if (yes + no > 0) return yes >= no ? "YES" : "NO";
