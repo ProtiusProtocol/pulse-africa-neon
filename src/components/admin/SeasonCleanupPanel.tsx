@@ -200,6 +200,18 @@ export function SeasonCleanupPanel({ onChanged }: { onChanged?: () => void }) {
                             {m.real_trades > 0 && ` · ${m.real_trades} real trade(s)`}
                             {m.prior_yes_pct != null && ` · prior ${m.prior_yes_pct}% YES`}
                           </p>
+                          {m.researched_outcome ? (
+                            <p className="mt-1 text-xs text-primary">
+                              <Badge variant="outline" className="mr-1 border-primary/40 text-primary">
+                                Researched {m.researched_outcome}
+                              </Badge>
+                              {m.researched_source}
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-xs text-amber-500">
+                              No verified result on file — outcome derived from pool/prior
+                            </p>
+                          )}
                         </div>
                         <div className="flex gap-1">
                           {(["YES", "NO"] as Outcome[]).map((side) => (
