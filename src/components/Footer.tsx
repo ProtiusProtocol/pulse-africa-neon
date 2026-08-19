@@ -51,8 +51,17 @@ export const Footer = () => {
                   Privacy
                 </a>
               </li>
+              <li>
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:text-glow-primary transition-colors"
+                >
+                  Admin
+                </Link>
+              </li>
             </ul>
           </div>
+
 
           {/* Social */}
           <div>
