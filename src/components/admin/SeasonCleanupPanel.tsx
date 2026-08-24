@@ -145,6 +145,21 @@ export function SeasonCleanupPanel({ onChanged }: { onChanged?: () => void }) {
                 <Button
                   variant="outline"
                   size="sm"
+                  onClick={() =>
+                    setSelected(
+                      Object.fromEntries(
+                        markets.filter((m) => m.researched_outcome).map((m) => [m.id, true]),
+                      ),
+                    )
+                  }
+                  disabled={working}
+                  title="Select only markets with a verified real-world result on file"
+                >
+                  Select verified only
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setSelected(Object.fromEntries(markets.map((m) => [m.id, true])))}
                   disabled={working}
                 >
