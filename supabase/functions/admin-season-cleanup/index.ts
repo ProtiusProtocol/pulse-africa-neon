@@ -4,6 +4,7 @@
 //  - settle : resolve a batch of markets to YES/NO in the DB, settle paper predictions + leaderboard
 //  - void   : cancel a batch of markets, refund staked paper points, mark trades refunded
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { settlePaperPredictions, recomputeRanks } from "../_shared/paperSettlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -148,91 +149,25 @@ Deno.serve(async (req) => {
           .not("status", "in", '("claimed","lost","refunded")');
       }
 
-      // 3) Paper predictions
-      const { data: preds } = await admin
-        .from("paper_predictions")
-        .select("*")
-        .eq("market_id", marketId)
-        .eq("status", "pending");
-
-      let settled = 0;
-      for (const p of preds ?? []) {
-        const stake = Number(p.points_staked ?? 50);
-        const { data: lb } = await admin
-          .from("paper_leaderboard")
-          .select("*")
-          .eq("session_id", p.session_id)
-          .eq("tenant_id", p.tenant_id ?? TENANT_ID)
-          .maybeSingle();
-
-        if (action === "void") {
-          await admin
-            .from("paper_predictions")
-            .update({ status: "void", points_won: stake, resolved_at: new Date().toISOString() })
-            .eq("id", p.id);
-          if (lb) {
-            await admin
-              .from("paper_leaderboard")
-              .update({
-                total_points: Number(lb.total_points ?? 0) + stake,
-                predictions_made: Math.max(0, Number(lb.predictions_made ?? 0) - 1),
-              })
-              .eq("id", lb.id);
-          }
-        } else {
-          const won = String(p.side ?? "").toLowerCase() === outcome.toLowerCase();
-          const payout = won ? stake * 2 : 0;
-          await admin
-            .from("paper_predictions")
-            .update({
-              status: won ? "won" : "lost",
-              points_won: payout,
-              resolved_at: new Date().toISOString(),
-            })
-            .eq("id", p.id);
-          if (lb) {
-            const wins = Number(lb.predictions_won ?? 0) + (won ? 1 : 0);
-            const losses = Number(lb.predictions_lost ?? 0) + (won ? 0 : 1);
-            const streak = won ? Number(lb.streak_current ?? 0) + 1 : 0;
-            await admin
-              .from("paper_leaderboard")
-              .update({
-                total_points: Number(lb.total_points ?? 0) + payout,
-                weekly_points: Number(lb.weekly_points ?? 0) + (won ? stake : -stake),
-                predictions_won: wins,
-                predictions_lost: losses,
-                accuracy_pct: wins + losses > 0 ? Math.round((wins / (wins + losses)) * 1000) / 10 : null,
-                streak_current: streak,
-                streak_best: Math.max(Number(lb.streak_best ?? 0), streak),
-                xp_total: Number(lb.xp_total ?? 0) + (won ? 25 : 5),
-              })
-              .eq("id", lb.id);
-          }
-        }
-        touchedSessions.add(p.session_id);
-        settled++;
-      }
+      // 3) Paper predictions (shared settlement – reward policy is pluggable)
+      const { settled, sessions } = await settlePaperPredictions(
+        admin,
+        marketId,
+        action === "void" ? null : outcome,
+      );
+      sessions.forEach((s) => touchedSessions.add(s));
 
       results.push({
         market_id: marketId,
         ok: true,
         detail: action === "settle"
           ? `resolved ${outcome}, ${settled} prediction(s) settled`
-          : `cancelled, ${settled} prediction(s) refunded`,
+          : `cancelled, ${settled} prediction(s) voided`,
       });
     }
 
     // 4) Recompute all-time ranks for the tenant
-    const { data: board } = await admin
-      .from("paper_leaderboard")
-      .select("id, total_points")
-      .eq("tenant_id", TENANT_ID)
-      .order("total_points", { ascending: false });
-    let rank = 0;
-    for (const row of board ?? []) {
-      rank++;
-      await admin.from("paper_leaderboard").update({ all_time_rank: rank }).eq("id", row.id);
-    }
+    await recomputeRanks(admin, TENANT_ID);
 
     return json({
       success: true,
