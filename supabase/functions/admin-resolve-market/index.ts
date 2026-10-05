@@ -3,6 +3,7 @@
 // to each winning trader's wallet, then marks DB trades as claimed.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import algosdk from "https://esm.sh/algosdk@2.7.0";
+import { settlePaperPredictions, recomputeRanks, currentPolicy } from "../_shared/paperSettlement.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,6 +134,16 @@ Deno.serve(async (req) => {
       .eq("id", marketId);
     if (updErr) return json({ error: `DB update failed: ${updErr.message}`, steps }, 500);
     steps.push(`DB resolved_outcome=${winningSide}, status=resolved`);
+
+    // 2b) Settle Soccer Laduma paper predictions in the same step
+    try {
+      const { settled, tenants } = await settlePaperPredictions(admin, marketId, winningSide);
+      for (const t of tenants) await recomputeRanks(admin, t);
+      steps.push(`paper predictions settled: ${settled} (policy=${currentPolicy()})`);
+    } catch (e) {
+      steps.push(`paper settlement FAILED: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
 
     // 3) Compute payouts from DB trades and pay winners directly
     const { data: trades } = await admin
