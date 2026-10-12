@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChevronRight, Activity, RefreshCw, LayoutGrid, TableProperties,
-  Clock, CheckCircle, AlertCircle, Hourglass, Search, X,
+  Clock, CheckCircle, AlertCircle, Hourglass, Search, X, Trophy,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,7 @@ interface FragilitySignal {
 
 type TradeCounts = Record<string, number>;
 type ViewMode = "grid" | "matrix";
-type MarketTab = "active" | "awaiting" | "resolved" | "pending";
+type MarketTab = "active" | "awaiting" | "resolved" | "pending" | "soccer";
 type SortMode = "pool" | "deadline" | "trades";
 
 const Markets = () => {
@@ -159,8 +159,14 @@ const Markets = () => {
     const awaiting: Market[] = [];
     const resolved: Market[] = [];
     const pending: Market[] = [];
+    const soccer: Market[] = [];
     let archivedCount = 0;
     allMarkets.forEach((m) => {
+      // Prediction-only Soccer Laduma markets live in their own tab
+      if (m.app_id?.startsWith("OFFCHAIN")) {
+        soccer.push(m);
+        return;
+      }
       if (m.status === "resolved") {
         const resolvedAt = new Date(m.updated_at).getTime();
         if (resolvedAt >= archiveCutoff) resolved.push(m);
@@ -169,10 +175,28 @@ const Markets = () => {
       else if (m.status === "active") active.push(m);
       else if (m.status === "pending") pending.push(m);
     });
-    return { active, awaiting, resolved, pending, archivedCount };
+    return { active, awaiting, resolved, pending, soccer, archivedCount };
   }, [allMarkets, archiveCutoff]);
 
   const current = buckets[activeTab];
+  const soccerGroups = useMemo(() => {
+    const groups: { key: string; label: string; items: Market[] }[] = [
+      { key: "SL-PSL", label: "PSL / South African Club Football", items: [] },
+      { key: "SL-CLUB", label: "International Club Football", items: [] },
+      { key: "SL-NAT", label: "International / National Teams", items: [] },
+    ];
+    const other: Market[] = [];
+    buckets.soccer.forEach((m) => {
+      const ref = (m as any).outcome_ref as string | undefined;
+      const g = groups.find((x) => ref?.startsWith(x.key + "-"));
+      (g ? g.items : other).push(m);
+    });
+    groups.forEach((g) =>
+      g.items.sort((a, b) => new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime()),
+    );
+    if (other.length) groups.push({ key: "other", label: "Other", items: other });
+    return groups.filter((g) => g.items.length > 0);
+  }, [buckets.soccer]);
 
   // Apply filters + sort
   const filteredMarkets = useMemo(() => {
@@ -293,7 +317,7 @@ const Markets = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as MarketTab)} className="mb-4">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto">
             <TabsTrigger value="active" className="flex items-center gap-2 py-2">
               <Clock className="w-4 h-4" /> Active
               <Badge variant="secondary" className="ml-1">{buckets.active.length}</Badge>
@@ -309,6 +333,10 @@ const Markets = () => {
             <TabsTrigger value="pending" className="flex items-center gap-2 py-2">
               <Hourglass className="w-4 h-4" /> Pending
               <Badge variant="outline" className="ml-1">{buckets.pending.length}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="soccer" className="flex items-center gap-2 py-2">
+              <Trophy className="w-4 h-4" /> Soccer Laduma
+              <Badge variant="outline" className="ml-1">{buckets.soccer.length}</Badge>
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -412,7 +440,67 @@ const Markets = () => {
         </div>
 
         {/* Markets display */}
-        {filteredMarkets.length === 0 ? (
+        {activeTab === "soccer" ? (
+          <div className="space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-card border border-border rounded-lg">
+              <div>
+                <h2 className="text-lg font-bold">Soccer Laduma Predictions</h2>
+                <p className="text-sm text-muted-foreground">
+                  Play free — no wallet needed. Make your call and build your predictor reputation.
+                </p>
+              </div>
+              <Button asChild className="min-h-[44px]">
+                <a href="/soccer-laduma/markets">Make predictions <ChevronRight className="w-4 h-4" /></a>
+              </Button>
+            </div>
+            {soccerGroups.map((g) => (
+              <section key={g.key}>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                  {g.label} <span className="text-foreground">({g.items.length})</span>
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {g.items
+                    .filter((m) => !search || m.title.toLowerCase().includes(search.trim().toLowerCase()))
+                    .map((m) => {
+                      const odds = getOdds(m);
+                      const closed = isPastDeadline(m) || m.status === "resolved";
+                      return (
+                        <a
+                          key={m.id}
+                          href="/soccer-laduma/markets"
+                          className="block p-4 bg-card border border-border rounded-lg hover:border-primary/50 transition-all"
+                        >
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                            <span>{m.region}</span>
+                            {m.deadline && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {closed ? "Closed" : `Closes ${formatDistanceToNow(new Date(m.deadline), { addSuffix: true })}`}
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-semibold mb-3 line-clamp-2">{m.title}</p>
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-primary font-medium">Yes {odds.yes}%</span>
+                            <span className="text-muted-foreground">No {odds.no}%</span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary" style={{ width: `${odds.yes}%` }} />
+                          </div>
+                          {m.resolved_outcome && (
+                            <Badge variant="secondary" className="mt-3">Result: {m.resolved_outcome.toUpperCase()}</Badge>
+                          )}
+                        </a>
+                      );
+                    })}
+                </div>
+              </section>
+            ))}
+            {soccerGroups.length === 0 && (
+              <p className="text-center text-muted-foreground py-12">Nothing here yet.</p>
+            )}
+          </div>
+        ) : filteredMarkets.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               {hasActiveFilters ? "No markets match your filters." : "Nothing here yet."}
