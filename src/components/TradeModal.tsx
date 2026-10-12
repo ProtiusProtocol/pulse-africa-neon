@@ -75,6 +75,12 @@ export const TradeModal = ({ market, isOpen, onClose, onTradeComplete }: TradeMo
       return;
     }
 
+    // Off-chain (Soccer Laduma) markets have no contract — never trade them on-chain
+    if (market.app_id.startsWith('OFFCHAIN')) {
+      toast.error('This market is prediction-only and cannot be traded on-chain');
+      return;
+    }
+
     // Parse app_id to number - handle various formats
     const appIdStr = market.app_id.replace(/\D/g, '') || '0';
     const appId = parseInt(appIdStr, 10);

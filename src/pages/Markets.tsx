@@ -44,7 +44,7 @@ interface FragilitySignal {
 
 type TradeCounts = Record<string, number>;
 type ViewMode = "grid" | "matrix";
-type MarketTab = "active" | "awaiting" | "resolved" | "pending";
+type MarketTab = "active" | "awaiting" | "resolved" | "pending" | "soccer";
 type SortMode = "pool" | "deadline" | "trades";
 
 const Markets = () => {
@@ -159,8 +159,14 @@ const Markets = () => {
     const awaiting: Market[] = [];
     const resolved: Market[] = [];
     const pending: Market[] = [];
+    const soccer: Market[] = [];
     let archivedCount = 0;
     allMarkets.forEach((m) => {
+      // Prediction-only Soccer Laduma markets live in their own tab
+      if (m.app_id?.startsWith("OFFCHAIN")) {
+        soccer.push(m);
+        return;
+      }
       if (m.status === "resolved") {
         const resolvedAt = new Date(m.updated_at).getTime();
         if (resolvedAt >= archiveCutoff) resolved.push(m);
@@ -169,10 +175,28 @@ const Markets = () => {
       else if (m.status === "active") active.push(m);
       else if (m.status === "pending") pending.push(m);
     });
-    return { active, awaiting, resolved, pending, archivedCount };
+    return { active, awaiting, resolved, pending, soccer, archivedCount };
   }, [allMarkets, archiveCutoff]);
 
   const current = buckets[activeTab];
+  const soccerGroups = useMemo(() => {
+    const groups: { key: string; label: string; items: Market[] }[] = [
+      { key: "SL-PSL", label: "PSL / South African Club Football", items: [] },
+      { key: "SL-CLUB", label: "International Club Football", items: [] },
+      { key: "SL-NAT", label: "International / National Teams", items: [] },
+    ];
+    const other: Market[] = [];
+    buckets.soccer.forEach((m) => {
+      const ref = (m as any).outcome_ref as string | undefined;
+      const g = groups.find((x) => ref?.startsWith(x.key + "-"));
+      (g ? g.items : other).push(m);
+    });
+    groups.forEach((g) =>
+      g.items.sort((a, b) => new Date(a.deadline || 0).getTime() - new Date(b.deadline || 0).getTime()),
+    );
+    if (other.length) groups.push({ key: "other", label: "Other", items: other });
+    return groups.filter((g) => g.items.length > 0);
+  }, [buckets.soccer]);
 
   // Apply filters + sort
   const filteredMarkets = useMemo(() => {
